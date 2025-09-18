@@ -4,7 +4,70 @@
     <option name="autoReloadType" value="NONE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="c573ea42-66c1-44e5-87e8-c894fff76fef" name="Changes" comment="" />
+    <list default="true" id="c573ea42-66c1-44e5-87e8-c894fff76fef" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/WebApp - Copy/.gitignore" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/WebApp - Copy/.vscode/extensions.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/WebApp - Copy/README.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/WebApp - Copy/index.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/WebApp - Copy/jsconfig.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/WebApp - Copy/package-lock.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/WebApp - Copy/package.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/WebApp - Copy/public/favicon.ico" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/WebApp - Copy/src/App.vue" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/WebApp - Copy/src/api/README.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/WebApp - Copy/src/api/apiService.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/WebApp - Copy/src/api/axios.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/WebApp - Copy/src/assets/base.css" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/WebApp - Copy/src/assets/main.css" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/WebApp - Copy/src/components/ApiExample.vue" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/WebApp - Copy/src/components/Button.vue" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/WebApp - Copy/src/components/ButtonExamples.vue" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/WebApp - Copy/src/components/DropdownField.vue" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/WebApp - Copy/src/components/ErrorBoundary.vue" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/WebApp - Copy/src/components/HelloWorld.vue" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/WebApp - Copy/src/components/InputField.vue" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/WebApp - Copy/src/components/InputFieldExample.vue" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/WebApp - Copy/src/components/PageContainer.vue" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/WebApp - Copy/src/components/SidebarNav.vue" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/WebApp - Copy/src/components/TheWelcome.vue" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/WebApp - Copy/src/components/TooltipText.vue" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/WebApp - Copy/src/components/WelcomeItem.vue" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/WebApp - Copy/src/components/icons/IconCommunity.vue" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/WebApp - Copy/src/components/icons/IconDocumentation.vue" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/WebApp - Copy/src/components/icons/IconEcosystem.vue" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/WebApp - Copy/src/components/icons/IconSupport.vue" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/WebApp - Copy/src/components/icons/IconTooling.vue" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/WebApp - Copy/src/composables/useAuth.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/WebApp - Copy/src/main.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/WebApp - Copy/src/router/index.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/WebApp - Copy/src/utils/constants.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/WebApp - Copy/src/utils/helper.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/WebApp - Copy/src/views/Carwash/BookCarWash.vue" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/WebApp - Copy/src/views/Carwash/CarWashBookingsTable.vue" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/WebApp - Copy/src/views/Carwash/ManageWashes.vue" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/WebApp - Copy/src/views/Carwash/MyWashes.vue" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/WebApp - Copy/src/views/Dashboards/AdminDashboard.vue" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/WebApp - Copy/src/views/Dashboards/CarWashDashbord.vue" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/WebApp - Copy/src/views/Dashboards/ClientDashboard.vue" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/WebApp - Copy/src/views/Dashboards/Dashboard.vue" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/WebApp - Copy/src/views/Dashboards/MechanicDashboard.vue" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/WebApp - Copy/src/views/Earnings.vue" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/WebApp - Copy/src/views/JobApplications.vue" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/WebApp - Copy/src/views/JobRequests.vue" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/WebApp - Copy/src/views/Mapview.vue" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/WebApp - Copy/src/views/PaymentHistory.vue" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/WebApp - Copy/src/views/Payments.vue" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/WebApp - Copy/src/views/Reports.vue" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/WebApp - Copy/src/views/RequestHistory.vue" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/WebApp - Copy/src/views/RequestMechanic.vue" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/WebApp - Copy/src/views/Usermanagement/CreateProfile.vue" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/WebApp - Copy/src/views/Usermanagement/Login.vue" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/WebApp - Copy/src/views/Usermanagement/ManageUsers.vue" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/WebApp - Copy/src/views/Usermanagement/Profile.vue" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/WebApp - Copy/src/views/Usermanagement/SignUp.vue" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/WebApp - Copy/src/views/Usermanagement/UserManagement.vue" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/WebApp - Copy/vite.config.js" beforeDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -19,9 +82,12 @@
       <ProjectState />
     </projectState>
   </component>
-  <component name="ProjectColorInfo"><![CDATA[{
-  "associatedIndex": 0
-}]]></component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 0
+}</component>
   <component name="ProjectId" id="32mwrqbCvhxH6FY5ImfFcBTZAzd" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
@@ -31,10 +97,13 @@
   "keyToString": {
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.cidr.known.project.marker": "true",
+    "RunOnceActivity.git.unshallow": "true",
     "RunOnceActivity.readMode.enableVisualFormatting": "true",
     "cf.first.check.clang-format": "false",
     "cidr.known.project.marker": "true",
-    "kotlin-language-version-configured": "true"
+    "git-widget-placeholder": "main",
+    "kotlin-language-version-configured": "true",
+    "last_opened_file_path": "C:/Users/philasandeB/Desktop/My Apps/Mechanic"
   }
 }]]></component>
   <component name="RunManager">
@@ -121,5 +190,16 @@
       <updated>1758039257183</updated>
     </task>
     <servers />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
   </component>
 </project>
