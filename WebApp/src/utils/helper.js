@@ -145,6 +145,8 @@ export const getStatusColor = (status) => {
       return "blue"; 
     case JOB_STATUS.IN_PROGRESS:
       return "blue";
+      case "In progress":
+      return "blue";
     case JOB_STATUS.COMPLETED:
       return "green";
     case JOB_STATUS.CANCELLED:

@@ -47,6 +47,7 @@
             </v-btn>
 
             <v-btn
+            v-if="false"
               variant="text"
               size="small"
               color="red"
@@ -111,9 +112,21 @@ const fetchBookings = async () => {
   loading.value = true;
   try {
     const res = await apiService.getAllCarWashBookings();
+    const allBookings = Array.isArray(res.data) ? res.data : [];
 
+    const userId = String(loggedInUser.id);
 
-    bookings.value = Array.isArray(res.data) ? res.data : [];
+    bookings.value = allBookings.filter(booking => {
+      const bookingCarWashId = String(booking.carWashId);
+
+      if (booking.status === "accepted") {
+        // Only include if carWashId matches logged-in user
+        return bookingCarWashId === userId;
+      } else {
+        // Include all other statuses only if carWashId is not the logged-in user
+        return bookingCarWashId !== userId;
+      }
+    });
   } catch (err) {
     console.error("Failed to fetch bookings:", err);
     bookings.value = [];
@@ -121,6 +134,8 @@ const fetchBookings = async () => {
     loading.value = false;
   }
 };
+
+
 const loggedInUser =JSON.parse( localStorage.getItem("userProfile"))
 const updateStatus = async (booking: Booking, status: string) => {
   const previousStatus = booking.status;

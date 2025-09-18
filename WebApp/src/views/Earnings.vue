@@ -3,16 +3,14 @@
     <v-card-title>Earnings</v-card-title>
     <v-card-text>
       <!-- Earnings Table -->
-      <v-data-table
-  :headers="headers"
-  :items="earnings"
-  :loading="loading"
-  class="elevation-1"
-  :items-per-page="5"
-  :footer-props="{
-    'items-per-page-options': [5]
-  }"
->
+ 
+<v-data-table
+          :headers="headers"
+          :items="earnings"
+          class="elevation-1"
+          :items-per-page="5"
+          :loading="loading"
+        >
 
         <template #item.amount="{ item }">
           R {{ item.amount }}
