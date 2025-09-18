@@ -1,0 +1,37 @@
+{
+  "name": "frontend",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@mdi/font": "^7.4.47",
+    "apexcharts": "^5.3.5",
+    "axios": "^1.12.1",
+    "chart.js": "^4.5.0",
+    "chartjs-plugin-datalabels": "^2.2.0",
+    "date-fns": "^4.1.0",
+    "echarts": "^6.0.0",
+    "leaflet": "^1.9.4",
+    "vue": "^3.5.18",
+    "vue-apexcharts": "^1.7.0",
+    "vue-chartjs": "^4.1.2",
+    "vue-echarts": "^7.0.3",
+    "vue-router": "^4.5.1",
+    "vue3-apexcharts": "^1.8.0",
+    "vuetify": "^3.10.0"
+  },
+  "devDependencies": {
+    "@types/chart.js": "^2.9.41",
+    "@vitejs/plugin-vue": "^6.0.1",
+    "vite": "^7.0.6",
+    "vite-plugin-vue-devtools": "^8.0.0"
+  }
+}
