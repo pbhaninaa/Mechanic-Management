@@ -25,6 +25,8 @@ export const API_ENDPOINTS = {
   PAYMENTS: '/payments',
   PAYMENT_BY_CLIENT: (username) => `/payments/client/${username}`,
   PAYMENT_BY_MECHANIC: (mechanicId) => `/payments/mechanic/${mechanicId}`,
+  PAYMENT_BY_CARWASHID: (carWashId) => `/payments/carWash/${carWashId}`,
+
   CREATE_PAYMENT: '/payments/pay',
   UPDATE_PAYMENT_STATUS: (id, status) => `/payments/${id}/status?status=${status}`,
   // Car Wash Booking Endpoints

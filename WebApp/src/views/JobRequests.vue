@@ -85,13 +85,7 @@ const getStatusColor = (status: string) => {
   }
 };
 
-const truncateLocation = (location: string) => {
-  const parts = location.split(",");
-  if (parts.length > 3) {
-    return parts.slice(0, 3).join(",") + ", ...";
-  }
-  return location;
-};
+
 
 const loadJobRequests = async () => {
   try {
@@ -101,7 +95,6 @@ const loadJobRequests = async () => {
     console.error("Failed to load job requests:", err);
   }
 };
-
 const updateJobStatus = async (job: JobRequest, status: string) => {
   try {
   const mechanicId = JSON.parse(localStorage.getItem("userProfile") || "{}").id;

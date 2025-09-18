@@ -137,7 +137,7 @@ const navigationItems = [
   // CarWash
   { title: 'Bookings', icon: 'mdi-calendar-check', to: '/car-wash-bookings', roles: ['carwash'] },
   { title: 'Manage Washes', icon: 'mdi-shower', to: '/manage-washes', roles: ['carwash'] },
-  { title: 'Earnings', icon: 'mdi-currency-usd', to: '/earnings', roles: ['carwash'] }
+  { title: 'Earnings', icon: 'mdi-currency-usd', to: '/earnings', roles: ['carwash','mechanic'] }
 ]
 
 // Filtered by role

@@ -180,6 +180,9 @@ async getPaymentsByClient(username) {
 async getPaymentsByMechanic(mechanicId) {
   return this.get(`${API_ENDPOINTS.PAYMENTS}/mechanic/${mechanicId}`);
 }
+async getPaymentsByCarWash(carWashId) {
+  return this.get(`${API_ENDPOINTS.PAYMENTS}/carWash/${carWashId}`);
+}
 
 async createPayment(paymentRequest) {
   return this.post(API_ENDPOINTS.CREATE_PAYMENT, paymentRequest);

@@ -2,6 +2,7 @@ package com.test.app.TestAppBackEnd.services;
 
 import com.test.app.TestAppBackEnd.entities.Payment;
 import com.test.app.TestAppBackEnd.models.PaymentRequest; // optional if you have a Job entity
+import com.test.app.TestAppBackEnd.repositories.CarWashBookingRepository;
 import com.test.app.TestAppBackEnd.repositories.MechanicRequestRepository;
 import com.test.app.TestAppBackEnd.repositories.PaymentRepository;
 import com.test.app.TestAppBackEnd.repositories.UserProfileRepository;
@@ -14,14 +15,16 @@ import java.util.List;
 public class PaymentService {
 
     private final PaymentRepository paymentRepository;
-    private final MechanicRequestRepository jobRepository; // optional
+    private final MechanicRequestRepository mechanicRequestRepository; // optional
     private final UserProfileRepository userProfileRepository;
+    private final CarWashBookingRepository carWashBookingRepository;
     private final double PLATFORM_FEE_PERCENT = 0.10; // 10% fee
 
-    public PaymentService(PaymentRepository paymentRepository,UserProfileRepository userProfileRepository , MechanicRequestRepository jobRepository) {
+    public PaymentService(PaymentRepository paymentRepository, UserProfileRepository userProfileRepository , MechanicRequestRepository mechanicRequestRepository, CarWashBookingRepository carWashBookingRepository) {
         this.paymentRepository = paymentRepository;
-        this.jobRepository = jobRepository;
+        this.mechanicRequestRepository = mechanicRequestRepository;
         this.userProfileRepository = userProfileRepository;
+        this.carWashBookingRepository = carWashBookingRepository;
     }
 
     @Transactional
@@ -35,19 +38,30 @@ public class PaymentService {
             throw new IllegalArgumentException("Job ID must be provided");
         }
 
-        // Fetch job and mechanic id (replace with your Job entity logic)
-        var job = jobRepository.findById(jobId)
-                .orElseThrow(() -> new IllegalArgumentException("Job not found"));
+//        Object job = null; // can hold either type
+//
+//        if (request.getMechanicId() != null) {
+//            job = mechanicRequestRepository.findById(jobId)
+//                    .orElseThrow(() -> new IllegalArgumentException("Mechanic job not found with ID: " + jobId));
+//        } else if (request.getCarWashId() != null) {
+//            job = carWashBookingRepository.findById(jobId)
+//                    .orElseThrow(() -> new IllegalArgumentException("Car Wash booking not found with ID: " + jobId));
+//        } else {
+//            throw new IllegalArgumentException("Either mechanicId or carWashId must be provided");
+//        }
+
+
 
         double platformFee = request.getAmount() * PLATFORM_FEE_PERCENT;
 
         Payment payment = new Payment(
-                request.getAmount(),
+                request.getAmount()-platformFee,
                 request.getClientUsername(),
                 jobId,
                 request.getMechanicId(),
                 request.getCarWashId(),
-                platformFee
+                platformFee,
+                request.getMechanicId() != null?"Car Mechanical Service":"Car Wash service"
         );
 
 
@@ -61,8 +75,13 @@ public class PaymentService {
     public List<Payment> getPaymentsByClient(String clientUsername) {
         return paymentRepository.findByClientUsername(clientUsername);
     }
+    public Payment getPaymentById(Long id) {
+        return paymentRepository.findById(id).orElse(null);
+    }
 
     public List<Payment> getPaymentsByMechanic(Long mechanicId) {
         return paymentRepository.findByMechanicId(mechanicId);
+    } public List<Payment> getPaymentsByCarWash(Long id) {
+        return paymentRepository.findByCarWashId(id);
     }
 }

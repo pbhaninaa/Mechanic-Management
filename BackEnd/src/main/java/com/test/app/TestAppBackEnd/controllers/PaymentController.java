@@ -64,4 +64,15 @@ public class PaymentController {
         );
         return ResponseEntity.ok(response);
     }
+    @GetMapping("/carWash/{carWashId}")
+    public ResponseEntity<ApiResponse<List<Payment>>> getPaymentsByCarWash(@PathVariable Long carWashId) {
+        List<Payment> payments = paymentService.getPaymentsByCarWash(carWashId);
+        ApiResponse<List<Payment>> response = new ApiResponse<>(
+                "Fetched payments for car wash ID: " + carWashId,
+                HttpStatus.OK.value(),
+                payments,
+                false
+        );
+        return ResponseEntity.ok(response);
+    }
 }

@@ -102,42 +102,37 @@ const headers = [
   { text: "Actions", value: "actions", sortable: false },
 ];
 
-// Format date to readable string
 const formatDate = (isoDate: string) => {
   const date = new Date(isoDate);
-  return date.toLocaleString(); // You can customize with Intl.DateTimeFormat
+  return date.toLocaleString();
 };
 
 const fetchBookings = async () => {
   loading.value = true;
   try {
     const res = await apiService.getAllCarWashBookings();
-    console.log("API response:", res.data); // debug
 
-    // Ensure we have an array
+
     bookings.value = Array.isArray(res.data) ? res.data : [];
   } catch (err) {
     console.error("Failed to fetch bookings:", err);
     bookings.value = [];
   } finally {
-    // Stop loading no matter what
     loading.value = false;
   }
 };
-
-// Update status locally
-// Update status locally and via API
+const loggedInUser =JSON.parse( localStorage.getItem("userProfile"))
 const updateStatus = async (booking: Booking, status: string) => {
   const previousStatus = booking.status;
-  booking.status = status; // optimistic update
+  booking.status = status; 
+  booking.carWashId= loggedInUser.id
 
   try {
-    // Send the entire booking object with updated status
     await apiService.updateCarWashBooking(booking.id, booking);
     console.log(`Booking ${booking.id} status updated to ${status}`);
   } catch (err) {
     console.error("Failed to update status:", err);
-    booking.status = previousStatus; // rollback on error
+    booking.status = previousStatus; 
   }
 };
 

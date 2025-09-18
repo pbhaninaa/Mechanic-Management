@@ -13,7 +13,8 @@
         >
           <!-- Location column -->
           <template #item.location="{ item }">
-            {{ item.location }}
+            {{truncateLocation(item.location)  }}
+            
           </template>
 
           <!-- Status column -->
@@ -101,7 +102,13 @@ const loadRequests = async () => {
     historyLoading.value = false;
   }
 };
-
+const truncateLocation = (location: string) => {
+  const parts = location.split(",");
+  if (parts.length > 3) {
+    return parts.slice(0, 3).join(",") + ", ...";
+  }
+  return location;
+};
 // Pay for an accepted request
 const payForRequest = async (request) => {
   const amountStr = prompt("Enter payment amount:");
@@ -117,6 +124,7 @@ const payForRequest = async (request) => {
   amount: amount,
   clientUsername: JSON.parse(localStorage.getItem("userProfile") || "{}").username || "",
   mechanicId: request.mechanicId
+  
 };
 
   try {

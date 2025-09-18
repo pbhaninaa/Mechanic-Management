@@ -52,7 +52,7 @@
               color="primary"
               size="small"
               class="mr-2"
-              @click="pay(item)"
+              @click="payForRequest(item)"
             >
               Pay
             </v-btn>
@@ -142,6 +142,32 @@ const pay = (booking: Booking) => {
     name: "Payment",
     query: { bookingId: booking.id },
   });
+};
+const payForRequest = async (request) => {
+  const amountStr = prompt("Enter payment amount: R"+request.servicePrice);
+  if (!amountStr) return;
+
+  const amount = parseFloat(amountStr);
+  if (isNaN(amount) || amount <= 0) {
+    alert("Invalid amount");
+    return;
+  }
+  const paymentRequest = {
+  jobId: request.id,
+  amount: amount,
+  clientUsername: JSON.parse(localStorage.getItem("userProfile") || "{}").username || "",
+  carWashId: request.carWashId
+  
+};
+
+  try {
+    await apiService.createPayment(paymentRequest);
+    alert(`Payment of R${amount.toFixed(2)} successful!`);
+    await fetchBookings(); // Refresh the table if needed
+  } catch (err) {
+    console.error(err);
+    alert("Payment failed, please try again.");
+  }
 };
 
 // Open directions in map view

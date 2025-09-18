@@ -17,11 +17,12 @@ public class Payment {
     private Long carWashId; // <--- Added
     private Double platformFee;
     private LocalDateTime paidAt;
+    private String jobDescription;
 
     // Constructors
     public Payment() {}
 
-    public Payment(Double amount, String clientUsername, Long jobId, Long mechanicId, Long carWashId, Double platformFee) {
+    public Payment(Double amount, String clientUsername, Long jobId, Long mechanicId, Long carWashId, Double platformFee,String jobDescription) {
         this.amount = amount;
         this.clientUsername = clientUsername;
         this.jobId = jobId;
@@ -29,6 +30,7 @@ public class Payment {
         this.carWashId = carWashId; // <--- Set
         this.platformFee = platformFee;
         this.paidAt = LocalDateTime.now();
+        this.jobDescription = jobDescription;
     }
 
     // Getters & Setters
@@ -54,4 +56,6 @@ public class Payment {
 
     public LocalDateTime getPaidAt() { return paidAt; }
     public void setPaidAt(LocalDateTime paidAt) { this.paidAt = paidAt; }
+    public String getJobDescription() { return jobDescription; }
+    public void setJobDescription(String jobDescription) { this.jobDescription = jobDescription; }
 }

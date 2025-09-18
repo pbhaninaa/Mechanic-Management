@@ -4,34 +4,39 @@
     <v-card-text>
       <!-- Earnings Table -->
       <v-data-table
-        :headers="headers"
-        :items="earnings"
-        :loading="loading"
-        class="elevation-1"
-      >
-        <template v-slot:top>
-          <v-toolbar flat>
-            <v-toolbar-title>Your Earnings</v-toolbar-title>
-            <v-spacer></v-spacer>
-            <Button label="Refresh" color="primary" :loading="loading" @click="fetchEarnings" />
-          </v-toolbar>
+  :headers="headers"
+  :items="earnings"
+  :loading="loading"
+  class="elevation-1"
+  :items-per-page="5"
+  :footer-props="{
+    'items-per-page-options': [5]
+  }"
+>
+
+        <template #item.amount="{ item }">
+          R {{ item.amount }}
         </template>
 
-        <template v-slot:item.amount="{ item }">
-          R {{ item.amount.toFixed(2) }}
+        <template #item.paidAt="{ item }">
+          {{ item.paidAt }}
         </template>
 
-        <template v-slot:item.status="{ item }">
+        <template #item.status="{ item }">
           <v-chip :color="item.status === 'Paid' ? 'green' : 'orange'" dark>
             {{ item.status }}
           </v-chip>
+        </template>
+
+        <template #no-data>
+          No earnings found.
         </template>
       </v-data-table>
 
       <!-- Feedback -->
       <v-alert
-        v-if="message"
-        :type="messageType"
+        v-if="message && messageType === 'error'"
+        type="error"
         class="mt-3"
         closable
         @click:close="message = ''"
@@ -42,44 +47,55 @@
   </PageContainer>
 </template>
 
-<script setup>
-import { ref, onMounted } from "vue";
-import apiService from "../api/apiService";
-import Button from "../components/Button.vue";
+<script setup lang="ts">
+import { ref, onMounted, watch } from "vue";
 import PageContainer from "../components/PageContainer.vue";
+import apiService from "@/api/apiService";
+import { format } from "date-fns";
 
 // Table headers
 const headers = [
-  { text: "Job ID", value: "jobId" },
-  { text: "Date", value: "date" },
+  { text: "Job Description", value: "jobDescription" },
+  { text: "Date", value: "paidAt" },
   { text: "Amount", value: "amount" },
   { text: "Status", value: "status" },
 ];
 
-// Default data (mock)
-const earnings = ref([
-  { jobId: "JOB123", date: "2025-09-01", amount: 1200, status: "Paid" },
-  { jobId: "JOB124", date: "2025-09-05", amount: 850, status: "Pending" },
-  { jobId: "JOB125", date: "2025-09-10", amount: 600, status: "Paid" },
-]);
-
-// Loading and feedback
+// State
+const earnings = ref([]);
 const loading = ref(false);
 const message = ref("");
 const messageType = ref("success");
 
-// Fetch earnings (API simulation)
+// Logged in user
+const loggedInUser = JSON.parse(localStorage.getItem("userProfile") || "{}");
+
+// Fetch earnings depending on role
 const fetchEarnings = async () => {
   loading.value = true;
   message.value = "";
-  try {
-    // Replace with API call when ready
-    // const response = await apiService.getEarnings();
-    // earnings.value = response.data;
 
-    message.value = "Earnings updated successfully!";
-    messageType.value = "success";
-  } catch (err) {
+  try {
+    let response;
+    const role = loggedInUser.roles?.[0];
+
+    if (role === "MECHANIC") {
+      response = await apiService.getPaymentsByMechanic(loggedInUser.id);
+    } else if (role === "CARWASH") {
+      response = await apiService.getPaymentsByCarWash(loggedInUser.id);
+    } else {
+      throw new Error("Invalid user role for earnings");
+    }
+
+    // Map backend data to table-friendly format
+    earnings.value = (response.data || []).map((p) => ({
+      id: p.id,
+      jobDescription: p.jobDescription || `Job #${p.jobId}`,
+      paidAt: format(new Date(p.paidAt), "dd MMM yyyy, HH:mm"),
+      amount: Number(p.amount).toFixed(2),
+      status: "Paid",
+    }));
+  } catch (err: any) {
     console.error("Error fetching earnings:", err);
     message.value = err.message || "Failed to load earnings";
     messageType.value = "error";
@@ -88,6 +104,19 @@ const fetchEarnings = async () => {
   }
 };
 
+// Hide success message automatically when loading finishes
+watch(loading, (newVal) => {
+  if (!newVal && messageType.value === "success") {
+    message.value = "";
+  }
+});
+
 // Auto-fetch on mount
 onMounted(fetchEarnings);
 </script>
+
+<style scoped>
+.v-data-table th {
+  font-weight: 600;
+}
+</style>

@@ -216,12 +216,9 @@ const submitBooking = async () => {
   if (!isFormComplete.value) return;
   loading.value = true;
   try {
-    // Send booking to backend
     const response = await apiService.createCarWashBooking(newBooking.value);
 
     console.log("Booking saved:", response);
-    // Optionally show a success toast/message
-    alert("Booking successful!");
 
     router.push({ name: "MyWashes" });
   } catch (error) {
