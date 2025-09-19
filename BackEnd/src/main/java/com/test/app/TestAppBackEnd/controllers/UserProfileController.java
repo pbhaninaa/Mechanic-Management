@@ -1,5 +1,6 @@
 package com.test.app.TestAppBackEnd.controllers;
 
+import com.test.app.TestAppBackEnd.constants.Role;
 import com.test.app.TestAppBackEnd.entities.UserProfile;
 import com.test.app.TestAppBackEnd.services.UserProfileService;
 import com.test.app.TestAppBackEnd.ApiResponse;
@@ -63,6 +64,39 @@ public class UserProfileController {
         System.out.println("[GET] Response ready for user: " + loggedInUsername);
         return response;
     }
+    // Get user profiles by role
+    @GetMapping("/role/{role}")
+    public ResponseEntity<ApiResponse<Iterable<UserProfile>>> getProfilesByRole(
+            @PathVariable String role,
+            Authentication authentication) {
+
+        String loggedInUsername = authentication.getName();
+        System.out.println("[GET BY ROLE] Logged-in user: " + loggedInUsername);
+
+        try {
+            Role enumRole = Role.valueOf(role.toUpperCase()); // ensure case safety
+            Iterable<UserProfile> profiles = userProfileService.getProfilesByRole(enumRole);
+
+            if (profiles.iterator().hasNext()) {
+                return ResponseEntity.ok(
+                        new ApiResponse<>("Profiles retrieved successfully", 200, profiles, true)
+                );
+            } else {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(new ApiResponse<>("No profiles found for role: " + role, 404, null, true));
+            }
+
+        } catch (IllegalArgumentException e) {
+            // Role not valid in enum
+            return ResponseEntity.badRequest()
+                    .body(new ApiResponse<>("Invalid role: " + role, 400, null, false));
+        } catch (Exception e) {
+            System.err.println("[ERROR] Failed to fetch profiles by role: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse<>("An error occurred while fetching profiles", 500, null, false));
+        }
+    }
+
 
     // ================= GET ALL PROFILES (ADMIN ONLY) =================
     @GetMapping("/all")

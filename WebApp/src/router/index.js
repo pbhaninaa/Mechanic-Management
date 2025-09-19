@@ -19,6 +19,7 @@ import ManageWashes from "@/views/Carwash/ManageWashes.vue";
 import BookCarWash from "@/views/Carwash/BookCarWash.vue";
 import MyWashes from "@/views/Carwash/MyWashes.vue";
 import Mapview from "@/views/Mapview.vue";
+import HelpPage from "@/views/HelpPage.vue";
 
 const routes = [
   { path: "/", redirect: "/login" },
@@ -39,7 +40,8 @@ const routes = [
   {path:"/manage-washes", name:"ManageWashes", component:ManageWashes, meta:{requiresAuth:true}},
   {path: "/book-wash", name: "BookCarWash", component: BookCarWash, meta: { requiresAuth: true } },
   {path:"/my-washes",name:"MyWashes",component:MyWashes,meta:{requiresAuth:true}},
-  {path:"/map-view",name:"Mapview",component:Mapview,meta:{requiresAuth:true}}
+  {path:"/map-view",name:"Mapview",component:Mapview,meta:{requiresAuth:true}},
+  {path:"/help-page",name:"HelpPage",component:HelpPage,meta:{requiresAuth:true}}
 ];
 
 const router = createRouter({

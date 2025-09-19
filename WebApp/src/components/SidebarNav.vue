@@ -70,6 +70,7 @@ import { useRouter } from 'vue-router'
 import { logoutUser } from '@/utils/helper'
 import apiService from '@/api/apiService'
 
+
 // Router
 const router = useRouter()
 
@@ -93,6 +94,8 @@ onMounted(async () => {
     localStorage.setItem('userProfile', JSON.stringify(res.data || {}))
     loggedInUser.value = res.data || {}
     userRole.value = res.data?.roles?.[0]?.toLowerCase() || 'client'
+    localStorage.setItem("currencySymbol","R");
+    localStorage.setItem("phoneCountryCode","+27")
   } catch (error) {
     console.error('Failed to load user profile:', error)
   }
@@ -103,7 +106,9 @@ const roleBackgrounds = {
   client: 'https://i.pinimg.com/736x/f9/59/7a/f9597a54166bbcdc9b9f593fbbe3cb35.jpg',
   mechanic: 'https://i.pinimg.com/1200x/98/37/dd/9837ddc4fd8a6ce78ffea7168fdd7380.jpg',
   admin: 'https://i.pinimg.com/736x/60/b7/c0/60b7c02ea75ac955b7a841b098725088.jpg',
-  carwash: 'https://i.pinimg.com/736x/5b/a2/90/5ba29035f67d4454dce1710575ad0dc9.jpg'
+  carwash: 'https://i.pinimg.com/736x/5b/a2/90/5ba29035f67d4454dce1710575ad0dc9.jpg',
+  noRole: 'https://i.pinimg.com/736x/5b/a2/90/5ba29035f67d4454dce1710575ad0dc9.jpg'
+
 }
 
 // Dynamic sidebar background
@@ -117,7 +122,7 @@ const sidebarStyle = computed(() => ({
 // Navigation items
 const navigationItems = [
   // Common
-  { title: 'Home', icon: 'mdi-home', to: '/dashboard', roles: ['client','mechanic','admin','carwash'] },
+  { title: 'Home', icon: 'mdi-home', to: '/dashboard', roles: ['client','mechanic','admin','carwash','noRole'] },
   { title: 'Profile', icon: 'mdi-account', to: '/profile', roles: ['client','mechanic','admin','carwash'] },
   
 
@@ -127,6 +132,7 @@ const navigationItems = [
   { title: 'Service History', icon: 'mdi-history', to: '/history', roles: ['client'] },
   { title: 'Payments', icon: 'mdi-credit-card', to: '/payments', roles: ['client'] }, 
   { title: 'My Washes', icon: 'mdi-calendar-check', to: '/my-washes', roles: ['client'] },
+  {title:'Help',icon:'mdi-help',to:'/help-page',roles:['client']},
 
   // Mechanic
   { title: 'Job Requests', icon: 'mdi-briefcase', to: '/jobs', roles: ['mechanic'] },

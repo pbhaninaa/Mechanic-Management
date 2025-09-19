@@ -6,6 +6,7 @@ import com.test.app.TestAppBackEnd.repositories.UserProfileRepository;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -53,6 +54,10 @@ public class UserProfileService {
     public Optional<UserProfile> getProfileByUsername(String username) {
 
         return repository.findByUsername(username);
+    }
+    // Get user profile by roles
+    public List<UserProfile> getProfilesByRole(Role role) {
+        return repository.findByRoles(role);
     }
 
     public Iterable<UserProfile> getAllProfiles() {
