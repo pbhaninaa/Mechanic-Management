@@ -30,9 +30,15 @@ public class MechanicRequestService {
         return repository.findById(id);
     }
 
+
     // Get requests by username
     public List<MechanicRequest> getByUsername(String username) {
         return repository.findByUsername(username);
+    }
+
+    // Get request by mechanic id
+    public List<MechanicRequest> getByMechanicId(Long mechanicId){
+        return repository.findByMechanicId(mechanicId);
     }
 
     // Update request by username (optional)

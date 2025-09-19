@@ -48,6 +48,21 @@ public class RequestHistoryController {
         );
     }
 
+    // Get by mechanic id
+    @GetMapping("/mechanic/{mechanicId}")
+    public ResponseEntity<ApiResponse<List<MechanicRequest>>> getByMechanicId(@PathVariable Long mechanicId) {
+        List<MechanicRequest> histories = mechanicRequestService.getByMechanicId(mechanicId);
+        if (histories.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                    new ApiResponse<>("No request history found for mechanic ID: " + mechanicId, HttpStatus.NOT_FOUND.value(), histories, false)
+            );
+        }
+
+        return ResponseEntity.ok(
+                new ApiResponse<>("Fetched request history for mechanic ID: " + mechanicId, HttpStatus.OK.value(), histories, false)
+        );
+    }
+
     // Create
     @PostMapping
     public ResponseEntity<ApiResponse<RequestHistory>> create(@RequestBody RequestHistory requestHistory) {

@@ -12,6 +12,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.*;
 import org.springframework.security.authentication.*;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
@@ -58,25 +60,55 @@ public class AuthController {
     // ================= LOGIN =================
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<LoginResponse>> login(@RequestBody LoginRequest request) {
-        Authentication auth = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
-        );
+        try {
+            Authentication auth = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
+            );
 
-        // Extract roles from authenticated user
-        List<String> roles = auth.getAuthorities().stream()
-                .map(grantedAuthority -> grantedAuthority.getAuthority())
-                .toList();
+            // Extract roles from authenticated user
+            List<String> roles = auth.getAuthorities().stream()
+                    .map(grantedAuthority -> grantedAuthority.getAuthority())
+                    .toList();
 
-        // Generate token with roles
-        String token = jwtUtil.generateToken(auth.getName(), roles);
+            // Generate token with roles
+            String token = jwtUtil.generateToken(auth.getName(), roles);
 
-        // Check if user has a profile
-        boolean hasProfile = userProfileRepository.findByUsername(auth.getName()).isPresent();
-//        UserProfile profile = userProfileRepository.findByUsername(auth.getName()).orElse(null);
-        LoginResponse loginResponse = new LoginResponse(token, token, hasProfile);
+            // Check if user has a profile
+            boolean hasProfile = userProfileRepository.findByUsername(auth.getName()).isPresent();
 
-        return ResponseEntity.ok(new ApiResponse<>("Login successful", 200, loginResponse, jwtUtil.isTokenValid(token)));
+            LoginResponse loginResponse = new LoginResponse(token, token, hasProfile);
+
+            return ResponseEntity.ok(
+                    new ApiResponse<>("Login successful", 200, loginResponse, jwtUtil.isTokenValid(token))
+            );
+
+        } catch (BadCredentialsException e) {
+            return ResponseEntity
+                    .status(HttpStatus.UNAUTHORIZED)
+                    .body(new ApiResponse<>("Invalid username or password", 401, null, false));
+
+        } catch (UsernameNotFoundException e) {
+            return ResponseEntity
+                    .status(HttpStatus.NOT_FOUND)
+                    .body(new ApiResponse<>("User not found", 404, null, false));
+
+        } catch (DisabledException e) {
+            return ResponseEntity
+                    .status(HttpStatus.UNAUTHORIZED)
+                    .body(new ApiResponse<>("User account is disabled", 401, null, false));
+
+        } catch (AuthenticationException e) {
+            return ResponseEntity
+                    .status(HttpStatus.UNAUTHORIZED)
+                    .body(new ApiResponse<>("Authentication failed", 401, null, false));
+
+        } catch (Exception e) {
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse<>("Internal server error", 500, null, false));
+        }
     }
+
 
 
     // ================= CREATE USER =================
