@@ -12,7 +12,6 @@
 
       <!-- Roles select -->
       <v-select
-      v-if="!isEditMode"
         v-model="form.roles"
         :items="roles"
         label="Role"

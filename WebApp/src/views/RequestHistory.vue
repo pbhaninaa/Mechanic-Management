@@ -5,16 +5,11 @@
       <div v-if="historyLoading">Loading your requests...</div>
       <div v-else-if="historyError" class="error">{{ historyError }}</div>
       <div v-else>
-        <v-data-table
-          :headers="headers"
-          :items="requests"
-          class="elevation-1"
-          :items-per-page="5"
-        >
+        <v-data-table :headers="headers" :items="requests" class="elevation-1" :items-per-page="5">
           <!-- Location column -->
           <template #item.location="{ item }">
-            {{truncateLocation(item.location)  }}
-            
+            {{ truncateLocation(item.location) }}
+
           </template>
 
           <!-- Status column -->
@@ -26,12 +21,8 @@
 
           <!-- Actions column -->
           <template #item.actions="{ item }">
-            <v-btn
-              small
-              color="green"
-              :disabled="item.status.toLowerCase() !== 'accepted'"
-              @click="payForRequest(item)"
-            >
+            <v-btn small color="green" :disabled="item.status.toLowerCase() !== 'accepted'"
+              @click="payForRequest(item)">
               Pay
             </v-btn>
           </template>
@@ -50,7 +41,8 @@ import { ref, onMounted } from "vue";
 import PageContainer from "@/components/PageContainer.vue";
 import apiService from "@/api/apiService";
 import { JOB_STATUS } from "@/utils/constants";
-
+import { useRouter } from 'vue-router';
+const router = useRouter();
 // TypeScript interface matching backend entity
 interface RequestHistory {
   id: number;
@@ -119,22 +111,19 @@ const payForRequest = async (request) => {
     alert("Invalid amount");
     return;
   }
-  const paymentRequest = {
-  jobId: request.id,
-  amount: amount,
-  clientUsername: JSON.parse(localStorage.getItem("userProfile") || "{}").username || "",
-  mechanicId: request.mechanicId
   
-};
+ router.push({
+    name: 'PaymentScreen',   
+    query: {
+      bookingId: request.id,
+      amount: amount,
+      jobDes:request.description,
+      clientUsername: JSON.parse(localStorage.getItem('userProfile') || '{}').username || '',
+      mechanicId:request.mechanicId
+    }
+  });
 
-  try {
-    await apiService.createPayment(paymentRequest);
-    alert(`Payment of R${amount.toFixed(2)} successful!`);
-    await loadRequests(); // Refresh the table if needed
-  } catch (err) {
-    console.error(err);
-    alert("Payment failed, please try again.");
-  }
+ 
 };
 
 // On component mount

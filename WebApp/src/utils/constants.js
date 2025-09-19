@@ -43,7 +43,7 @@ export const USER_ROLES = {
   CLIENT: 'CLIENT',
   MECHANIC: 'MECHANIC',
   ADMIN: 'ADMIN',
-  CARWASH: 'CARWASH'
+  CAR_WASH: 'CARWASH'
 };
 
 // Job Status Constants

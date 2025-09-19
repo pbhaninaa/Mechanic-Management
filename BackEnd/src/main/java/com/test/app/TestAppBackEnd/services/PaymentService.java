@@ -84,4 +84,15 @@ public class PaymentService {
     } public List<Payment> getPaymentsByCarWash(Long id) {
         return paymentRepository.findByCarWashId(id);
     }
+    public Payment deletePaymentById(Long paymentId) {
+        Payment payment = paymentRepository.findById(paymentId)
+                .orElseThrow(() -> new RuntimeException("Payment not found with ID: " + paymentId));
+        paymentRepository.delete(payment);
+        return payment;
+    }
+
+    public void deleteAllPayments() {
+        paymentRepository.deleteAll();
+    }
+
 }

@@ -104,7 +104,8 @@ const pendingJobRequests = computed(() =>
 );
 const updateJobStatus = async (job: JobRequest, status: string) => {
   try {
-    const payload = { ...job, status };
+    const payload = { ...job, status, mechanicId:JSON.parse(localStorage.getItem("userProfile")).id };
+  
     await apiService.updateRequestMechanic(payload);
     job.status = status;
   } catch (err: any) {
@@ -123,7 +124,6 @@ const loadJobRequests = async () => {
     // Add phone number to each job request
     jobRequests.value = (res.data || []).map(job => ({
       ...job,
-      phoneNumber: "0782141216"  // <-- added phone number
     }));
 
   } catch (err) {

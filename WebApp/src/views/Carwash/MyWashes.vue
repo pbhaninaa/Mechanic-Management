@@ -49,9 +49,9 @@
               {{ item.status }}
             </v-chip>
 
-            <!-- Pay button if status is accepted -->
-            <v-btn
-              v-if="item.status === 'accepted'"
+            <!-- Pay button if status is accepted             -->
+            <v-btn 
+             v-if="item.status === 'accepted'"
               color="primary"
               size="small"
               class="mr-2"
@@ -81,11 +81,11 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
-import { useRouter } from "vue-router";
 import PageContainer from "@/components/PageContainer.vue";
 import { format } from "date-fns";
 import apiService from "@/api/apiService";
 import { getStatusColor } from "@/utils/helper";
+import {useRouter} from 'vue-router'
 
 // Booking interface matching backend
 interface Booking {
@@ -141,37 +141,21 @@ const fetchBookings = async () => {
 const formatDate = (dateStr: string) => format(new Date(dateStr), "dd MMM yyyy");
 
 // Redirect to payment
-const pay = (booking: Booking) => {
-  router.push({
-    name: "Payment",
-    query: { bookingId: booking.id },
-  });
-};
+
 const payForRequest = async (request) => {
-  const amountStr = prompt("Enter payment amount: R"+request.servicePrice);
-  if (!amountStr) return;
 
-  const amount = parseFloat(amountStr);
-  if (isNaN(amount) || amount <= 0) {
-    alert("Invalid amount");
-    return;
-  }
-  const paymentRequest = {
-  jobId: request.id,
-  amount: amount,
-  clientUsername: JSON.parse(localStorage.getItem("userProfile") || "{}").username || "",
-  carWashId: request.carWashId
-  
-};
+  router.push({
+    name:"PaymentScreen",
+    query:{
+      bookingId:request.id,
+      amount:request.servicePrice,
+      clientUsername:JSON.parse(localStorage.getItem("userProfile")||"{}").username||"",
+      carWashId:request.carWashId,
+      jobDes:"Car wash service"
+    }
+  });
 
-  try {
-    await apiService.createPayment(paymentRequest);
-    alert(`Payment of R${amount.toFixed(2)} successful!`);
-    await fetchBookings(); // Refresh the table if needed
-  } catch (err) {
-    console.error(err);
-    alert("Payment failed, please try again.");
-  }
+
 };
 
 // Open directions in map view
