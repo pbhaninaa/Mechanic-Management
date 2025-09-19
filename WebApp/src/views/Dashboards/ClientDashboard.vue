@@ -44,7 +44,6 @@
     </v-row>
   </PageContainer>
 </template>
-
 <script setup>
 import { ref, onMounted, watchEffect } from "vue";
 import PageContainer from "@/components/PageContainer.vue";
@@ -63,25 +62,39 @@ const progressChart = ref(null);
 let requestsChartInstance = null;
 let progressChartInstance = null;
 
-// Load job requests and payments
+// Load job requests and payments safely
 const loadJobRequests = async () => {
   loading.value = true;
   error.value = null;
+
   try {
     const profile = JSON.parse(localStorage.getItem("profile") || "{}");
     const username = profile.username || "";
 
-    // Job requests
-    const res = await apiService.getUserRequestHistory(username);
-    jobRequests.value = res.data || [];
+    // Fetch both data sources safely
+    const results = await Promise.allSettled([
+      apiService.getUserRequestHistory(username),
+      apiService.getCarWashBookingsByClient(username)
+    ]);
+
+    const userRequests = results[0].status === "fulfilled" ? results[0].value.data || [] : [];
+    const carWashBookings = results[1].status === "fulfilled" ? results[1].value.data || [] : [];
+
+    // Combine both arrays
+    jobRequests.value = [...userRequests, ...carWashBookings];
 
     // Payments
-    const paymentRes = await apiService.getPaymentsByClient(username);
-    const payments = paymentRes.data || [];
-    moneySpent.value = payments.reduce((total, p) => total + (p.amount || 0), 0);
+    try {
+      const paymentRes = await apiService.getPaymentsByClient(username);
+      const payments = paymentRes.data || [];
+      moneySpent.value = payments.reduce((total, p) => total + (p.amount || 0), 0);
+    } catch {
+      moneySpent.value = 0;
+    }
   } catch (err) {
-    error.value = "Failed to load data.";
     console.error(err);
+    jobRequests.value = [];
+    moneySpent.value = 0;
   } finally {
     loading.value = false;
   }
@@ -92,8 +105,7 @@ const formatCurrency = (amount) => `R ${amount.toLocaleString()}`;
 
 // Update summary cards + charts reactively
 watchEffect(() => {
-  if (!jobRequests.value.length) return;
-
+  // Compute totals
   const { total, completed, pending } = jobRequests.value.reduce(
     (acc, r) => {
       acc.total++;
@@ -104,6 +116,7 @@ watchEffect(() => {
     { total: 0, completed: 0, pending: 0 }
   );
 
+  // Summary cards with zero defaults
   summaryCards.value = [
     { title: "My Requests", value: total, icon: "mdi-car-wrench", color: "blue" },
     { title: "Completed Jobs", value: completed, icon: "mdi-clipboard-check", color: "green" },
@@ -114,13 +127,14 @@ watchEffect(() => {
   // Progress pie chart
   if (progressChart.value) {
     if (progressChartInstance) progressChartInstance.destroy();
+
     progressChartInstance = new Chart(progressChart.value.getContext("2d"), {
       type: "pie",
       data: {
         labels: [JOB_STATUS.COMPLETED, JOB_STATUS.PENDING, "Other"],
         datasets: [
           {
-            data: [completed, pending, total - completed - pending],
+            data: total === 0 ? [0, 0, 1] : [completed, pending, total - completed - pending],
             backgroundColor: ["#4caf50", "#ff9800", "#2196f3"],
           },
         ],
@@ -175,6 +189,7 @@ onMounted(() => {
   loadJobRequests();
 });
 </script>
+
 
 <style scoped>
 .chart-container {

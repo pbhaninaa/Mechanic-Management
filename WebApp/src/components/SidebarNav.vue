@@ -39,8 +39,9 @@
         :active="router.currentRoute.value.path === item.to"
         class="nav-item"
         @click="handleNavClick"
+        :disabled="!isRoleValid"
       >
-        <v-tooltip v-if="rail" location="right" :text="item.title" />
+        <v-tooltip v-if="rail && isRoleValid" location="right" :text="item.title" />
       </v-list-item>
     </v-list>
 
@@ -53,8 +54,9 @@
           :title="rail ? '' : 'Logout'" 
           @click="logoutUser" 
           class="logout-item"
+          :disabled="!isRoleValid"
         >
-          <v-tooltip v-if="rail" location="right" text="Logout" />
+          <v-tooltip v-if="rail && isRoleValid" location="right" text="Logout" />
         </v-list-item>
       </v-list>
     </div>
@@ -70,7 +72,6 @@ import { useRouter } from 'vue-router'
 import { logoutUser } from '@/utils/helper'
 import apiService from '@/api/apiService'
 
-
 // Router
 const router = useRouter()
 
@@ -85,7 +86,10 @@ const windowWidth = ref(window.innerWidth)
 
 // User info
 const loggedInUser = ref(JSON.parse(localStorage.getItem('userProfile') || '{}')) 
-const userRole = ref(localStorage.getItem('role') || 'client')
+const userRole = ref(localStorage.getItem('role') || '')
+
+// Check if role is valid
+const isRoleValid = computed(() => !!userRole.value && userRole.value !== '')
 
 // Fetch user profile
 onMounted(async () => {
@@ -93,7 +97,7 @@ onMounted(async () => {
     const res = await apiService.getUserProfile()
     localStorage.setItem('userProfile', JSON.stringify(res.data || {}))
     loggedInUser.value = res.data || {}
-    userRole.value = res.data?.roles?.[0]?.toLowerCase() || 'client'
+    userRole.value = res.data?.roles?.[0]?.toLowerCase() || ''
     localStorage.setItem("currencySymbol","R");
     localStorage.setItem("phoneCountryCode","+27")
   } catch (error) {
@@ -107,13 +111,12 @@ const roleBackgrounds = {
   mechanic: 'https://i.pinimg.com/1200x/98/37/dd/9837ddc4fd8a6ce78ffea7168fdd7380.jpg',
   admin: 'https://i.pinimg.com/736x/60/b7/c0/60b7c02ea75ac955b7a841b098725088.jpg',
   carwash: 'https://i.pinimg.com/736x/5b/a2/90/5ba29035f67d4454dce1710575ad0dc9.jpg',
-  noRole: 'https://i.pinimg.com/736x/5b/a2/90/5ba29035f67d4454dce1710575ad0dc9.jpg'
-
+  noRole: 'https://i.pinimg.com/736x/82/3e/28/823e2880c95e96a1a96448fb34fff3d0.jpg'
 }
 
 // Dynamic sidebar background
 const sidebarStyle = computed(() => ({
-  backgroundImage: `url(${roleBackgrounds[userRole.value] || roleBackgrounds.client})`,
+  backgroundImage: `url(${roleBackgrounds[userRole.value] || roleBackgrounds.noRole})`,
   backgroundRepeat: 'no-repeat',
   backgroundSize: 'cover',
   backgroundPosition: 'center'
@@ -121,26 +124,16 @@ const sidebarStyle = computed(() => ({
 
 // Navigation items
 const navigationItems = [
-  // Common
   { title: 'Home', icon: 'mdi-home', to: '/dashboard', roles: ['client','mechanic','admin','carwash','noRole'] },
   { title: 'Profile', icon: 'mdi-account', to: '/profile', roles: ['client','mechanic','admin','carwash'] },
-  
-
-  // Client
   { title: 'Service Request', icon: 'mdi-car-wrench', to: '/request', roles: ['client'] }, 
   { title: 'Book Car Wash', icon: 'mdi-shower', to: '/book-wash', roles: ['client'] },
   { title: 'Service History', icon: 'mdi-history', to: '/history', roles: ['client'] },
   { title: 'Payments', icon: 'mdi-credit-card', to: '/payments', roles: ['client'] }, 
   { title: 'My Washes', icon: 'mdi-calendar-check', to: '/my-washes', roles: ['client'] },
-  {title:'Help',icon:'mdi-help',to:'/help-page',roles:['client']},
-
-  // Mechanic
+  { title:'Help',icon:'mdi-help',to:'/help-page',roles:['client']},
   { title: 'Job Requests', icon: 'mdi-briefcase', to: '/jobs', roles: ['mechanic'] },
-
-  // Admin
   { title: 'User Management', icon: 'mdi-account-multiple', to: '/users', roles: ['admin'] },
-
-  // CarWash
   { title: 'Bookings', icon: 'mdi-calendar-check', to: '/car-wash-bookings', roles: ['carwash'] },
   { title: 'Manage Washes', icon: 'mdi-shower', to: '/manage-washes', roles: ['carwash'] },
   { title: 'Earnings', icon: 'mdi-currency-usd', to: '/earnings', roles: ['carwash','mechanic'] }
