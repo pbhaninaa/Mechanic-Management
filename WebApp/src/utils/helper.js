@@ -5,9 +5,7 @@ import { JOB_STATUS } from "./constants";
 
 export const isAuthenticated = ref(!!localStorage.getItem("token"));
 
-/**
- * Login User with JWT
- */
+
 export const loginUser = async (username, password) => {
   try {
     const res = await apiService.login({ username, password });
@@ -26,7 +24,7 @@ export const loginUser = async (username, password) => {
 
       setTimeout(() => {
         window.location.reload();
-      }, 30);
+      }, 3000);
 
       return { success: true, message: "Login successful!" };
     } else {
@@ -55,7 +53,7 @@ export const logoutUser = () => {
 
   setTimeout(() => {
     window.location.reload();
-  }, 30);
+  }, 3000);
 };
 
 export const goToSignup = () => {
