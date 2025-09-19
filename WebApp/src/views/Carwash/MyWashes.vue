@@ -44,7 +44,10 @@
         <!-- Status with Pay & Directions buttons -->
         <template #item.status="{ item }">
           <div class="d-flex align-center">
-            <span class="mr-2">{{ item.status }}</span>
+        <!-- Status column -->
+            <v-chip class="mr-4" :color="getStatusColor(item.status)" dark>
+              {{ item.status }}
+            </v-chip>
 
             <!-- Pay button if status is accepted -->
             <v-btn
@@ -82,6 +85,7 @@ import { useRouter } from "vue-router";
 import PageContainer from "@/components/PageContainer.vue";
 import { format } from "date-fns";
 import apiService from "@/api/apiService";
+import { getStatusColor } from "@/utils/helper";
 
 // Booking interface matching backend
 interface Booking {
