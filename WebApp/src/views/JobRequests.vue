@@ -97,12 +97,8 @@ const loadJobRequests = async () => {
 };
 const updateJobStatus = async (job: JobRequest, status: string) => {
   try {
-  const mechanicId = JSON.parse(localStorage.getItem("userProfile") || "{}").id;
-    if (!mechanicId) {
-      alert("Mechanic ID not found in local storage.");
-      return;
-    }
-    const payload = { ...job, status, mechanicId };
+ 
+    const payload = { ...job, status, mechanicId:JSON.parse(localStorage.getItem("userProfile")).id };
 
     await apiService.updateRequestMechanic(payload);
     job.status = status;
