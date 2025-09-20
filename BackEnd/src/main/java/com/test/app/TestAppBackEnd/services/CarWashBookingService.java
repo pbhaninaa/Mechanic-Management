@@ -14,6 +14,7 @@ public class CarWashBookingService {
     @Autowired
     private CarWashBookingRepository repository;
 
+
     // Create booking
     public CarWashBooking createBooking(CarWashBooking booking) {
         return repository.save(booking);

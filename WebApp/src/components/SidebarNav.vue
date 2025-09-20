@@ -136,7 +136,8 @@ const navigationItems = [
   { title: 'User Management', icon: 'mdi-account-multiple', to: '/users', roles: ['admin'] },
   { title: 'Bookings', icon: 'mdi-calendar-check', to: '/car-wash-bookings', roles: ['carwash'] },
   { title: 'Manage Washes', icon: 'mdi-shower', to: '/manage-washes', roles: ['carwash'] },
-  { title: 'Earnings', icon: 'mdi-currency-usd', to: '/earnings', roles: ['carwash','mechanic'] }
+  { title: 'Earnings', icon: 'mdi-currency-usd', to: '/earnings', roles: ['carwash','mechanic'] },
+  { title: 'Test', icon: 'mdi-currency-usd', to: '/earnings', roles: ['client','carwash','mechanic'] },
 ]
 
 // Filtered by role

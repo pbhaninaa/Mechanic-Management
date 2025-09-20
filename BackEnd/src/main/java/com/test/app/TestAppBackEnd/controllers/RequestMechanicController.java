@@ -2,7 +2,7 @@ package com.test.app.TestAppBackEnd.controllers;
 
 import com.test.app.TestAppBackEnd.entities.MechanicRequest;
 import com.test.app.TestAppBackEnd.services.MechanicRequestService;
-import com.test.app.TestAppBackEnd.ApiResponse;
+import com.test.app.TestAppBackEnd.models.ApiResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 

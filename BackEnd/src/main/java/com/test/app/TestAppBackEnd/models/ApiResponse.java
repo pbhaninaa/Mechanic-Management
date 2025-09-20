@@ -1,4 +1,4 @@
-package com.test.app.TestAppBackEnd;
+package com.test.app.TestAppBackEnd.models;
 
 public class ApiResponse<T> {
 

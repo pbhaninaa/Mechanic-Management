@@ -1,6 +1,6 @@
 package com.test.app.TestAppBackEnd.controllers;
 
-import com.test.app.TestAppBackEnd.ApiResponse;
+import com.test.app.TestAppBackEnd.models.ApiResponse;
 import com.test.app.TestAppBackEnd.entities.CarWashBooking;
 import com.test.app.TestAppBackEnd.services.CarWashBookingService;
 import org.springframework.beans.factory.annotation.Autowired;

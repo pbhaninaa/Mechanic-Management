@@ -2,7 +2,7 @@ package com.test.app.TestAppBackEnd.controllers;
 
 import com.test.app.TestAppBackEnd.entities.JobApplication;
 import com.test.app.TestAppBackEnd.services.JobApplicationService;
-import com.test.app.TestAppBackEnd.ApiResponse;
+import com.test.app.TestAppBackEnd.models.ApiResponse;
 import com.test.app.TestAppBackEnd.security.JwtUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;

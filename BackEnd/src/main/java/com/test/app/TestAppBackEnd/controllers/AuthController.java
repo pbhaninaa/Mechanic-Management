@@ -6,7 +6,7 @@ import com.test.app.TestAppBackEnd.repositories.UserRepository;
 import com.test.app.TestAppBackEnd.models.LoginRequest;
 import com.test.app.TestAppBackEnd.models.LoginResponse;
 import com.test.app.TestAppBackEnd.entities.User;
-import com.test.app.TestAppBackEnd.ApiResponse;
+import com.test.app.TestAppBackEnd.models.ApiResponse;
 
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.*;

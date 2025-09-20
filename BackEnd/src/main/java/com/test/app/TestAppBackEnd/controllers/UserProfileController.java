@@ -3,7 +3,7 @@ package com.test.app.TestAppBackEnd.controllers;
 import com.test.app.TestAppBackEnd.constants.Role;
 import com.test.app.TestAppBackEnd.entities.UserProfile;
 import com.test.app.TestAppBackEnd.services.UserProfileService;
-import com.test.app.TestAppBackEnd.ApiResponse;
+import com.test.app.TestAppBackEnd.models.ApiResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
