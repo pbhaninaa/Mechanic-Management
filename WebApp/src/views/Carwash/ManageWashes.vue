@@ -24,14 +24,13 @@
           {{ item.serviceTypes.join(", ") }}
         </template>
 
-        <!-- Optional Actions: (e.g., mark as completed) -->
         <!-- Actions: Update Status -->
         <template v-slot:item.actions="{ item }">
           <!-- Start / In progress button -->
           <v-tooltip text="Mark as In Progress" location="top">
             <template #activator="{ props }">
               <v-btn v-bind="props" small color="green" variant="text" class="mr-1"
-                @click="updateStatus(item, JOB_STATUS.IN_PROGRESS)" :disabled="item.status === JOB_STATUS.IN_PROGRESS">
+                @click="updateStatus(item, JOB_STATUS.IN_PROGRESS)" :disabled="item.status !== JOB_STATUS.PAID">
                 <v-icon size="18">mdi-play</v-icon>
               </v-btn>
             </template>
@@ -41,7 +40,7 @@
           <v-tooltip  text="Mark as Completed" location="top">
             <template #activator="{ props }">
               <v-btn v-bind="props" small color="blue" variant="text" class="mr-1"
-                @click="updateStatus(item, JOB_STATUS.COMPLETED)" :disabled="item.status === JOB_STATUS.COMPLETED">
+                @click="updateStatus(item, JOB_STATUS.COMPLETED)" :disabled="item.status !== JOB_STATUS.IN_PROGRESS">
                 <v-icon size="18">mdi-check</v-icon>
               </v-btn>
             </template>
