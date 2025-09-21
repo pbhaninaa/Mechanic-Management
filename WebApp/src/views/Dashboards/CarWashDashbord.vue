@@ -44,7 +44,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch } from "vue";
+import { ref, onMounted } from "vue";
 import PageContainer from "@/components/PageContainer.vue";
 import Chart from "chart.js/auto";
 import ChartDataLabels from "chartjs-plugin-datalabels";
@@ -60,15 +60,16 @@ const earningsChart = ref<HTMLCanvasElement | null>(null);
 const summaryCards = ref([
   { title: "Total Customers", value: 0, icon: "mdi-account", color: "blue" },
   { title: "Cars Washed", value: 0, icon: "mdi-car", color: "green" },
-  // { title: "Active Packages", value: 0, icon: "mdi-clipboard-check", color: "purple" },
   { title: "Revenue", value: "R 0", icon: "mdi-cash", color: "orange" },
 ]);
 
-// Earnings per month (dummy init)
-const monthlyEarnings = ref<number[]>([]);
+// Earnings per month
+const monthlyEarnings = ref<number[]>(Array(12).fill(0));
+const monthLabels = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
 // Function to render charts dynamically
 const renderCharts = () => {
+  // Doughnut chart (Service Progress)
   if (progressPieChart.value) {
     new Chart(progressPieChart.value.getContext("2d"), {
       type: "doughnut",
@@ -96,11 +97,12 @@ const renderCharts = () => {
     });
   }
 
+  // Line chart (Monthly Earnings)
   if (earningsChart.value) {
     new Chart(earningsChart.value.getContext("2d"), {
       type: "line",
       data: {
-        labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"], // optionally fetch dynamically
+        labels: monthLabels,
         datasets: [{
           label: "Earnings (R)",
           data: monthlyEarnings.value,
@@ -130,22 +132,22 @@ const loadSummaryData = async () => {
     const clients = (usersRes.data || []).filter(u => u.roles.includes("CLIENT"));
     const carWashPayments = (paymentsRes.data || []).filter(p => p.carWashId == loggedInUser.id);
 
+    // Update summary cards
     summaryCards.value = [
       { title: "Total Customers", value: clients.length, icon: "mdi-account", color: "blue" },
       { title: "Cars Washed", value: carWashPayments.length, icon: "mdi-car", color: "green" },
-      // { title: "Active Packages", value: 230, icon: "mdi-clipboard-check", color: "purple" },
       { title: "Revenue", value: carWashPayments.reduce((sum, p) => sum + (p.amount || 0), 0), icon: "mdi-cash", color: "orange" },
     ];
 
-    // Example: Compute monthly earnings from payments
-    const monthTotals: number[] = [0, 0, 0, 0, 0, 0]; // Jan-Jun
+    // Calculate monthly earnings for full year
+    const monthTotals: number[] = Array(12).fill(0);
     carWashPayments.forEach(p => {
-      const month = new Date(p.paidAt).getMonth();
-      if (month < 6) monthTotals[month] += p.amount || 0;
+      const month = new Date(p.paidAt).getMonth(); // 0=Jan, 11=Dec
+      monthTotals[month] += p.amount || 0;
     });
     monthlyEarnings.value = monthTotals;
 
-    // Re-render charts with updated data
+    // Render charts
     renderCharts();
   } catch (err) {
     console.error("Failed to load summary data:", err);

@@ -160,7 +160,24 @@ const handleNavClick = () => { if (isMobile.value) closeMobileNav() }
 const openMobileNav = () => { if (isMobile.value) { drawer.value = true; mobileOverlay.value = true } }
 const closeMobileNav = () => { drawer.value = false; mobileOverlay.value = false }
 
-onMounted(() => { window.addEventListener('resize', handleResize); handleResize() })
+onMounted(async () => {
+  try {
+    // Fetch user profile
+    const res = await apiService.getUserProfile()
+    localStorage.setItem('userProfile', JSON.stringify(res.data || {}))
+    loggedInUser.value = res.data || {}
+    userRole.value = res.data?.roles?.[0]?.toLowerCase() || ''
+    localStorage.setItem("currencySymbol","R");
+    localStorage.setItem("phoneCountryCode","+27")
+
+    // Navigate to Home (/dashboard) when component mounts
+    router.push('/dashboard')
+
+  } catch (error) {
+    console.error('Failed to load user profile:', error)
+  }
+})
+
 onUnmounted(() => { window.removeEventListener('resize', handleResize) })
 
 defineExpose({ openMobileNav, closeMobileNav })

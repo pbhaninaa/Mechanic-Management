@@ -46,7 +46,7 @@ const dashboardComponent = computed(() => {
       return MechanicDashboard;
     case USER_ROLES.ADMIN:
       return AdminDashboard;
-          case USER_ROLES.CARWASH:
+          case USER_ROLES.CAR_WASH:
       return CarWashDashbord;
     default:
       return null;

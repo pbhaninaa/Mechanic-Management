@@ -16,15 +16,7 @@ export const loginUser = async (username, password) => {
 
       const defaultProfile = { username };
       localStorage.setItem("profile", JSON.stringify(defaultProfile));
-
-      router.push({
-        name: res.data.hasProfile ? "Dashboard" : "CreateProfile",
-        query: { profile: JSON.stringify(defaultProfile) },
-      });
-
-      setTimeout(() => {
-        window.location.reload();
-      }, 3000);
+      window.location.reload();
 
       return { success: true, message: "Login successful!" };
     } else {
@@ -48,25 +40,18 @@ export const logoutUser = () => {
   localStorage.removeItem("isAdmin");
   localStorage.removeItem("isClient");
 
+  window.location.reload();
   isAuthenticated.value = false;
   router.push("/login");
 
-  setTimeout(() => {
-    window.location.reload();
-  }, 3000);
 };
 
 export const goToSignup = () => {
   router.push("/signup");
 };
 
-/**
- * Get distance (in km) between current location and a target location name
- * Uses OpenStreetMap Nominatim API (free, no API key required)
- */
 export const getDistanceToLocation = async (locationName) => {
   try {
-    // Step 1: Get current device location
     const currentPosition = await new Promise((resolve, reject) => {
       if (!navigator.geolocation) {
         return reject(new Error("Geolocation not supported"));
@@ -79,7 +64,6 @@ export const getDistanceToLocation = async (locationName) => {
       lng: currentPosition.coords.longitude,
     };
 
-    // Step 2: Geocode the location name → coordinates using OpenStreetMap
     const response = await fetch(
       `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
         locationName
@@ -124,9 +108,9 @@ function haversineDistance(coords1, coords2) {
   const a =
     Math.sin(dLat / 2) * Math.sin(dLat / 2) +
     Math.cos(toRad(coords1.lat)) *
-      Math.cos(toRad(coords2.lat)) *
-      Math.sin(dLng / 2) *
-      Math.sin(dLng / 2);
+    Math.cos(toRad(coords2.lat)) *
+    Math.sin(dLng / 2) *
+    Math.sin(dLng / 2);
 
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
@@ -140,10 +124,10 @@ export const getStatusColor = (status) => {
     case JOB_STATUS.PENDING:
       return "orange";
     case JOB_STATUS.ACCEPTED:
-      return "blue"; 
+      return "blue";
     case JOB_STATUS.IN_PROGRESS:
       return "blue";
-      case "In progress":
+    case "In progress":
       return "blue";
     case JOB_STATUS.COMPLETED:
       return "green";
