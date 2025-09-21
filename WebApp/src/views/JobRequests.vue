@@ -22,12 +22,12 @@
         <!-- Minimal icon-only action buttons -->
         <template #item.actions="{ item }">
           <v-btn variant="text" size="small" color="green" class="mr-1" @click="updateJobStatus(item, JOB_STATUS.ACCEPTED)"
-            :disabled="item.status === 'accepted'">
+            :disabled="item.status === JOB_STATUS.ACCEPTED">
             <v-icon size="18">mdi-check</v-icon>
           </v-btn>
 
           <v-btn variant="text" size="small" color="red" @click="updateJobStatus(item, JOB_STATUS.DECLINED)"
-            :disabled="item.status === 'declined'">
+            :disabled="item.status === JOB_STATUS.DECLINED">
             <v-icon size="18">mdi-close</v-icon>
           </v-btn>
         </template>
@@ -47,6 +47,7 @@ import PageContainer from "@/components/PageContainer.vue";
 import apiService from "@/api/apiService";
 import TooltipText from "@/components/TooltipText.vue";
 import { JOB_STATUS } from "@/utils/constants";
+import { getStatusColor } from "@/utils/helper";
 interface JobRequest {
   id: number;
   username: string;
@@ -68,22 +69,7 @@ const headers = [
   { text: "Actions", value: "actions", sortable: false },
 ];
 
-const getStatusColor = (status: string) => {
-  switch (status.toLowerCase()) {
-    case JOB_STATUS.PENDING:
-      return "orange";
-    case JOB_STATUS.ACCEPTED:
-      return "green";
-    case JOB_STATUS.COMPLETED:
-      return "blue";
-    case JOB_STATUS.DECLINED:
-      return "red";
-      case JOB_STATUS.REJECTED:
-      return "red";
-    default:
-      return "grey";
-  }
-};
+
 
 
 

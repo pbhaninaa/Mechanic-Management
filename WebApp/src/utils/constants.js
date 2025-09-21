@@ -54,7 +54,7 @@ export const JOB_STATUS = {
   ACCEPTED: 'accepted',
   PENDING: 'pending',
   COMPLETED: 'completed',
-  IN_PROGRESS: 'in_progress',
+  IN_PROGRESS: 'in_progress'||'In progress'||'In progress',
   CANCELLED: 'cancelled',
   ON_HOLD: 'on_hold',
   SCHEDULED: 'scheduled',
@@ -67,6 +67,7 @@ export const JOB_STATUS = {
   DRAFT: 'draft',
   ARCHIVED: 'archived',
   FAILED: 'failed',
+  PAID:'paid',
   OTHER: 'other'
 };
 

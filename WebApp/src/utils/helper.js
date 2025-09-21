@@ -126,8 +126,7 @@ export const getStatusColor = (status) => {
     case JOB_STATUS.ACCEPTED:
       return "blue";
     case JOB_STATUS.IN_PROGRESS:
-      return "blue";
-    case "In progress":
+      case JOB_STATUS.IN_PROGRESS:
       return "blue";
     case JOB_STATUS.COMPLETED:
       return "green";
@@ -137,6 +136,8 @@ export const getStatusColor = (status) => {
     case JOB_STATUS.REJECTED:
     case JOB_STATUS.FAILED:
       return "red";
+        case JOB_STATUS.PAID:
+      return "lime";
     default:
       return "grey";
   }

@@ -42,7 +42,7 @@ public class MechanicRequestService {
     }
 
     // Update request by username (optional)
-    public Optional<MechanicRequest> updateByUsername(MechanicRequest updated) {
+    public Optional<MechanicRequest> update(MechanicRequest updated) {
         Optional<MechanicRequest> requests = repository.findById(updated.getId());
         if (requests.isEmpty()) return Optional.empty();
 

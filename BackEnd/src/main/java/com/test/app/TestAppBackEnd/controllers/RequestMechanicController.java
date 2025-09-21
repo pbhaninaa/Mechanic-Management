@@ -27,7 +27,7 @@ public class RequestMechanicController {
     }
     // Update
     @PutMapping ResponseEntity<ApiResponse<Optional<MechanicRequest>>> update(@RequestBody MechanicRequest request) {
-        Optional<MechanicRequest> toUpdate = service.updateByUsername(request);
+        Optional<MechanicRequest> toUpdate = service.update(request);
         return ResponseEntity.ok(new ApiResponse<>("Mechanic request updated", 200, toUpdate, false));
     }
 

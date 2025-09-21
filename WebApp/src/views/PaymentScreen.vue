@@ -26,13 +26,7 @@
         </v-card>
 
         <!-- Payment Method -->
-        <v-select
-          v-model="paymentMethod"
-          :items="paymentMethods"
-          label="Select Payment Method"
-          outlined
-          required
-        />
+        <v-select v-model="paymentMethod" :items="paymentMethods" label="Select Payment Method" outlined required />
 
         <!-- Card Info -->
         <div v-if="paymentMethod === 'Card'" class="mt-4">
@@ -41,19 +35,13 @@
             <InputField v-model="expiry" label="Expiry MM/YY" type="text" class="mr-2" required />
             <InputField v-model="cvv" label="CVV" type="password" required />
           </div>
-          <InputField v-model="cardHolder" label="Cardholder Name" type="text" required class="mt-2"/>
+          <InputField v-model="cardHolder" label="Cardholder Name" type="text" required class="mt-2" />
         </div>
 
       </v-card-text>
 
       <v-card-actions class="d-flex justify-center">
-        <Button
-          label="Pay Now"
-          color="primary"
-          :loading="loading"
-          :disabled="!isFormValid"
-          @click="processPayment"
-        />
+        <Button label="Pay Now" color="primary" :loading="loading" :disabled="!isFormValid" @click="processPayment" />
       </v-card-actions>
     </v-card>
 
@@ -82,6 +70,7 @@ import PageContainer from '@/components/PageContainer.vue';
 import InputField from '@/components/InputField.vue';
 import Button from '@/components/Button.vue';
 import apiService from '@/api/apiService';
+import { JOB_STATUS } from '@/utils/constants';
 
 // Router
 const route = useRoute();
@@ -119,46 +108,75 @@ const isFormValid = computed(() => {
 // Process payment
 const processPayment = async () => {
   loading.value = true;
+  paymentError.value = false;
+  paymentSuccess.value = false;
 
   try {
+    // Build the payment payload
     const paymentPayload: any = {
       jobId: Number(bookingId),
       amount: amount,
       clientUsername: clientUsername,
     };
 
-    // Assign mechanicId or carWashId based on job description
+    let job: any = null;
+
+    // Fetch job details based on type
     if (jobDes.toLowerCase() !== "car wash service") {
       paymentPayload.mechanicId = mechanicId;
+      job = await apiService.getMechanicRequestsById(bookingId);
     } else {
       paymentPayload.carWashId = carWashId;
+      job = await apiService.getCarWashBookingById(bookingId);
     }
 
     console.log("Payment payload being sent:", paymentPayload);
 
-    // Send request
+    // Send payment request
     const res = await apiService.createPayment(paymentPayload);
-
     console.log("Payment response:", res);
+    job = job.data
+    // Check for success using the correct property
+    if (res && res.statusCode === 200) {
+      // Payment succeeded — update job status
+      alert(JSON.stringify(job))
+      job.status = JOB_STATUS.PAID;
+      if (jobDes.toLowerCase() == "car wash service") {
+            alert(JSON.stringify(job))
 
-    paymentSuccess.value = true;
+        await apiService.updateCarWashBooking(job.id, job);
+      } else {
+        await apiService.updateRequestMechanic(job);
+      }
 
-    router.push({
-      name: "Payments",
-      query: { bookingId }
-    });
+      paymentSuccess.value = true;
+
+      alert("Payment successful!");
+
+      router.push({
+        name: "Payments",
+        query: { bookingId },
+      });
+    } else {
+      throw new Error(res?.message || "Payment was not successful");
+    }
+
   } catch (err: any) {
     console.error("Payment failed:", err.response || err.message || err);
     paymentError.value = true;
+    alert(err.message || "Payment failed. Please try again.");
   } finally {
     loading.value = false;
   }
 };
+
+
+
 </script>
 
 <style scoped>
 .v-card {
   border-radius: 12px;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
 }
 </style>

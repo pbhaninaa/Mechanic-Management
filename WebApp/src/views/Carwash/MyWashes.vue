@@ -51,7 +51,7 @@
 
             <!-- Pay button if status is accepted             -->
             <v-btn 
-             v-if="item.status === 'accepted'"
+             v-if="item.status === JOB_STATUS.ACCEPTED"
               color="primary"
               size="small"
               class="mr-2"
@@ -86,6 +86,7 @@ import { format } from "date-fns";
 import apiService from "@/api/apiService";
 import { getStatusColor } from "@/utils/helper";
 import {useRouter} from 'vue-router'
+import { JOB_STATUS } from "@/utils/constants";
 
 // Booking interface matching backend
 interface Booking {

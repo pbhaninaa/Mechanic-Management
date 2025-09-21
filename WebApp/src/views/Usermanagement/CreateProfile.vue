@@ -101,14 +101,16 @@ const saveProfile = async () => {
     if (form.value.roles && !Array.isArray(form.value.roles)) {
       form.value.roles = [form.value.roles];
     }
-
     if (isEditMode.value) {
-      await apiService.updateUserProfile(form.value);
+     const res= await apiService.updateUserProfile(form.value);
+      localStorage.setItem("userProfile", JSON.stringify(res.data));
       message.value = "Profile updated successfully!";
      
     } else {
-      await apiService.createUserProfile(form.value);
+     const res= await apiService.createUserProfile(form.value);
+      localStorage.setItem("userProfile", JSON.stringify(res.data));
       message.value = "Profile saved successfully!";
+
     } 
     messageType.value = "success";
 

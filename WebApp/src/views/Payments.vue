@@ -88,7 +88,7 @@ const loadPayments = async () => {
       mechanic: p.mechanicId || "Unassigned",
       amount: p.amount,
       date: p.paidAt,
-      status: p.status || "Paid",
+      status: p.status || JOB_STATUS.PAID,
       jobId: p.jobId
     }));
 

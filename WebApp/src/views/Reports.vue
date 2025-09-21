@@ -12,7 +12,7 @@
         :items-per-page="5"
       >
         <template #item.status="{ item }">
-          <v-chip :color="item.status === 'Completed' ? 'green' : 'orange'" dark>
+          <v-chip :color="item.status === JOB_STATUS.COMPLETED? 'green' : 'orange'" dark>
             {{ item.status }}
           </v-chip>
         </template>
@@ -28,6 +28,7 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import PageContainer from "@/components/PageContainer.vue";
+import { JOB_STATUS } from "@/utils/constants";
 
 interface Report {
   id: number;

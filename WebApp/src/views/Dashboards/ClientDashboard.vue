@@ -71,7 +71,6 @@ const loadJobRequests = async () => {
     const profile = JSON.parse(localStorage.getItem("profile") || "{}");
     const username = profile.username || "";
 
-    // Fetch both data sources safely
     const results = await Promise.allSettled([
       apiService.getUserRequestHistory(username),
       apiService.getCarWashBookingsByClient(username)
@@ -80,7 +79,6 @@ const loadJobRequests = async () => {
     const userRequests = results[0].status === "fulfilled" ? results[0].value.data || [] : [];
     const carWashBookings = results[1].status === "fulfilled" ? results[1].value.data || [] : [];
 
-    // Combine both arrays
     jobRequests.value = [...userRequests, ...carWashBookings];
 
     // Payments
@@ -116,7 +114,7 @@ watchEffect(() => {
     { total: 0, completed: 0, pending: 0 }
   );
 
-  // Summary cards with zero defaults
+  // Summary cards
   summaryCards.value = [
     { title: "My Requests", value: total, icon: "mdi-car-wrench", color: "blue" },
     { title: "Completed Jobs", value: completed, icon: "mdi-clipboard-check", color: "green" },
@@ -143,24 +141,21 @@ watchEffect(() => {
     });
   }
 
-  // Requests line chart (last 6 months)
+  // Requests line chart (full year)
   if (requestsChart.value) {
     if (requestsChartInstance) requestsChartInstance.destroy();
 
     const now = new Date();
-    const months = Array.from({ length: 6 }, (_, i) => {
-      const d = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1);
+    const months = Array.from({ length: 12 }, (_, i) => {
+      const d = new Date(now.getFullYear(), i, 1);
       return d.toLocaleString("default", { month: "short" });
     });
 
     const monthlyData = months.map((_, idx) => {
-      const year = new Date(now.getFullYear(), now.getMonth() - (5 - idx), 1).getFullYear();
+      const year = now.getFullYear();
       return jobRequests.value.filter(req => {
         const d = new Date(req.date);
-        return (
-          d.getMonth() === (now.getMonth() - (5 - idx) + 12) % 12 &&
-          d.getFullYear() === year
-        );
+        return d.getMonth() === idx && d.getFullYear() === year;
       }).length;
     });
 
@@ -189,6 +184,7 @@ onMounted(() => {
   loadJobRequests();
 });
 </script>
+
 
 
 <style scoped>

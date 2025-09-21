@@ -40,8 +40,8 @@
               size="small"
               color="green"
               class="mr-1"
-              @click="updateStatus(item, 'accepted')"
-              :disabled="item.status === 'accepted'"
+              @click="updateStatus(item, JOB_STATUS.ACCEPTED)"
+              :disabled="item.status === JOB_STATUS.ACCEPTED"
             >
               <v-icon size="18">mdi-check</v-icon>
             </v-btn>
@@ -51,8 +51,8 @@
               variant="text"
               size="small"
               color="red"
-              @click="updateStatus(item, 'declined')"
-              :disabled="item.status === 'declined'"
+              @click="updateStatus(item, JOB_STATUS.DECLINED)"
+              :disabled="item.status === JOB_STATUS.DECLINED"
             >
               <v-icon size="18">mdi-close</v-icon>
             </v-btn>
@@ -72,6 +72,7 @@ import PageContainer from "@/components/PageContainer.vue";
 import TooltipText from "@/components/TooltipText.vue";
 import apiService from "@/api/apiService";
 import { getStatusColor } from "@/utils/helper";
+import { JOB_STATUS } from "@/utils/constants";
 
 interface Booking {
   id: number;
@@ -119,7 +120,7 @@ const fetchBookings = async () => {
     bookings.value = allBookings.filter(booking => {
       const bookingCarWashId = String(booking.carWashId);
 
-      if (booking.status === "accepted") {
+      if (booking.status === JOB_STATUS.ACCEPTED) {
         // Only include if carWashId matches logged-in user
         return bookingCarWashId === userId;
       } else {

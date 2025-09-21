@@ -27,16 +27,27 @@
         <!-- Optional Actions: (e.g., mark as completed) -->
         <!-- Actions: Update Status -->
         <template v-slot:item.actions="{ item }">
-          <v-btn small color="green" variant="text" class="mr-1" @click="updateStatus(item, 'In progress')"
-            :disabled="item.status == 'In progress'">
-            <v-icon size="18">mdi-play</v-icon>
-          </v-btn>
+          <!-- Start / In progress button -->
+          <v-tooltip text="Mark as In Progress" location="top">
+            <template #activator="{ props }">
+              <v-btn v-bind="props" small color="green" variant="text" class="mr-1"
+                @click="updateStatus(item, JOB_STATUS.IN_PROGRESS)" :disabled="item.status === JOB_STATUS.IN_PROGRESS">
+                <v-icon size="18">mdi-play</v-icon>
+              </v-btn>
+            </template>
+          </v-tooltip>
 
-          <v-btn small color="blue" variant="text" class="mr-1" @click="updateStatus(item, 'completed')"
-            :disabled="item.status == 'completed'">
-            <v-icon size="18">mdi-check</v-icon>
-          </v-btn>
+          <!-- Complete button -->
+          <v-tooltip text="Mark as Completed" location="top">
+            <template #activator="{ props }">
+              <v-btn v-bind="props" small color="blue" variant="text" class="mr-1"
+                @click="updateStatus(item, JOB_STATUS.COMPLETED)" :disabled="item.status === JOB_STATUS.COMPLETED">
+                <v-icon size="18">mdi-check</v-icon>
+              </v-btn>
+            </template>
+          </v-tooltip>
         </template>
+
 
       </v-data-table>
 
@@ -52,6 +63,7 @@ import { ref, onMounted } from "vue";
 import PageContainer from "@/components/PageContainer.vue";
 import { getStatusColor } from "@/utils/helper";
 import apiService from "@/api/apiService";
+import { JOB_STATUS } from "@/utils/constants";
 
 
 const loggedInUser = JSON.parse(localStorage.getItem("userProfile") || "{}");
@@ -91,7 +103,7 @@ const headers = [
 const updateStatus = async (job: WashJob, newStatus: string) => {
   try {
     loading.value = true;
-    job.status=newStatus
+    job.status = newStatus
 
     // 🔁 Call backend to persist the status change
     await apiService.updateCarWashBooking(job.id, job);
@@ -118,7 +130,7 @@ const fetchWashes = async () => {
 
     washes.value = allBookings.filter(
       booking =>
-        booking.status === "accepted" &&
+        // booking.status === JOB_STATUS.PAID &&
         String(booking.carWashId) === userId
     );
   } catch (err) {
