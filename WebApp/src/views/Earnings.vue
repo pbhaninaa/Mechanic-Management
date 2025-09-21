@@ -21,7 +21,7 @@
         </template>
 
         <template #item.status="{ item }">
-          <v-chip :color="item.status === JOB_STATUS.PAID ? 'green' : 'orange'" dark>
+          <v-chip :color="getStatusColor(item.status)" dark>
             {{ item.status }}
           </v-chip>
         </template>
@@ -50,7 +50,7 @@ import { ref, onMounted, watch } from "vue";
 import PageContainer from "../components/PageContainer.vue";
 import apiService from "@/api/apiService";
 import { format } from "date-fns";
-import { JOB_STATUS } from "@/utils/constants";
+import { getStatusColor } from "@/utils/helper";
 
 // Table headers
 const headers = [

@@ -73,6 +73,7 @@
 import { ref, onMounted } from "vue";
 import PageContainer from "../components/PageContainer.vue";
 import { STATUS_COLORS } from "../utils/constants";
+import { getStatusColor } from "@/utils/helper";
 
 // Demo data for testing
 const demoApplications = [
@@ -109,10 +110,7 @@ const applications = ref([]);
 const loading = ref(true);
 const error = ref("");
 
-// Status color helper
-const getStatusColor = (status) => {
-  return STATUS_COLORS[status?.toLowerCase()] || 'grey';
-};
+
 
 // Format date nicely
 const formatDate = (dateString) => {

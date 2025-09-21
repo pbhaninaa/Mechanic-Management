@@ -42,6 +42,7 @@ import PageContainer from "@/components/PageContainer.vue";
 import apiService from "@/api/apiService";
 import { JOB_STATUS } from "@/utils/constants";
 import { useRouter } from 'vue-router';
+import { getStatusColor } from "../utils/helper";
 const router = useRouter();
 // TypeScript interface matching backend entity
 interface RequestHistory {
@@ -67,16 +68,7 @@ const headers = [
   { text: "Actions", value: "actions", sortable: false }
 ];
 
-// Status colors
-const getStatusColor = (status: string) => {
-  switch (status.toLowerCase()) {
-    case JOB_STATUS.PENDING: return "orange";
-    case JOB_STATUS.ACCEPTED: return "blue";
-    case JOB_STATUS.COMPLETED: return "green";
-    case JOB_STATUS.DECLINED: return "red";
-    default: return "grey";
-  }
-};
+
 
 // Fetch request history for current user
 const loadRequests = async () => {

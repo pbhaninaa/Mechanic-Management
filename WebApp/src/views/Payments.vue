@@ -44,6 +44,7 @@ import { ref, onMounted } from "vue";
 import PageContainer from "@/components/PageContainer.vue";
 import apiService from "@/api/apiService";
 import { JOB_STATUS } from "@/utils/constants";
+import { getStatusColor } from "@/utils/helper";
 
 interface Payment {
   id: number;
@@ -66,14 +67,7 @@ const headers = [
   { text: "Actions", value: "actions", sortable: false },
 ];
 
-const getStatusColor = (status: string) => {
-  switch (status.toLowerCase()) {
-    case JOB_STATUS.PENDING: return "orange";
-    case JOB_STATUS.COMPLETED: return "green";
-    case JOB_STATUS.FAILED: return "red";
-    default: return "grey";
-  }
-};
+
 
 // Load payments from API
 const loadPayments = async () => {

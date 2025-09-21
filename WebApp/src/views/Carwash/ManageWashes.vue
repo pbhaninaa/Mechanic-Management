@@ -38,7 +38,7 @@
           </v-tooltip>
 
           <!-- Complete button -->
-          <v-tooltip text="Mark as Completed" location="top">
+          <v-tooltip  text="Mark as Completed" location="top">
             <template #activator="{ props }">
               <v-btn v-bind="props" small color="blue" variant="text" class="mr-1"
                 @click="updateStatus(item, JOB_STATUS.COMPLETED)" :disabled="item.status === JOB_STATUS.COMPLETED">
