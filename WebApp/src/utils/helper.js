@@ -14,9 +14,13 @@ export const loginUser = async (username, password) => {
 
       isAuthenticated.value = true;
 
+      // Clear any existing profile data for fresh login
+      localStorage.removeItem("userProfile");
+      localStorage.removeItem("profile");
+      localStorage.removeItem("role");
+      
       const defaultProfile = { username };
       localStorage.setItem("profile", JSON.stringify(defaultProfile));
-      window.location.reload();
 
       return { success: true, message: "Login successful!" };
     } else {

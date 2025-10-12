@@ -47,3 +47,46 @@ html, body, #app, .v-application {
   width: 100% !important;
   height: 100% !important;
 }
+
+/* Global responsive design improvements */
+* {
+  box-sizing: border-box;
+}
+
+/* Ensure proper touch targets on mobile */
+@media (max-width: 960px) {
+  button, .v-btn, .v-list-item {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  .v-text-field input {
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+}
+
+/* Improve text readability on small screens */
+@media (max-width: 600px) {
+  .v-card-title {
+    font-size: 1.2rem;
+  }
+  
+  .v-list-item-title {
+    font-size: 0.9rem;
+  }
+}
+
+/* Optimize for very small screens */
+@media (max-width: 400px) {
+  .v-card-title {
+    font-size: 1.1rem;
+  }
+  
+  .v-list-item-title {
+    font-size: 0.85rem;
+  }
+  
+  .v-btn {
+    font-size: 0.85rem;
+  }
+}

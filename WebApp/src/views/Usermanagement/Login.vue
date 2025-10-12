@@ -77,7 +77,7 @@ import Button from "@/components/Button.vue";
 const username = ref("");
 const password = ref("");
 const message = ref("");
-const messageType = ref<"success" | "error">("success");
+const messageType = ref("success");
 const loading = ref(false);
 
 const handleLogin = async () => {
@@ -89,6 +89,11 @@ const handleLogin = async () => {
   if (result.success) {
     message.value = result.message;
     messageType.value = "success";
+    
+    // Redirect after successful login
+    setTimeout(() => {
+      window.location.reload();
+    }, 1000);
   } else {
     message.value = result.message;
     messageType.value = "error";
@@ -100,10 +105,11 @@ const handleLogin = async () => {
 
 <style scoped>
 .login-card {
-  box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1); /* Soft shadow */
+  box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
   border-radius: 10px;
   width: 100%;
   max-width: 600px;
+  margin: 16px;
 }
 
 .v-card-title {
@@ -134,5 +140,52 @@ const handleLogin = async () => {
 
 .text-center {
   text-align: center;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 960px) {
+  .login-card {
+    margin: 8px;
+    max-width: 90vw;
+  }
+  
+  .v-card-title {
+    font-size: 1.5rem;
+  }
+}
+
+@media (max-width: 600px) {
+  .login-card {
+    margin: 4px;
+    max-width: 95vw;
+    border-radius: 8px;
+  }
+  
+  .v-card-title {
+    font-size: 1.25rem;
+  }
+  
+  .mb-4 {
+    margin-bottom: 12px;
+  }
+  
+  .v-divider {
+    margin: 16px 0;
+  }
+}
+
+@media (max-width: 400px) {
+  .login-card {
+    margin: 2px;
+    max-width: 98vw;
+  }
+  
+  .v-card-title {
+    font-size: 1.1rem;
+  }
+  
+  .text-body-2 {
+    font-size: 12px;
+  }
 }
 </style>

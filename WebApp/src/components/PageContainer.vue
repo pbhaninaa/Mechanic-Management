@@ -23,9 +23,12 @@ onMounted(() => {
   margin-right: 15%;
   width: 85%;
 }
+
 .unauth-centered {
   align-items: center; 
   justify-content: center;
+  margin: 0;
+  width: 100%;
 }
 
 .page-card {
@@ -33,5 +36,39 @@ onMounted(() => {
   min-height: fit-content;
   max-height: fit-content;
   box-sizing: border-box;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 960px) {
+  .page-container {
+    margin-right: 5%;
+    width: 95%;
+  }
+  
+  .page-card {
+    padding: 16px !important;
+  }
+}
+
+@media (max-width: 600px) {
+  .page-container {
+    margin-right: 2%;
+    width: 98%;
+  }
+  
+  .page-card {
+    padding: 12px !important;
+  }
+}
+
+@media (max-width: 400px) {
+  .page-container {
+    margin-right: 0;
+    width: 100%;
+  }
+  
+  .page-card {
+    padding: 8px !important;
+  }
 }
 </style>
