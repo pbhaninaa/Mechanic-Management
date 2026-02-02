@@ -137,11 +137,10 @@
 import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import PageContainer from "@/components/PageContainer.vue";
+import { useProfile } from "@/composables/useProfile";
 
 const router = useRouter();
-const profile = ref(null);
-const error = ref("");
-const loading = ref(true);
+const { profile, loading, error, loadProfile } = useProfile();
 
 // Navigate to edit profile
 const goToEditProfile = () => {
@@ -158,26 +157,18 @@ const formatDate = (dateStr) => {
 
 // Load profile on mount
 onMounted(async () => {
-  loading.value = true;
   try {
-    const userProfile = localStorage.getItem("userProfile")
-      ? JSON.parse(localStorage.getItem("userProfile"))
-      : null;
-
-    if (userProfile && userProfile) {
-      profile.value = userProfile;
-    } else {
+    await loadProfile();
+    
+    if (!profile.value) {
       // If no profile, redirect to CreateProfile
       router.replace({ name: "CreateProfile" });
     }
   } catch (err) {
     console.error("Profile error:", err);
-    error.value = err.message || "Profile not found or unauthorized";
     
     // Redirect to CreateProfile on error
     router.replace({ name: "CreateProfile" });
-  } finally {
-    loading.value = false;
   }
 });
 </script>

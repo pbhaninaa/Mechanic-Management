@@ -19,7 +19,6 @@ public class User {
 
     // Default constructor
     public User() {}
-
     // All-args constructor
     public User(String username, String password) {
         this.username = username;

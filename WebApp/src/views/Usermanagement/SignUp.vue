@@ -176,6 +176,7 @@ const goToLogin = () => {
   border-radius: 10px;
   width: 100%;
   max-width: 600px;
+  margin: 16px;
 }
 
 .v-card-title {
@@ -206,5 +207,52 @@ const goToLogin = () => {
 .v-alert {
   font-weight: 500;
   border-radius: 8px;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 960px) {
+  .page-card {
+    margin: 8px;
+    max-width: 90vw;
+  }
+  
+  .v-card-title {
+    font-size: 1.5rem;
+  }
+}
+
+@media (max-width: 600px) {
+  .page-card {
+    margin: 4px;
+    max-width: 95vw;
+    border-radius: 8px;
+  }
+  
+  .v-card-title {
+    font-size: 1.25rem;
+  }
+  
+  .mb-4 {
+    margin-bottom: 12px;
+  }
+  
+  .v-divider {
+    margin: 16px 0;
+  }
+}
+
+@media (max-width: 400px) {
+  .page-card {
+    margin: 2px;
+    max-width: 98vw;
+  }
+  
+  .v-card-title {
+    font-size: 1.1rem;
+  }
+  
+  .text-body-2 {
+    font-size: 12px;
+  }
 }
 </style>

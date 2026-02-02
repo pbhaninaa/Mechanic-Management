@@ -3,8 +3,12 @@ package com.test.app.TestAppBackEnd.entities;
 import com.test.app.TestAppBackEnd.constants.Role;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
+
+import com.fasterxml.jackson.annotation.JsonSetter;
 
 @Entity
 @Table(name = "user_profiles")
@@ -52,7 +56,7 @@ public class UserProfile {
     public UserProfile(String username, String password, String email, Set<Role> roles) {
         this.username = username;
         this.email = email;
-        this.roles = roles;
+        this.roles = new HashSet<>(roles); // always mutable
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
     }
@@ -82,6 +86,20 @@ public class UserProfile {
 
     public Set<Role> getRoles() { return roles; }
     public void setRoles(Set<Role> roles) { this.roles = roles; }
+
+
+    @JsonSetter("roles")
+    public void setRolesFromJson(Object rolesJson) {
+        if (rolesJson instanceof String) {
+            this.roles = new HashSet<>();
+            this.roles.add(Role.valueOf((String) rolesJson));
+        } else if (rolesJson instanceof Collection<?> col) {
+            this.roles = col.stream()
+                    .map(o -> Role.valueOf(o.toString()))
+                    .collect(Collectors.toCollection(HashSet::new)); // mutable
+        }
+    }
+
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }

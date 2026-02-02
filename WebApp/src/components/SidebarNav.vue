@@ -193,7 +193,6 @@ onMounted(async () => {
   }
 })
 
-
 onUnmounted(() => { window.removeEventListener('resize', handleResize) })
 
 defineExpose({ openMobileNav, closeMobileNav })
