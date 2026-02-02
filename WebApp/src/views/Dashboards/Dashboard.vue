@@ -21,10 +21,11 @@
   </PageContainer>
 </template>
 
-<script setup lang="ts">
+<script setup>
 import { ref, computed, onMounted } from "vue";
 import PageContainer from "@/components/PageContainer.vue";
 import apiService from "@/api/apiService";
+import { useProfile } from "@/composables/useProfile";
 
 import ClientDashboard from "./ClientDashboard.vue";
 import MechanicDashboard from "./MechanicDashboard.vue";
@@ -32,9 +33,7 @@ import AdminDashboard from "./AdminDashboard.vue";
 import CarWashDashbord from "./CarWashDashbord.vue";
 import { USER_ROLES } from "@/utils/constants";
 
-const profile = ref<any>(null);
-const loading = ref(true);
-const error = ref<string | null>(null);
+const { profile, loading, error, loadProfile } = useProfile();
 
 const primaryRole = computed(() => profile.value?.roles?.[0] || null);
 
@@ -53,34 +52,7 @@ const dashboardComponent = computed(() => {
   }
 });
 
-const getProfile = async () => {
-  loading.value = true;
-  error.value = null;
-
-  try {
-    let userProfile = null;
-
-    // 1. Try localStorage
-    const stored = localStorage.getItem("userProfile");
-    if (stored) {
-      userProfile = JSON.parse(stored);
-    }
-    // 2. Fallback to API if not in localStorage
-    if (!userProfile) {
-      const res = await apiService.getUserProfile();
-      userProfile = res.data;
-      localStorage.setItem("userProfile", JSON.stringify(userProfile));
-    }
-
-    profile.value = userProfile;
-  } catch (err: any) {
-    error.value = err.message || "Profile not found or unauthorized";
-  } finally {
-    loading.value = false;
-  }
-};
-
-onMounted(() => getProfile());
+onMounted(() => loadProfile());
 </script>
 
 <style scoped>

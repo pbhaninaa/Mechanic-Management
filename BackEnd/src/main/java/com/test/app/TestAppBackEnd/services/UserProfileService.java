@@ -66,9 +66,7 @@ public class UserProfileService {
     }
 
     // ================= UPDATE =================
-    public Optional<UserProfile> updateProfile(String username, UserProfile updatedProfile) {
-
-
+    public Optional<UserProfile> updateProfile(String username, UserProfile updatedProfile, boolean isAdmin) {
         return repository.findByUsername(username)
                 .map(existing -> {
                     existing.setFirstName(updatedProfile.getFirstName());
@@ -76,11 +74,15 @@ public class UserProfileService {
                     existing.setPhoneNumber(updatedProfile.getPhoneNumber());
                     existing.setAddress(updatedProfile.getAddress());
                     existing.setEmail(updatedProfile.getEmail());
-                    existing.setRoles(updatedProfile.getRoles());
+                    // Only admins can update roles
+                    if (isAdmin) {
+                        existing.setRoles(updatedProfile.getRoles());
+                    }
                     existing.setUpdatedAt(LocalDateTime.now());
                     return repository.save(existing);
                 });
     }
+
 
     // ================= DELETE =================
     public boolean deleteProfile(String username) {

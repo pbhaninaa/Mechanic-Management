@@ -135,7 +135,11 @@ public class UserProfileController {
                     .body(new ApiResponse<>("Unauthorized to update this profile", 403, null, true));
         }
 
-        var response = userProfileService.updateProfile(updatedProfile.getUsername(), updatedProfile)
+        var response = userProfileService.updateProfile(
+                        updatedProfile.getUsername(),
+                        updatedProfile,
+                        isAdmin // pass isAdmin here
+                )
                 .map(profile -> ResponseEntity.ok(new ApiResponse<>("Profile updated", 200, profile, true)))
                 .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND)
                         .body(new ApiResponse<>("Profile does not exist for this user", 404, null, true)));
@@ -143,6 +147,7 @@ public class UserProfileController {
         System.out.println("[UPDATE] Response ready for user: " + updatedProfile.getUsername());
         return response;
     }
+
 
     // ================= DELETE OWN PROFILE =================
     @DeleteMapping
