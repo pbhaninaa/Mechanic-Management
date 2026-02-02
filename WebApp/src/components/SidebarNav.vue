@@ -161,21 +161,38 @@ const closeMobileNav = () => { drawer.value = false; mobileOverlay.value = false
 
 onMounted(async () => {
   try {
-    // Fetch user profile
     const res = await apiService.getUserProfile()
+
     localStorage.setItem('userProfile', JSON.stringify(res.data || {}))
     loggedInUser.value = res.data || {}
     userRole.value = res.data?.roles?.[0]?.toLowerCase() || ''
-    localStorage.setItem("currencySymbol","R");
-    localStorage.setItem("phoneCountryCode","+27")
 
-    // Navigate to Home (/dashboard) when component mounts
+    localStorage.setItem("currencySymbol", "R")
+    localStorage.setItem("phoneCountryCode", "+27")
+
     router.push('/dashboard')
 
   } catch (error) {
+    console.log(error)
+
+    const status =
+      error.status ||
+      error.response?.status
+
+    const message =
+      error.data?.message ||
+      error.response?.data?.message ||
+      error.message
+
+    if (status === 404 && message?.includes('Profile does not exist')) {
+      router.push('/create-profile')
+      return
+    }
+
     console.error('Failed to load user profile:', error)
   }
 })
+
 
 onUnmounted(() => { window.removeEventListener('resize', handleResize) })
 

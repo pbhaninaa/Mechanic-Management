@@ -113,7 +113,7 @@ const saveProfile = async () => {
 
     } 
     messageType.value = "success";
-
+  window.location.reload();
     // Navigate back to profile page after save
     setTimeout(() => {
       router.push({ name: "Dashboard" });
@@ -124,6 +124,7 @@ const saveProfile = async () => {
     messageType.value = "error";
   } finally {
     loading.value = false;
+    
   }
 };
 </script>
