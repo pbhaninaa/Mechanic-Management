@@ -3,12 +3,48 @@
     <v-card-title>{{ isEditMode ? "Edit Profile" : "Create Profile" }}</v-card-title>
     <v-card-text>
       <!-- Input fields -->
-      <InputField v-model="form.firstName" label="First Name" type="text" :disabled="loading" required />
-      <InputField v-model="form.lastName" label="Last Name" type="text" :disabled="loading" required />
-      <InputField v-model="form.username" label="Username" type="text" :disabled="true" required />
-      <InputField v-model="form.email" label="Email" type="email" :disabled="loading || isEditMode" required />
-      <InputField v-model="form.phoneNumber" label="Phone Number" type="tel" required :disabled="loading" max-width="10"/>
-      <InputField v-model="form.address" label="Address" type="text" :disabled="loading" />
+      <InputField
+        v-model="form.firstName"
+        label="First Name"
+        type="text"
+        :disabled="loading"
+        required
+      />
+      <InputField
+        v-model="form.lastName"
+        label="Last Name"
+        type="text"
+        :disabled="loading"
+        required
+      />
+      <InputField
+        v-model="form.username"
+        label="Username"
+        type="text"
+        :disabled="true"
+        required
+      />
+      <InputField
+        v-model="form.email"
+        label="Email"
+        type="email"
+        :disabled="loading || isEditMode"
+        required
+      />
+      <InputField
+        v-model="form.phoneNumber"
+        label="Phone Number"
+        type="tel"
+        required
+        :disabled="loading"
+        max-width="10"
+      />
+      <InputField
+        v-model="form.address"
+        label="Address"
+        type="text"
+        :disabled="loading || form.roles[0] === USER_ROLES.ADMIN"
+      />
 
       <!-- Roles select -->
       <v-select
@@ -16,20 +52,27 @@
         :items="roles"
         label="Role"
         chips
-        :multiple="false"          
-        :disabled="loading"
+        :multiple="false"
+        :disabled="loading || !canEditRole"
         required
       />
 
+      <!-- Save / Update button -->
       <Button
         :label="isEditMode ? 'Update' : 'Save'"
         color="primary"
         @click="saveProfile"
         :loading="loading"
-        :disabled="loading || !form.firstName || !form.lastName || !form.username || !form.email"
+        :disabled="loading || !form.firstName || !form.lastName || !form.username || !form.email || !form.phoneNumber || form.phoneNumber.length !== 10"
       />
 
-      <v-alert v-if="message" :type="messageType" class="mt-3" closable @click:close="message = ''">
+      <v-alert
+        v-if="message"
+        :type="messageType"
+        class="mt-3"
+        closable
+        @click:close="message = ''"
+      >
         {{ message }}
       </v-alert>
     </v-card-text>
@@ -56,7 +99,6 @@ const propsProfile = ref(
     : JSON.parse(localStorage.getItem("profile") || "{}")
 );
 
-
 // Roles array
 const roles = [USER_ROLES.CLIENT, USER_ROLES.MECHANIC, USER_ROLES.CAR_WASH, USER_ROLES.ADMIN];
 
@@ -79,42 +121,58 @@ const loading = ref(false);
 const message = ref("");
 const messageType = ref("success");
 
+// Current logged-in user
+const currentUser = ref(JSON.parse(localStorage.getItem("userProfile") || "{}"));
+
+// Determine if the logged-in user can edit roles
+const canEditRole = computed(() => currentUser.value.roles?.includes(USER_ROLES.ADMIN));
+
 // Fill form if editing
 onMounted(() => {
-  
   if (propsProfile.value) {
-    // Ensure roles is always an array
-    form.value = { 
-      ...form.value, 
-      ...propsProfile.value, 
-      roles: propsProfile.value.roles ? [...propsProfile.value.roles] : [] 
+    form.value = {
+      ...form.value,
+      ...propsProfile.value,
+      roles: propsProfile.value.roles ? [...propsProfile.value.roles] : []
     };
   }
 });
 
 // Save or update profile
 const saveProfile = async () => {
+  // Validate phone number length
+  if (form.value.phoneNumber.length !== 10) {
+    message.value = "Phone number must be exactly 10 digits.";
+    messageType.value = "error";
+    return;
+  }
+
+  // Prevent non-admins from changing roles
+  if (!canEditRole.value) {
+    form.value.roles = propsProfile.value.roles ? [...propsProfile.value.roles] : [];
+  }
+
   loading.value = true;
   message.value = "";
   try {
-    // Ensure roles is always an array, even if only one selected
+    // Ensure roles is always an array
     if (form.value.roles && !Array.isArray(form.value.roles)) {
       form.value.roles = [form.value.roles];
     }
+
     if (isEditMode.value) {
-     const res= await apiService.updateUserProfile(form.value);
+      const res = await apiService.updateUserProfile(form.value);
       localStorage.setItem("userProfile", JSON.stringify(res.data));
       message.value = "Profile updated successfully!";
-     
     } else {
-     const res= await apiService.createUserProfile(form.value);
+      const res = await apiService.createUserProfile(form.value);
       localStorage.setItem("userProfile", JSON.stringify(res.data));
       message.value = "Profile saved successfully!";
+    }
 
-    } 
     messageType.value = "success";
-  window.location.reload();
-    // Navigate back to profile page after save
+
+    // Redirect after 1 second
     setTimeout(() => {
       router.push({ name: "Dashboard" });
     }, 1000);
@@ -124,7 +182,6 @@ const saveProfile = async () => {
     messageType.value = "error";
   } finally {
     loading.value = false;
-    
   }
 };
 </script>
