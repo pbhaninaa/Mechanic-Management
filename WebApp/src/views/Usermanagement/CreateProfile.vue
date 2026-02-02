@@ -1,90 +1,81 @@
 <template>
   <PageContainer>
-    <v-card class="profile-card">
-      <v-card-title>{{ isEditMode ? "Edit Profile" : "Create Profile" }}</v-card-title>
-      <v-card-text>
-        <!-- Input fields -->
-        <div class="form-fields">
-          <InputField 
-            v-model="form.firstName" 
-            label="First Name" 
-            type="text" 
-            :disabled="loading" 
-            required 
-            class="mb-3"
-          />
-          <InputField 
-            v-model="form.lastName" 
-            label="Last Name" 
-            type="text" 
-            :disabled="loading" 
-            required 
-            class="mb-3"
-          />
-          <InputField 
-            v-model="form.username" 
-            label="Username" 
-            type="text" 
-            :disabled="true" 
-            required 
-            class="mb-3"
-          />
-          <InputField 
-            v-model="form.email" 
-            label="Email" 
-            type="email" 
-            :disabled="loading || isEditMode" 
-            required 
-            class="mb-3"
-          />
-          <InputField 
-            v-model="form.phoneNumber" 
-            label="Phone Number" 
-            type="tel" 
-            :disabled="loading" 
-            class="mb-3"
-          />
-          <InputField 
-            v-model="form.address" 
-            label="Address" 
-            type="text" 
-            :disabled="loading" 
-            class="mb-3"
-          />
+    <v-card-title>{{ isEditMode ? "Edit Profile" : "Create Profile" }}</v-card-title>
+    <v-card-text>
+      <!-- Input fields -->
+      <InputField
+        v-model="form.firstName"
+        label="First Name"
+        type="text"
+        :disabled="loading"
+        required
+      />
+      <InputField
+        v-model="form.lastName"
+        label="Last Name"
+        type="text"
+        :disabled="loading"
+        required
+      />
+      <InputField
+        v-model="form.username"
+        label="Username"
+        type="text"
+        :disabled="true"
+        required
+      />
+      <InputField
+        v-model="form.email"
+        label="Email"
+        type="email"
+        :disabled="loading || isEditMode"
+        required
+      />
+      <InputField
+        v-model="form.phoneNumber"
+        label="Phone Number"
+        type="tel"
+        required
+        :disabled="loading"
+        max-width="10"
+      />
+      <InputField
+        v-model="form.address"
+        label="Address"
+        type="text"
+        :disabled="loading || form.roles[0] === USER_ROLES.ADMIN"
+      />
 
-          <!-- Roles select -->
-          <v-select
-            v-model="form.roles"
-            :items="roles"
-            label="Role"
-            chips
-            :multiple="false"          
-            :disabled="loading"
-            required
-            class="mb-4"
-          />
+      <!-- Roles select -->
+      <v-select
+        v-model="form.roles"
+        :items="roles"
+        label="Role"
+        chips
+        :multiple="false"
+        :disabled="loading || !canEditRole"
+        required
+      />
 
-          <Button
-            :label="isEditMode ? 'Update' : 'Save'"
-            color="primary"
-            @click="saveProfile"
-            :loading="loading"
-            :disabled="loading || !isFormValid"
-            class="mb-3"
-          />
+      <!-- Save / Update button -->
+      <Button
+        :label="isEditMode ? 'Update' : 'Save'"
+        color="primary"
+        @click="saveProfile"
+        :loading="loading"
+        :disabled="loading || !form.firstName || !form.lastName || !form.username || !form.email || !form.phoneNumber || form.phoneNumber.length !== 10"
+      />
 
-          <v-alert 
-            v-if="message" 
-            :type="messageType" 
-            class="mt-3" 
-            closable 
-            @click:close="message = ''"
-          >
-            {{ message }}
-          </v-alert>
-        </div>
-      </v-card-text>
-    </v-card>
+      <v-alert
+        v-if="message"
+        :type="messageType"
+        class="mt-3"
+        closable
+        @click:close="message = ''"
+      >
+        {{ message }}
+      </v-alert>
+    </v-card-text>
   </PageContainer>
 </template>
 
@@ -96,14 +87,10 @@ import Button from "@/components/Button.vue";
 import apiService from "@/api/apiService";
 import PageContainer from "@/components/PageContainer.vue";
 import { USER_ROLES } from "@/utils/constants";
-import { useProfile } from "@/composables/useProfile";
 
 // Router
 const router = useRouter();
 const route = useRoute();
-
-// Profile composable
-const { refreshProfile } = useProfile();
 
 // Get profile from query (if editing)
 const propsProfile = ref(
@@ -111,7 +98,6 @@ const propsProfile = ref(
     ? JSON.parse(route.query.profile)
     : JSON.parse(localStorage.getItem("profile") || "{}")
 );
-
 
 // Roles array
 const roles = [USER_ROLES.CLIENT, USER_ROLES.MECHANIC, USER_ROLES.CAR_WASH, USER_ROLES.ADMIN];
@@ -135,65 +121,60 @@ const loading = ref(false);
 const message = ref("");
 const messageType = ref("success");
 
-// Form validation
-const isFormValid = computed(() => {
-  return form.value.firstName && 
-         form.value.lastName && 
-         form.value.username && 
-         form.value.email && 
-         form.value.roles && 
-         form.value.roles.length > 0;
-});
+// Current logged-in user
+const currentUser = ref(JSON.parse(localStorage.getItem("userProfile") || "{}"));
+
+// Determine if the logged-in user can edit roles
+const canEditRole = computed(() => currentUser.value.roles?.includes(USER_ROLES.ADMIN));
 
 // Fill form if editing
 onMounted(() => {
-  // Get username from localStorage (set during login)
-  const profile = JSON.parse(localStorage.getItem("profile") || "{}");
-  if (profile.username) {
-    form.value.username = profile.username;
-  }
-  
   if (propsProfile.value) {
-    // Ensure roles is always an array
-    form.value = { 
-      ...form.value, 
-      ...propsProfile.value, 
-      roles: propsProfile.value.roles ? [...propsProfile.value.roles] : [] 
+    form.value = {
+      ...form.value,
+      ...propsProfile.value,
+      roles: propsProfile.value.roles ? [...propsProfile.value.roles] : []
     };
   }
 });
 
 // Save or update profile
 const saveProfile = async () => {
+  // Validate phone number length
+  if (form.value.phoneNumber.length !== 10) {
+    message.value = "Phone number must be exactly 10 digits.";
+    messageType.value = "error";
+    return;
+  }
+
+  // Prevent non-admins from changing roles
+  if (!canEditRole.value) {
+    form.value.roles = propsProfile.value.roles ? [...propsProfile.value.roles] : [];
+  }
+
   loading.value = true;
   message.value = "";
   try {
-    // Ensure roles is always an array, even if only one selected
+    // Ensure roles is always an array
     if (form.value.roles && !Array.isArray(form.value.roles)) {
       form.value.roles = [form.value.roles];
     }
+
     if (isEditMode.value) {
-     const res= await apiService.updateUserProfile(form.value);
+      const res = await apiService.updateUserProfile(form.value);
       localStorage.setItem("userProfile", JSON.stringify(res.data));
       message.value = "Profile updated successfully!";
-     
     } else {
-     const res= await apiService.createUserProfile(form.value);
+      const res = await apiService.createUserProfile(form.value);
       localStorage.setItem("userProfile", JSON.stringify(res.data));
       message.value = "Profile saved successfully!";
+    }
 
-    } 
     messageType.value = "success";
 
-    // Refresh profile data
-    await refreshProfile();
-
-    // Dispatch custom event to notify other components
-    window.dispatchEvent(new CustomEvent('profileUpdated'));
-
-    // Refresh the page to update auth stores and navbar
+    // Redirect after 1 second
     setTimeout(() => {
-      window.location.reload();
+      router.push({ name: "Dashboard" });
     }, 1000);
   } catch (err) {
     console.error("Error saving profile:", err);
@@ -204,65 +185,3 @@ const saveProfile = async () => {
   }
 };
 </script>
-
-<style scoped>
-.profile-card {
-  box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
-  border-radius: 10px;
-}
-
-.form-fields {
-  max-width: 600px;
-}
-
-.mb-3 {
-  margin-bottom: 16px;
-}
-
-.mb-4 {
-  margin-bottom: 24px;
-}
-
-/* Mobile responsiveness for CreateProfile */
-@media (max-width: 960px) {
-  .profile-card {
-    margin: 8px;
-  }
-  
-  .form-fields {
-    max-width: 90vw;
-  }
-}
-
-@media (max-width: 600px) {
-  .profile-card {
-    margin: 4px;
-  }
-  
-  .v-card-title {
-    font-size: 1.25rem;
-  }
-  
-  .form-fields {
-    max-width: 95vw;
-  }
-  
-  .mb-3 {
-    margin-bottom: 12px;
-  }
-}
-
-@media (max-width: 400px) {
-  .profile-card {
-    margin: 2px;
-  }
-  
-  .v-card-title {
-    font-size: 1.1rem;
-  }
-  
-  .form-fields {
-    max-width: 98vw;
-  }
-}
-</style>

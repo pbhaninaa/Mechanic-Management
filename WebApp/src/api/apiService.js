@@ -105,6 +105,11 @@ class ApiService {
   async updateUserByUsername(username, data) {
     return this.put(`${API_ENDPOINTS.PROFILE}/user/${username}`, data);
   }
+  // ---------- Email ----------
+async sendEmail(emailData) {
+  return this.post(API_ENDPOINTS.SEND_EMAIL, emailData);
+}
+
 
   // ---------- Job Applications ----------
  /* async getJobApplications() {

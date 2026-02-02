@@ -165,11 +165,13 @@ const editUser = (user: any) => {
 
 // Update user
 const updateUser = async () => {
-  
   if (!isFormValid.value) return;
   loading.value = true;
-  try {
+  try {   
+
     await apiService.updateUserProfile(selectedUser.value);
+    
+ 
     editDialog.value = false;
     await loadUsers();
   } catch (err: any) {
@@ -178,6 +180,23 @@ const updateUser = async () => {
     loading.value = false;
   }
 };
+
+async function sendEmailToUser(user: any) {
+  const emailPayload = {
+    to: user.email,
+    from: 'job.application.software@gmail.com',
+    subject: 'Profile Updated',
+    body: `Hi ${user.firstName}, your profile has been successfully updated.`
+  };
+
+  try {
+    const response = await apiService.sendEmail(emailPayload);
+    console.log('Email sent successfully to', user.email, response);
+  } catch (error) {
+    console.error('Error sending email to', user.email, error);
+  }
+}
+
 
 // Delete confirmation
 const confirmDelete = (user: any) => {
