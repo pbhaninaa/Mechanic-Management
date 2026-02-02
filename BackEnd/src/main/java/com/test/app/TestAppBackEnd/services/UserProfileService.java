@@ -41,7 +41,7 @@ public class UserProfileService {
         UserProfile savedProfile = repository.save(profile);
 
         // Notify user by email
-        sendEmailNotification(
+        emailService. sendEmailNotification(
                 savedProfile.getEmail(),
                 "Welcome to TestApp",
                 "Hi " + savedProfile.getFirstName() + ",\n\n" +
@@ -93,7 +93,7 @@ public class UserProfileService {
                         body += "\nYour roles have been changed to: " + savedProfile.getRoles();
                     }
 
-                    sendEmailNotification(savedProfile.getEmail(), "Profile Update Notification", body);
+                    emailService.  sendEmailNotification(savedProfile.getEmail(), "Profile Update Notification", body);
 
                     return savedProfile;
                 });
@@ -106,7 +106,7 @@ public class UserProfileService {
                     repository.delete(profile);
 
                     // Notify user by email
-                    sendEmailNotification(
+                    emailService. sendEmailNotification(
                             profile.getEmail(),
                             "Profile Deleted",
                             "Hi " + profile.getFirstName() + ",\n\n" +
@@ -117,20 +117,6 @@ public class UserProfileService {
                 }).orElse(false);
     }
 
-    // ================= EMAIL HELPER =================
-    @Async
-    public void sendEmailNotification(String to, String subject, String body) {
-        try {
-            emailService.sendEmail(
-                    to,
-                    "no-reply@testapp.com", // From address
-                    subject,
-                    body
-            );
-        } catch (Exception e) {
-            System.out.println("Failed to send email to " + to + ": " + e.getMessage());
-        }
-    }
 
     // ================= DEBUG =================
     public String toString(UserProfile profile) {

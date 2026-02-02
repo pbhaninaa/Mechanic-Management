@@ -6,6 +6,7 @@ import jakarta.mail.internet.MimeMessage;
 
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -27,6 +28,21 @@ public class EmailService {
         helper.setText(body, false);
 
         mailSender.send(message);
+    }
+    // ================= EMAIL HELPER =================
+    @Async
+    public void sendEmailNotification(String toUsernameOrEmail, String subject, String body) {
+        try {
+            // Assuming username is the email; adapt if you store emails separately
+           sendEmail(
+                    toUsernameOrEmail,
+                    "no-reply@testapp.com",
+                    subject,
+                    body
+            );
+        } catch (Exception e) {
+            System.out.println("Failed to send email to " + toUsernameOrEmail + ": " + e.getMessage());
+        }
     }
 
 }

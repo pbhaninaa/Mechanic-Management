@@ -3,6 +3,7 @@ package com.test.app.TestAppBackEnd.services;
 import com.test.app.TestAppBackEnd.entities.MechanicRequest;
 import com.test.app.TestAppBackEnd.repositories.MechanicRequestRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.scheduling.annotation.Async;
 
 import java.util.List;
 import java.util.Optional;
@@ -11,42 +12,46 @@ import java.util.Optional;
 public class MechanicRequestService {
 
     private final MechanicRequestRepository repository;
+    private final EmailService emailService;
 
-    public MechanicRequestService(MechanicRequestRepository repository) {
+    public MechanicRequestService(MechanicRequestRepository repository, EmailService emailService) {
         this.repository = repository;
+        this.emailService = emailService;
     }
 
-    // Create new request
+    // ================= CREATE =================
     public MechanicRequest create(MechanicRequest request) {
         return repository.save(request);
     }
 
-    // Get all requests (optional, for admin)
+    // ================= READ =================
     public List<MechanicRequest> getAll() {
         return repository.findAll();
     }
-    // Get By I'd
+
     public Optional<MechanicRequest> getById(Long id) {
         return repository.findById(id);
     }
 
-
-    // Get requests by username
     public List<MechanicRequest> getByUsername(String username) {
         return repository.findByUsername(username);
     }
 
-    // Get request by mechanic id
-    public List<MechanicRequest> getByMechanicId(Long mechanicId){
+    public List<MechanicRequest> getByMechanicId(Long mechanicId) {
         return repository.findByMechanicId(mechanicId);
     }
 
-    // Update request by username (optional)
+    // ================= UPDATE =================
     public Optional<MechanicRequest> update(MechanicRequest updated) {
         Optional<MechanicRequest> requests = repository.findById(updated.getId());
         if (requests.isEmpty()) return Optional.empty();
 
         MechanicRequest existing = requests.get();
+
+        // Check if status changed
+        boolean statusChanged = !existing.getStatus().equals(updated.getStatus());
+
+        // Update all fields
         existing.setDescription(updated.getDescription());
         existing.setLocation(updated.getLocation());
         existing.setLatitude(updated.getLatitude());
@@ -56,10 +61,22 @@ public class MechanicRequestService {
         existing.setUsername(updated.getUsername());
         existing.setMechanicId(updated.getMechanicId());
 
-        return Optional.of(repository.save(existing));
+        MechanicRequest saved = repository.save(existing);
+
+        // Send email if status changed and actor is not the owner
+        if (statusChanged ) {
+            String subject = "Mechanic Request Status Updated";
+            String body = "Hi " + existing.getUsername() + ",\n\n" +
+                    "Your mechanic request (ID: " + existing.getId() + ") status has been changed to: " +
+                    existing.getStatus() + ".\n\nThank you!";
+
+            emailService.sendEmailNotification(existing.getUsername(), subject, body);
+        }
+
+        return Optional.of(saved);
     }
 
-    // Delete request by username
+    // ================= DELETE =================
     public boolean deleteByUsername(String username) {
         List<MechanicRequest> requests = repository.findByUsername(username);
         if (requests.isEmpty()) return false;
@@ -67,4 +84,6 @@ public class MechanicRequestService {
         repository.deleteByUsername(username);
         return true;
     }
+
+
 }
