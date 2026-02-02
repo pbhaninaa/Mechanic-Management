@@ -118,14 +118,14 @@ const headers = [
 
 // Edit dialog
 const editDialog = ref(false);
-const selectedUser = ref<any>({});
+const selectedUser = ref<any>({});  
 
 // Delete confirmation dialog
 const deleteDialog = ref(false);
 const userToDelete = ref<any>(null);
 
 // Available roles
-const availableRoles = ['CLIENT', 'MECHANIC', 'ADMIN'];
+const availableRoles = ['CLIENT', 'MECHANIC', 'ADMIN', 'CARWASH'];
 
 // Form validation
 const isFormValid = computed(() => {
