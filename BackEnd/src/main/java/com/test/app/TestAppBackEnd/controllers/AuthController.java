@@ -167,7 +167,20 @@ public class AuthController {
 
         User user = existingUser.get();
         user.setUsername(updatedUser.getUsername());
-        user.setPassword(passwordEncoder.encode(updatedUser.getPassword()));
+        /*String newPassword = updatedUser.getPassword();
+        if (newPassword != null
+                && !newPassword.isBlank()
+                && !newPassword.startsWith("$2")) {
+            user.setPassword(passwordEncoder.encode(newPassword));
+        }
+*/
+        String newPassword = updatedUser.getPassword();
+        if (newPassword != null
+                && !newPassword.isBlank()
+                && !newPassword.startsWith("$2")) {
+            user.setPassword(passwordEncoder.encode(newPassword));
+        }
+
 
         User savedUser = userRepository.save(user);
 

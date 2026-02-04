@@ -125,7 +125,14 @@ const messageType = ref("success");
 const currentUser = ref(JSON.parse(localStorage.getItem("userProfile") || "{}"));
 
 // Determine if the logged-in user can edit roles
-const canEditRole = computed(() => currentUser.value.roles?.includes(USER_ROLES.ADMIN));
+const canEditRole = computed(() => {
+  // If creating profile → everyone can choose role
+  if (!isEditMode.value) return true;
+
+  // If editing → only ADMIN can edit role
+  return currentUser.value.roles?.includes(USER_ROLES.ADMIN);
+});
+
 
 // Fill form if editing
 onMounted(() => {
@@ -163,10 +170,18 @@ const saveProfile = async () => {
     if (isEditMode.value) {
       const res = await apiService.updateUserProfile(form.value);
       localStorage.setItem("userProfile", JSON.stringify(res.data));
+      // Keep role in sync for role-driven navbar
+      const nextRole = res.data?.roles?.[0]?.toLowerCase?.() || "";
+      if (nextRole) localStorage.setItem("role", nextRole);
+      // Notify app/navbar to refresh immediately
+      window.dispatchEvent(new Event("profileUpdated"));
       message.value = "Profile updated successfully!";
     } else {
       const res = await apiService.createUserProfile(form.value);
       localStorage.setItem("userProfile", JSON.stringify(res.data));
+      const nextRole = res.data?.roles?.[0]?.toLowerCase?.() || "";
+      if (nextRole) localStorage.setItem("role", nextRole);
+      window.dispatchEvent(new Event("profileUpdated"));
       message.value = "Profile saved successfully!";
     }
 
@@ -182,6 +197,8 @@ const saveProfile = async () => {
     messageType.value = "error";
   } finally {
     loading.value = false;
+    windows.reload();
+    
   }
 };
 </script>
