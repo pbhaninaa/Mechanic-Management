@@ -227,10 +227,11 @@ const saveProfile = async () => {
 
     messageType.value = "success";
 
-    // Redirect after 1 second
+    // Give a short delay for localStorage to settle, then reload the app.
+    // This remounts the navbar so it pulls the latest profile/role.
     setTimeout(() => {
-      router.push({ name: "Dashboard" });
-    }, 1000);
+      window.location.reload();
+    }, 200);
   } catch (err) {
     console.error("Error saving profile:", err);
     message.value = err.response?.data?.message || err.message || "Failed to save profile";
