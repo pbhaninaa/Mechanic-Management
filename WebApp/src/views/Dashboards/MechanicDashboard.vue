@@ -80,12 +80,12 @@ const statsCards = computed(() => [
 
 // Table headers
 const tableHeaders = [
-  { text: "Client Name", value: "username" },
-  { text: "Service", value: "description" },
-  { text: "Date", value: "date" },
-  { text: "Phone Number", value: "phoneNumber" },
-  { text: "Location", value: "location" },
-  { text: "Actions", value: "actions", sortable: false },
+  { title: "Client Name", value: "username" },
+  { title: "Service", value: "description" },
+  { title: "Date", value: "date" },
+  { title: "Phone Number", value: "phoneNumber" },
+  { title: "Location", value: "location" },
+  { title: "Actions", value: "actions", sortable: false },
 ];
 
 // Computed stats

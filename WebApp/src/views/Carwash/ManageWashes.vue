@@ -86,14 +86,14 @@ const washes = ref<WashJob[]>([]);
 const loading = ref(false);
 
 const headers = [
-  { text: "Client", value: "clientUsername" },
-  { text: "Plate", value: "carPlate" },
-  { text: "Car Type", value: "carType" },
-  { text: "Location", value: "location" },
-  { text: "Services", value: "serviceTypes" },
-  { text: "Date", value: "date" },
-  { text: "Status", value: "status" },
-  { text: "Actions", value: "actions", sortable: false },
+  { title: "Client", value: "clientUsername" },
+  { title: "Plate", value: "carPlate" },
+  { title: "Car Type", value: "carType" },
+  { title: "Location", value: "location" },
+  { title: "Services", value: "serviceTypes" },
+  { title: "Date", value: "date" },
+  { title: "Status", value: "status" },
+  { title: "Actions", value: "actions", sortable: false },
 ];
 
 // Optional: Update status (for example, to "Completed")

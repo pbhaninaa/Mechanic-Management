@@ -1,61 +1,52 @@
 <template>
-  <v-navigation-drawer 
-    v-model="drawer" 
-    :rail="rail" 
-    permanent 
-    @click.stop="rail = false" 
-    class="sidebar-nav"
-    :style="sidebarStyle"
-  >
+  <v-navigation-drawer v-model="drawer" :rail="rail" permanent @click.stop="rail = false" class="sidebar-nav"
+    :style="sidebarStyle">
     <!-- Brand Section -->
     <div class="brand-section">
-      <v-list-item 
-        :title="rail ? '' : appTitle" 
-        :subtitle="rail ? '' : loggedInUser.firstName" 
-        class="brand-item"
-      >
+      <v-list-item :title="rail ? '' : appTitle" :subtitle="rail ? '' : loggedInUser.firstName" class="brand-item">
         <template v-slot:append>
-          <v-btn 
-            variant="text" 
-            icon="mdi-chevron-left" 
-            @click.stop="rail = !rail" 
-            class="rail-toggle" 
-          />
+          <v-btn variant="text" icon="mdi-chevron-left" @click.stop="rail = !rail" class="rail-toggle" />
         </template>
       </v-list-item>
-    </div> 
+    </div>
 
     <v-divider />
 
     <!-- Navigation Items -->
     <v-list density="compact" nav>
-      <v-list-item 
-        v-for="item in filteredNavigationItems" 
-        :key="item.title" 
-        :prepend-icon="item.icon"
-        :title="rail ? '' : item.title" 
-        :to="item.to" 
-        link
-        :active="router.currentRoute.value.path === item.to"
-        class="nav-item"
-        @click="handleNavClick"
-        :disabled="!isRoleValid"
-      >
-        <v-tooltip v-if="rail && isRoleValid" location="right" :text="item.title" />
-      </v-list-item>
+      <template v-for="item in filteredNavigationItems" :key="item.title">
+        <!-- Grouped items (nested) -->
+        <v-list-group v-if="item.children && item.children.length" :value="item.title" class="nav-item"
+          :disabled="!isRoleValid">
+          <template #activator="{ props }">
+            <v-list-item v-bind="props" :prepend-icon="item.icon" :title="rail ? '' : item.title"
+              :disabled="!isRoleValid">
+              <v-tooltip v-if="rail && isRoleValid" location="right" :text="item.title" />
+            </v-list-item>
+          </template>
+
+          <v-list-item v-for="child in item.children" :key="child.title" :prepend-icon="child.icon"
+            :title="rail ? '' : child.title" :to="child.to" link :active="router.currentRoute.value.path === child.to"
+            class="nav-item" @click="handleNavClick" :disabled="!isRoleValid">
+            <v-tooltip v-if="rail && isRoleValid" location="left" :text="child.title" />
+          </v-list-item>
+        </v-list-group>
+
+        <!-- Regular single items -->
+        <v-list-item v-else :prepend-icon="item.icon" :title="rail ? '' : item.title" :to="item.to" link
+          :active="router.currentRoute.value.path === item.to" class="nav-item" @click="handleNavClick"
+          :disabled="!isRoleValid">
+          <v-tooltip v-if="rail && isRoleValid" location="right" :text="item.title" />
+        </v-list-item>
+      </template>
     </v-list>
 
     <!-- Bottom Actions -->
     <div class="bottom-actions">
       <v-divider />
       <v-list density="compact" nav>
-        <v-list-item 
-          prepend-icon="mdi-logout" 
-          :title="rail ? '' : 'Logout'" 
-          @click="logoutUser" 
-          class="logout-item"
-          :disabled="!isRoleValid"
-        >
+        <v-list-item prepend-icon="mdi-logout" :title="rail ? '' : 'Logout'" @click="logoutUser" class="logout-item"
+          :disabled="!isRoleValid">
           <v-tooltip v-if="rail && isRoleValid" location="right" text="Logout" />
         </v-list-item>
       </v-list>
@@ -85,7 +76,7 @@ const mobileOverlay = ref(false)
 const windowWidth = ref(window.innerWidth)
 
 // User info
-const loggedInUser = ref(JSON.parse(localStorage.getItem('userProfile') || '{}')) 
+const loggedInUser = ref(JSON.parse(localStorage.getItem('userProfile') || '{}'))
 const userRole = ref(localStorage.getItem('role') || '')
 
 // Check if role is valid
@@ -98,8 +89,8 @@ onMounted(async () => {
     localStorage.setItem('userProfile', JSON.stringify(res.data || {}))
     loggedInUser.value = res.data || {}
     userRole.value = res.data?.roles?.[0]?.toLowerCase() || ''
-    localStorage.setItem("currencySymbol","R");
-    localStorage.setItem("phoneCountryCode","+27")
+    localStorage.setItem("currencySymbol", "R");
+    localStorage.setItem("phoneCountryCode", "+27")
   } catch (error) {
     console.error('Failed to load user profile:', error)
   }
@@ -124,19 +115,39 @@ const sidebarStyle = computed(() => ({
 
 // Navigation items
 const navigationItems = [
-  { title: 'Home', icon: 'mdi-home', to: '/dashboard', roles: ['client','mechanic','admin','carwash','noRole'] },
-  { title: 'Profile', icon: 'mdi-account', to: '/profile', roles: ['client','mechanic','admin','carwash'] },
-  { title: 'Service Request', icon: 'mdi-car-wrench', to: '/request', roles: ['client'] }, 
+  { title: 'Home', icon: 'mdi-home', to: '/dashboard', roles: ['client', 'mechanic', 'admin', 'carwash', 'noRole'] },
+  { title: 'Profile', icon: 'mdi-account', to: '/profile', roles: ['client', 'mechanic', 'admin', 'carwash'] },
+  { title: 'Service Request', icon: 'mdi-car-wrench', to: '/request', roles: ['client'] },
   { title: 'Book Car Wash', icon: 'mdi-shower', to: '/book-wash', roles: ['client'] },
   { title: 'Service History', icon: 'mdi-history', to: '/history', roles: ['client'] },
-  { title: 'Payments', icon: 'mdi-credit-card', to: '/payments', roles: ['client'] }, 
+  { title: 'Payments', icon: 'mdi-credit-card', to: '/payments', roles: ['client'] },
   { title: 'My Washes', icon: 'mdi-calendar-check', to: '/my-washes', roles: ['client'] },
-  { title:'Help',icon:'mdi-help',to:'/help-page',roles:['client']},
+  { title: 'Help', icon: 'mdi-help', to: '/help-page', roles: ['client'] },
   { title: 'Job Requests', icon: 'mdi-briefcase', to: '/jobs', roles: ['mechanic'] },
   { title: 'User Management', icon: 'mdi-account-multiple', to: '/users', roles: ['admin'] },
+  {
+    title: 'Manage Payments',
+    icon: 'mdi-credit-card',
+    roles: ['admin'],
+    children: [
+      { title: 'Payments', icon: 'mdi-credit-card', to: '/payments' },
+      { title: 'Earnings', icon: 'mdi-currency-usd', to: '/earnings' }
+    ]
+  }, {
+    title: 'Manage Requests',
+    icon: 'mdi-clipboard-list',
+    roles: ['admin'],
+    children: [
+      { title: 'Carwash management', icon: 'mdi-shower', to: '/car-wash-bookings' },
+      { title: 'Mechanic management', icon: 'mdi-car-wrench', to: '/jobs' }
+    ]
+  },
+
+
+
   { title: 'Bookings', icon: 'mdi-calendar-check', to: '/car-wash-bookings', roles: ['carwash'] },
   { title: 'Manage Washes', icon: 'mdi-shower', to: '/manage-washes', roles: ['carwash'] },
-  { title: 'Earnings', icon: 'mdi-currency-usd', to: '/earnings', roles: ['carwash','mechanic'] }
+  { title: 'Earnings', icon: 'mdi-currency-usd', to: '/earnings', roles: ['carwash', 'mechanic'] }
 ]
 
 // Filtered by role
@@ -203,18 +214,22 @@ defineExpose({ openMobileNav, closeMobileNav })
   height: 100vh;
   box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
 }
+
 .bottom-actions {
   position: absolute;
   bottom: 0;
   width: 100%;
   background-color: aliceblue;
 }
+
 .brand-section {
   padding: 10px 16px;
 }
+
 .nav-item {
   cursor: pointer;
 }
+
 .logout-item {
   cursor: pointer;
 }

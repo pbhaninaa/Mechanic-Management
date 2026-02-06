@@ -59,12 +59,12 @@ interface Payment {
 const payments = ref<Payment[]>([]);
 
 const headers = [
-  { text: "Client", value: "client" },
-  { text: "Mechanic", value: "mechanic" },
-  { text: "Amount", value: "amount" },
-  { text: "Date", value: "date" },
-  { text: "Status", value: "status" },
-  { text: "Actions", value: "actions", sortable: false },
+  { title: "Client", value: "client" },
+  { title: "Mechanic", value: "mechanic" },
+  { title: "Amount", value: "amount" },
+  { title: "Date", value: "date" },
+  { title: "Status", value: "status" },
+  { title: "Actions", value: "actions", sortable: false },
 ];
 
 

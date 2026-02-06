@@ -108,12 +108,12 @@ const loading = ref(false);
 const error = ref<string | null>(null);
 
 const headers = [
-  { text: 'Username', value: 'username' },
-  { text: 'Full Name', value: 'fullName' },
-  { text: 'Email', value: 'email' },
-  { text: 'Phone', value: 'phoneNumber' },
-  { text: 'Roles', value: 'roles', sortable: false },
-  { text: 'Actions', value: 'actions', sortable: false }
+  { title: 'Username', value: 'username' },
+  { title: 'Full Name', value: 'fullName' },
+  { title: 'Email', value: 'email' },
+  { title: 'Phone', value: 'phoneNumber' },
+  { title: 'Roles', value: 'roles', sortable: false },
+  { title: 'Actions', value: 'actions', sortable: false }
 ];
 
 // Edit dialog

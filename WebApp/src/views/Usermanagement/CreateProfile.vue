@@ -31,14 +31,29 @@
         :disabled="loading || isEditMode"
         required
       />
-      <InputField
-        v-model="form.phoneNumber"
-        label="Phone Number"
-        type="tel"
-        required
-        :disabled="loading"
-        max-width="10"
-      />
+      <!-- Country code + phone number -->
+      <v-row>
+        <!-- <v-col cols="4">
+          <v-select
+            v-model="form.countryCode"
+            :items="countryOptions"
+            item-title="label"
+            item-value="code"
+            label="Country Code"
+            :disabled="loading"
+            required
+          />
+        </v-col> -->
+        <v-col >
+          <InputField
+            v-model="form.phoneNumber"
+            label="Phone Number"
+            type="tel"
+            required
+            :disabled="loading"
+          />
+        </v-col>
+      </v-row>
       <InputField
         v-model="form.address"
         label="Address"
@@ -63,7 +78,16 @@
         color="primary"
         @click="saveProfile"
         :loading="loading"
-        :disabled="loading || !form.firstName || !form.lastName || !form.username || !form.email || !form.phoneNumber || form.phoneNumber.length !== 10"
+        :disabled="
+          loading ||
+          !form.firstName ||
+          !form.lastName ||
+          !form.username ||
+          !form.email ||
+          !form.phoneNumber ||
+          !form.countryCode ||
+          !isPhoneValid
+        "
       />
 
       <v-alert
@@ -111,9 +135,27 @@ const form = ref({
   lastName: "",
   username: "",
   email: "",
+  countryCode: localStorage.getItem("phoneCountryCode") || "+27",
   phoneNumber: "",
   address: "",
   roles: [] // always an array
+});
+
+// Supported country codes and expected local number lengths (excluding country code)
+const countryOptions = [
+  { label: "South Africa (+27)", code: "+27", length: 9 },
+  { label: "United States (+1)", code: "+1", length: 10 },
+  { label: "United Kingdom (+44)", code: "+44", length: 10 },
+];
+
+const requiredPhoneLength = computed(() => {
+  const found = countryOptions.find(c => c.code === form.value.countryCode);
+  return found?.length ?? 9;
+});
+
+const isPhoneValid = computed(() => {
+  const digitsOnly = (form.value.phoneNumber || "").replace(/\D/g, "");
+  return digitsOnly.length === requiredPhoneLength.value;
 });
 
 // Loading and feedback
@@ -147,9 +189,10 @@ onMounted(() => {
 
 // Save or update profile
 const saveProfile = async () => {
-  // Validate phone number length
-  if (form.value.phoneNumber.length !== 10) {
-    message.value = "Phone number must be exactly 10 digits.";
+  // Validate phone number length based on selected country code
+  const digitsOnly = (form.value.phoneNumber || "").replace(/\D/g, "");
+  if (digitsOnly.length !== requiredPhoneLength.value) {
+    message.value = `Phone number must be exactly ${requiredPhoneLength.value} digits for the selected country.`;
     messageType.value = "error";
     return;
   }
@@ -162,6 +205,11 @@ const saveProfile = async () => {
   loading.value = true;
   message.value = "";
   try {
+    // Persist selected country code for use elsewhere (e.g. Help page)
+    if (form.value.countryCode) {
+      localStorage.setItem("phoneCountryCode", form.value.countryCode);
+    }
+
     // Ensure roles is always an array
     if (form.value.roles && !Array.isArray(form.value.roles)) {
       form.value.roles = [form.value.roles];
@@ -170,18 +218,10 @@ const saveProfile = async () => {
     if (isEditMode.value) {
       const res = await apiService.updateUserProfile(form.value);
       localStorage.setItem("userProfile", JSON.stringify(res.data));
-      // Keep role in sync for role-driven navbar
-      const nextRole = res.data?.roles?.[0]?.toLowerCase?.() || "";
-      if (nextRole) localStorage.setItem("role", nextRole);
-      // Notify app/navbar to refresh immediately
-      window.dispatchEvent(new Event("profileUpdated"));
       message.value = "Profile updated successfully!";
     } else {
       const res = await apiService.createUserProfile(form.value);
       localStorage.setItem("userProfile", JSON.stringify(res.data));
-      const nextRole = res.data?.roles?.[0]?.toLowerCase?.() || "";
-      if (nextRole) localStorage.setItem("role", nextRole);
-      window.dispatchEvent(new Event("profileUpdated"));
       message.value = "Profile saved successfully!";
     }
 
@@ -197,7 +237,6 @@ const saveProfile = async () => {
     messageType.value = "error";
   } finally {
     loading.value = false;
-    windows.reload();
     
   }
 };

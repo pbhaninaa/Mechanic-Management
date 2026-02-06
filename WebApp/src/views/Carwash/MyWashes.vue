@@ -107,13 +107,13 @@ interface Booking {
 
 // Table headers
 const headers = [
-  { text: "Car Plate", value: "carPlate" },
-  { text: "Car Type", value: "carType" },
-  { text: "Services", value: "serviceTypes" },
-  { text: "Date", value: "date" },
-  { text: "Price", value: "price" },
-  { text: "Location", value: "location" },
-  { text: "Status", value: "status" },
+  { title: "Car Plate", value: "carPlate" },
+  { title: "Car Type", value: "carType" },
+  { title: "Services", value: "serviceTypes" },
+  { title: "Date", value: "date" },
+  { title: "Price", value: "price" },
+  { title: "Location", value: "location" },
+  { title: "Status", value: "status" },
 ];
 
 // Reactive states

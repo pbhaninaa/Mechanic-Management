@@ -61,12 +61,12 @@ interface JobRequest {
 const jobRequests = ref<JobRequest[]>([]);
 
 const headers = [
-  { text: "Client", value: "username" },
-  { text: "Description", value: "description" },
-  { text: "Date", value: "date" },
-  { text: "Location", value: "location" },
-  { text: "Status", value: "status" },
-  { text: "Actions", value: "actions", sortable: false },
+  { title: "Client", value: "username" },
+  { title: "Description", value: "description" },
+  { title: "Date", value: "date" },
+  { title: "Location", value: "location" },
+  { title: "Status", value: "status" },
+  { title: "Actions", value: "actions", sortable: false },
 ];
 
 

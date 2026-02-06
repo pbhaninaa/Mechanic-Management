@@ -61,11 +61,11 @@ const historyError = ref<string | null>(null);
 
 // Table headers
 const headers = [
-  { text: "Description", value: "description" },
-  { text: "Location", value: "location" },
-  { text: "Date", value: "date" },
-  { text: "Status", value: "status" },
-  { text: "Actions", value: "actions", sortable: false }
+  { title: "Description", value: "description" },
+  { title: "Location", value: "location" },
+  { title: "Date", value: "date" },
+  { title: "Status", value: "status" },
+  { title: "Actions", value: "actions", sortable: false }
 ];
 
 

@@ -90,3 +90,9 @@ html, body, #app, .v-application {
     font-size: 0.85rem;
   }
 }
+
+/* Global table header styling */
+.v-data-table thead th {
+  font-weight: 700;
+  background-color: #f3f4f6; /* light grey to distinguish header row */
+}

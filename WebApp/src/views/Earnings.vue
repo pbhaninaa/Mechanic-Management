@@ -54,10 +54,10 @@ import { getStatusColor } from "@/utils/helper";
 
 // Table headers
 const headers = [
-  { text: "Job Description", value: "jobDescription" },
-  { text: "Date", value: "paidAt" },
-  { text: "Amount", value: "amount" },
-  { text: "Status", value: "status" },
+  { title: "Job Description", value: "jobDescription" },
+  { title: "Date", value: "paidAt" },
+  { title: "Amount", value: "amount" },
+  { title: "Status", value: "status" },
 ];
 
 // State

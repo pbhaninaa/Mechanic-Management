@@ -36,7 +36,7 @@ import { defineProps } from "vue";
 import PageContainer from "@/components/PageContainer.vue";
 
 interface TableHeader {
-  text: string;
+  title: string;
   value: string;
   sortable?: boolean;
 }

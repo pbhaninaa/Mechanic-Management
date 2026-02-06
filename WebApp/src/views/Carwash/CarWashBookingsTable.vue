@@ -93,15 +93,15 @@ const bookings = ref<Booking[]>([]);
 const loading = ref(false);
 
 const headers = [
-  { text: "Client Username", value: "clientUsername" },
-  { text: "Car Plate", value: "carPlate" },
-  { text: "Car Type", value: "carType" },
-  { text: "Car Description", value: "carDescription" },
-  { text: "Service Types", value: "serviceTypes" },
-  { text: "Date", value: "date" },
-  { text: "Location", value: "location" },
-  { text: "Status", value: "status" },
-  { text: "Actions", value: "actions", sortable: false },
+  { title: "Client Username", value: "clientUsername" },
+  { title: "Car Plate", value: "carPlate" },
+  { title: "Car Type", value: "carType" },
+  { title: "Car Description", value: "carDescription" },
+  { title: "Service Types", value: "serviceTypes" },
+  { title: "Date", value: "date" },
+  { title: "Location", value: "location" },
+  { title: "Status", value: "status" },
+  { title: "Actions", value: "actions", sortable: false },
 ];
 
 const formatDate = (isoDate: string) => {
