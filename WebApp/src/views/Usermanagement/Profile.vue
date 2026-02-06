@@ -144,10 +144,11 @@ const { profile, loading, error, loadProfile } = useProfile();
 
 // Navigate to edit profile
 const goToEditProfile = () => {
-  router.push({
-    name: "CreateProfile",
-    query: { profile: JSON.stringify(profile.value) }
-  });
+  // Store the profile in localStorage instead of exposing it in the URL
+  if (profile.value) {
+    localStorage.setItem("profile", JSON.stringify(profile.value));
+  }
+  router.push({ name: "CreateProfile" });
 };
 
 // Format date nicely

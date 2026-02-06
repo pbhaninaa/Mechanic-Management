@@ -2,8 +2,7 @@
   <PageContainer>
       <v-card-title>Car Wash Bookings</v-card-title>
       <v-card-text>
-        <p>See all booking requests from clients.</p>
-
+    
         <v-data-table
           :headers="headers"
           :items="bookings"

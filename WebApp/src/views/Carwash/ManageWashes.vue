@@ -4,13 +4,7 @@
     <v-card-text>
       <!-- Washes Table -->
       <v-data-table :headers="headers" :items="washes" :loading="loading" class="elevation-1" :items-per-page="5">
-        <template v-slot:top>
-          <v-toolbar flat>
-            <v-toolbar-title>Your Wash Jobs</v-toolbar-title>
-            <v-spacer></v-spacer>
-            <Button label="Refresh" color="primary" :loading="loading" @click="fetchWashes" />
-          </v-toolbar>
-        </template>
+       
 
         <!-- Status with colored chips -->
         <template v-slot:item.status="{ item }">

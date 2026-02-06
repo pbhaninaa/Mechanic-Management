@@ -3,9 +3,7 @@
     <v-card>
       <v-card-title>Car Wash Booking</v-card-title>
       <v-card-text>
-        <p>Fill in your details to book a car wash:</p>
-
-        <v-form ref="form" v-model="formValid" lazy-validation>
+      <v-form ref="form" v-model="formValid" lazy-validation>
           <v-row class="mt-5" dense>
             <!-- Car Type -->
             <v-col cols="12" md="6">
