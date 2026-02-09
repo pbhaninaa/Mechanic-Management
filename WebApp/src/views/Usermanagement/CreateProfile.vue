@@ -31,26 +31,27 @@
         :disabled="loading || isEditMode"
         required
       />
-      <!-- Country code + phone number -->
+      <!-- Country + phone number -->
       <v-row>
-        <!-- <v-col cols="4">
+        <v-col cols="6">
           <v-select
             v-model="form.countryCode"
             :items="countryOptions"
             item-title="label"
             item-value="code"
-            label="Country Code"
+            label="Country"
             :disabled="loading"
             required
           />
-        </v-col> -->
-        <v-col >
+        </v-col>
+        <v-col cols="6">
           <InputField
             v-model="form.phoneNumber"
             label="Phone Number"
             type="tel"
             required
             :disabled="loading"
+            :countryCode="form.countryCode"
           />
         </v-col>
       </v-row>
@@ -141,11 +142,11 @@ const form = ref({
   roles: [] // always an array
 });
 
-// Supported country codes and expected local number lengths (excluding country code)
+// Supported countries: phone code, currency, and expected local number lengths (excluding country code)
 const countryOptions = [
-  { label: "South Africa (+27)", code: "+27", length: 9 },
-  { label: "United States (+1)", code: "+1", length: 10 },
-  { label: "United Kingdom (+44)", code: "+44", length: 10 },
+  { label: "South Africa (ZAR)", code: "+27", currency: "R", length: 9 },
+  { label: "United States (USD)", code: "+1", currency: "$", length: 10 },
+  { label: "United Kingdom (GBP)", code: "+44", currency: "£", length: 10 },
 ];
 
 const requiredPhoneLength = computed(() => {
@@ -205,9 +206,13 @@ const saveProfile = async () => {
   loading.value = true;
   message.value = "";
   try {
-    // Persist selected country code for use elsewhere (e.g. Help page)
+    // Persist selected country/currency for use elsewhere (e.g. Help page, navbar)
     if (form.value.countryCode) {
       localStorage.setItem("phoneCountryCode", form.value.countryCode);
+      const selectedCountry = countryOptions.find(c => c.code === form.value.countryCode);
+      if (selectedCountry?.currency) {
+        localStorage.setItem("currencySymbol", selectedCountry.currency);
+      }
     }
 
     // Ensure roles is always an array

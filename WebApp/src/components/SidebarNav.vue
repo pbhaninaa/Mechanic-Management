@@ -89,8 +89,6 @@ onMounted(async () => {
     localStorage.setItem('userProfile', JSON.stringify(res.data || {}))
     loggedInUser.value = res.data || {}
     userRole.value = res.data?.roles?.[0]?.toLowerCase() || ''
-    localStorage.setItem("currencySymbol", "R");
-    localStorage.setItem("phoneCountryCode", "+27")
   } catch (error) {
     console.error('Failed to load user profile:', error)
   }
@@ -177,9 +175,6 @@ onMounted(async () => {
     localStorage.setItem('userProfile', JSON.stringify(res.data || {}))
     loggedInUser.value = res.data || {}
     userRole.value = res.data?.roles?.[0]?.toLowerCase() || ''
-
-    localStorage.setItem("currencySymbol", "R")
-    localStorage.setItem("phoneCountryCode", "+27")
 
     router.push('/dashboard')
 
