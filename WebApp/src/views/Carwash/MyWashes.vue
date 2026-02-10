@@ -164,6 +164,7 @@ const goToDirections = (booking: Booking) => {
   router.push({
     name: "Mapview",
     query: { lat: booking.locationLat, lng: booking.locationLng },
+    
   });
 };
 

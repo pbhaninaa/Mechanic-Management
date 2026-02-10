@@ -32,73 +32,109 @@ const props = defineProps<Props>();
 
 const map = ref<L.Map | null>(null);
 const routeLayer = ref<L.GeoJSON | null>(null);
+const userMarker = ref<L.Marker | null>(null);
+const destinationMarker = ref<L.Marker | null>(null);
 let watchId: number | null = null;
 
-// Draw route using OSRM API
-const drawRoute = async (from: { lat: number; lng: number }, to: { lat: number; lng: number }) => {
+/* =========================
+   Draw route using OSRM
+========================= */
+const drawRoute = async (
+  from: { lat: number; lng: number },
+  to: { lat: number; lng: number }
+) => {
   try {
-    const response = await fetch(
+    const res = await fetch(
       `https://router.project-osrm.org/route/v1/driving/${from.lng},${from.lat};${to.lng},${to.lat}?overview=full&geometries=geojson`
     );
-    const data = await response.json();
+    const data = await res.json();
 
-    if (!data.routes || data.routes.length === 0) return;
+    if (!data.routes?.length) return;
 
-    const routeGeoJSON = data.routes[0].geometry;
+    const geometry = data.routes[0].geometry;
 
-    // Remove existing route
-    if (routeLayer.value) map.value?.removeLayer(routeLayer.value);
+    if (routeLayer.value) {
+      map.value?.removeLayer(routeLayer.value);
+    }
 
-    // Draw new route
-    routeLayer.value = L.geoJSON(routeGeoJSON, { style: { color: "blue", weight: 5 } }).addTo(map.value!);
-
-    // Fit map to route
-    const bounds = L.geoJSON(routeGeoJSON).getBounds();
-    map.value?.fitBounds(bounds, { padding: [50, 50] });
-  } catch (error) {
-    console.error("Routing error:", error);
+    routeLayer.value = L.geoJSON(geometry, {
+      style: { color: "#2563eb", weight: 5 },
+    }).addTo(map.value!);
+  } catch (err) {
+    console.error("Routing error:", err);
   }
 };
 
-// Initialize map
-const initMap = (currentLocation: { lat: number; lng: number }) => {
-  if (!map.value) {
-    map.value = L.map("map").setView([currentLocation.lat, currentLocation.lng], 13);
+/* =========================
+   Initialize map ONCE
+========================= */
+const initMap = (location: { lat: number; lng: number }) => {
+  if (map.value) return;
 
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: "© OpenStreetMap contributors",
-    }).addTo(map.value);
+  map.value = L.map("map").setView([location.lat, location.lng], 14);
 
-    // Add marker for user
-    L.marker([currentLocation.lat, currentLocation.lng]).addTo(map.value);
-    L.marker([props.destination.lat, props.destination.lng]).addTo(map.value);
-  }
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    attribution: "© OpenStreetMap contributors",
+  }).addTo(map.value);
 
-  drawRoute(currentLocation, props.destination);
+  userMarker.value = L.marker([location.lat, location.lng])
+    .addTo(map.value)
+    .bindPopup("You are here")
+    .openPopup();
+
+  destinationMarker.value = L.marker([
+    props.destination.lat,
+    props.destination.lng,
+  ])
+    .addTo(map.value)
+    .bindPopup("Destination");
+
+  drawRoute(location, props.destination);
 };
 
-// Reload current location
+/* =========================
+   Update user location
+========================= */
+const updateUserLocation = (location: { lat: number; lng: number }) => {
+  if (!map.value || !userMarker.value) return;
+
+  userMarker.value.setLatLng([location.lat, location.lng]);
+  drawRoute(location, props.destination);
+};
+
+/* =========================
+   Get current location
+========================= */
 const reloadLocation = () => {
   if (!navigator.geolocation) return;
 
   navigator.geolocation.getCurrentPosition(
-    (position) => {
-      const currentLocation = { lat: position.coords.latitude, lng: position.coords.longitude };
-      initMap(currentLocation);
+    (pos) => {
+      const loc = {
+        lat: pos.coords.latitude,
+        lng: pos.coords.longitude,
+      };
+
+      initMap(loc);
+      map.value?.setView([loc.lat, loc.lng], 14);
     },
     (err) => console.error(err),
     { enableHighAccuracy: true }
   );
 };
 
-// Live updates
+/* =========================
+   Live GPS tracking
+========================= */
 const startLiveUpdates = () => {
   if (!navigator.geolocation) return;
 
   watchId = navigator.geolocation.watchPosition(
-    (position) => {
-      const currentLocation = { lat: position.coords.latitude, lng: position.coords.longitude };
-      drawRoute(currentLocation, props.destination);
+    (pos) => {
+      updateUserLocation({
+        lat: pos.coords.latitude,
+        lng: pos.coords.longitude,
+      });
     },
     (err) => console.error(err),
     { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 }
@@ -116,6 +152,7 @@ onBeforeUnmount(() => {
   }
 });
 </script>
+
 
 <style scoped>
 #map {
