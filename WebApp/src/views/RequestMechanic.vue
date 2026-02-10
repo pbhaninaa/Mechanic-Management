@@ -233,7 +233,7 @@ const submitRequest = async () => {
     loading.value = false;
   }
 };
-
+fetchCurrentLocation();
 // On mount
 onMounted(() => {
   if (request.value.forSelf) fetchCurrentLocation();

@@ -48,17 +48,26 @@
                 required
               />
             </v-col>
+<!-- Location Choice -->
+<v-col cols="12" md="6">
+  <v-radio-group v-model="useCurrentLocation" row>
+    <v-radio label="Use My Current Location" :value="true" />
+    <v-radio label="Enter Location Manually" :value="false" />
+  </v-radio-group>
+</v-col>
 
             <!-- Location -->
-            <v-col cols="12" md="6">
-              <InputField
-                v-model="newBooking.location"
-                label="Location"
-                type="text"
-                :disabled="loading"
-                required
-              />
-            </v-col>
+           <v-col cols="12" md="6">
+  <InputField
+    v-model="newBooking.location"
+    label="Location"
+    type="text"
+    :disabled="loading || useCurrentLocation"
+    :readonly="useCurrentLocation"
+    required
+  />
+</v-col>
+
 
             <!-- Total Price -->
             <v-col cols="12" md="6">
@@ -122,6 +131,8 @@ import InputField from "@/components/InputField.vue";
 import DropdownField from "@/components/DropdownField.vue";
 import Button from "@/components/Button.vue";
 import apiService from "@/api/apiService";
+import { getCurrentLocationWithName } from "@/utils/helper";
+
 
 // Get logged in user
 const loggedInUser = JSON.parse(localStorage.getItem("userProfile") || "{}");
@@ -144,6 +155,7 @@ const formValid = ref(false);
 const isEditMode = ref(false);
 const menu = ref(false);
 const today = new Date().toISOString().split("T")[0];
+const useCurrentLocation = ref(true);
 
 const newBooking = ref<Booking>({
   clientUsername: loggedInUser.username || "",
@@ -199,6 +211,25 @@ watch(computedPrice, (newPrice) => {
 
 // For displaying in the input field
 const formattedPrice = computed(() => `R ${newBooking.value.servicePrice}`);
+const fetchCurrentLocation = async () => {
+  const result = await getCurrentLocationWithName();
+
+  if (!result.success) {
+    alert(result.message || "Failed to get location");
+    useCurrentLocation.value = false;
+    return;
+  }
+
+  newBooking.value.location = result.locationName;
+};
+watch(useCurrentLocation, async (val) => {
+  if (val) {
+    await fetchCurrentLocation();
+  } else {
+    newBooking.value.location = "";
+  }
+});
+fetchCurrentLocation();
 
 // Form validation
 const isFormComplete = computed(() =>
