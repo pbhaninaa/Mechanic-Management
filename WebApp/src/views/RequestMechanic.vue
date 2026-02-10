@@ -15,9 +15,10 @@
           v-model="request.description"
           :items="jobOptions"
           label="Service Description"
+          placeholder="Select Service Description"
           :rules="[rules.required]"
           :disabled="loading"
-          outlined
+          variant="outlined"
         />
 
         <!-- Custom explanation if "Other" is selected -->
@@ -47,6 +48,8 @@
           :close-on-content-click="false"
           transition="scale-transition"
           offset-y
+          variant="outlined"
+
           min-width="290px"
         >
           <template #activator="{ props }">
