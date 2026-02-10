@@ -3,12 +3,7 @@
     <div>
       <v-card-title>Users Management</v-card-title>
       <v-card-text>
-        <v-data-table
-          :headers="headers"
-          :items="users"
-          :loading="loading"
-          class="elevation-1"
-        >
+        <v-data-table :headers="headers" :items="users" :loading="loading" class="elevation-1">
           <!-- Full Name Column -->
           <template #item.fullName="{ item }">
             {{ item.firstName }} {{ item.lastName }}
@@ -16,14 +11,7 @@
 
           <!-- Roles Column -->
           <template #item.roles="{ item }">
-            <v-chip
-              v-for="role in item.roles"
-              :key="role"
-              class="ma-1"
-              color="primary"
-              dark
-              small
-            >
+            <v-chip v-for="role in item.roles" :key="role" class="ma-1" color="primary" dark small>
               {{ role }}
             </v-chip>
           </template>
@@ -41,7 +29,7 @@
     </div>
 
     <!-- Edit User Dialog -->
-    <v-dialog v-model="editDialog" max-width="500px">
+    <v-dialog v-model="editDialog" max-width="900px">
       <v-card>
         <v-card-title>Edit User</v-card-title>
         <v-card-text>
@@ -49,33 +37,22 @@
           <InputField v-model="selectedUser.lastName" label="Last Name" required />
           <InputField v-model="selectedUser.username" label="Username" required disabled />
           <InputField v-model="selectedUser.email" label="Email" type="email" required />
-          <InputField v-model="selectedUser.phoneNumber" label="Phone Number" type="tel" required />
+          <PhoneNumberInput v-model="selectedUser.phoneNumber" @valid="isPhoneValid = $event" :disabled="loading" />
 
           <!-- Editable Roles Multi-Select -->
-          <v-select
-            v-model="selectedUser.roles"
-            :items="availableRoles"
-            label="Roles"
-            :multiple="false"
-            chips
-            outlined
-            required
-          />
+          <v-select v-model="selectedUser.roles" :items="availableRoles" label="Roles" :multiple="false" chips
+            variant="outlined" required />
         </v-card-text>
-        <v-card-actions>
-          <v-spacer />
-          <Button text label="Cancel" @click="editDialog = false" />
-          <Button
-            color="primary"
-            label="Save"
-            block
-            :loading="loading"
-            :disabled="!isFormValid"
-            @click="updateUser"
-          />
+
+        <!-- Centered Buttons -->
+        <v-card-actions class="justify-center">
+          <!-- <Button text label="Cancel" class="mx-2" @click="editDialog = false" /> -->
+          <Button color="primary" label="Save" class="mx-2" :loading="loading" :disabled="!isFormValid"
+            @click="updateUser" />
         </v-card-actions>
       </v-card>
     </v-dialog>
+
 
     <!-- Delete Confirmation Dialog -->
     <v-dialog v-model="deleteDialog" max-width="400px">
@@ -101,6 +78,7 @@ import PageContainer from '@/components/PageContainer.vue';
 import InputField from '@/components/InputField.vue';
 import Button from '@/components/Button.vue';
 import apiService from '@/api/apiService';
+import PhoneNumberInput from '@/components/PhoneNumberInput.vue';
 const router = useRouter();
 
 const users = ref([]);
@@ -118,7 +96,7 @@ const headers = [
 
 // Edit dialog
 const editDialog = ref(false);
-const selectedUser = ref<any>({});  
+const selectedUser = ref<any>({});
 
 // Delete confirmation dialog
 const deleteDialog = ref(false);
@@ -134,10 +112,12 @@ const isFormValid = computed(() => {
     selectedUser.value.lastName &&
     selectedUser.value.username &&
     selectedUser.value.email &&
-    selectedUser.value.phoneNumber &&
+    isPhoneValid.value &&
     selectedUser.value.roles?.length > 0
   );
 });
+
+
 
 // Load all users
 const loadUsers = async () => {
@@ -154,24 +134,24 @@ const loadUsers = async () => {
 };
 
 // Edit user
-const editUser = (user: any) => {  
-  //  router.push({
-  //   name: "CreateProfile",
-  //   query: { profile: JSON.stringify(user) }
-  // });
- selectedUser.value = { ...user };
+const editUser = (user: any) => {
+  selectedUser.value = {
+    ...user,
+    phoneNumber: user.phoneNumber || ""
+  };
   editDialog.value = true;
 };
+
 
 // Update user
 const updateUser = async () => {
   if (!isFormValid.value) return;
   loading.value = true;
-  try {   
+  try {
 
     await apiService.updateUserProfile(selectedUser.value);
-    
- 
+
+
     editDialog.value = false;
     await loadUsers();
   } catch (err: any) {
@@ -196,7 +176,18 @@ async function sendEmailToUser(user: any) {
     console.error('Error sending email to', user.email, error);
   }
 }
+const countryOptions = [
+  { label: "South Africa (ZAR)", code: "+27", currency: "R", length: 9 },
+  { label: "United States (USD)", code: "+1", currency: "$", length: 10 },
+  { label: "United Kingdom (GBP)", code: "+44", currency: "£", length: 10 },
+];
 
+const requiredPhoneLength = computed(() => {
+  const found = countryOptions.find(c => c.code === selectedUser.value.countryCode);
+  return found?.length ?? 9;
+});
+
+const isPhoneValid = ref(true);
 
 // Delete confirmation
 const confirmDelete = (user: any) => {

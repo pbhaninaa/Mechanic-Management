@@ -2,102 +2,24 @@
   <PageContainer>
     <v-card-title>{{ isEditMode ? "Edit Profile" : "Create Profile" }}</v-card-title>
     <v-card-text>
-      <!-- Input fields -->
-      <InputField
-        v-model="form.firstName"
-        label="First Name"
-        type="text"
-        :disabled="loading"
-        required
-      />
-      <InputField
-        v-model="form.lastName"
-        label="Last Name"
-        type="text"
-        :disabled="loading"
-        required
-      />
-      <InputField
-        v-model="form.username"
-        label="Username"
-        type="text"
-        :disabled="true"
-        required
-      />
-      <InputField
-        v-model="form.email"
-        label="Email"
-        type="email"
-        :disabled="loading || isEditMode"
-        required
-      />
-      <!-- Country + phone number -->
-      <v-row>
-        <v-col cols="6">
-          <v-select
-            v-model="form.countryCode"
-            :items="countryOptions"
-            item-title="label"
-            item-value="code"
-            label="Country"
-            :disabled="loading"
-            required
-          />
-        </v-col>
-        <v-col cols="6">
-          <InputField
-            v-model="form.phoneNumber"
-            label="Phone Number"
-            type="tel"
-            required
-            :disabled="loading"
-            :countryCode="form.countryCode"
-          />
-        </v-col>
-      </v-row>
-      <InputField
-        v-model="form.address"
-        label="Address"
-        type="text"
-        :disabled="loading || form.roles[0] === USER_ROLES.ADMIN"
-      />
-
-      <!-- Roles select -->
-      <v-select
-        v-model="form.roles"
-        :items="roles"
-        label="Role"
-        chips
-        :multiple="false"
-        :disabled="loading || !canEditRole"
-        required
-      />
-
-      <!-- Save / Update button -->
-      <Button
-        :label="isEditMode ? 'Update' : 'Save'"
-        color="primary"
-        @click="saveProfile"
-        :loading="loading"
-        :disabled="
-          loading ||
-          !form.firstName ||
-          !form.lastName ||
-          !form.username ||
-          !form.email ||
-          !form.phoneNumber ||
-          !form.countryCode ||
-          !isPhoneValid
-        "
-      />
-
-      <v-alert
-        v-if="message"
-        :type="messageType"
-        class="mt-3"
-        closable
-        @click:close="message = ''"
-      >
+      <InputField v-model="form.firstName" label="First Name" type="text" :disabled="loading" required />
+      <InputField v-model="form.lastName" label="Last Name" type="text" :disabled="loading" required />
+      <InputField v-model="form.username" label="Username" type="text" :disabled="true" required />
+      <InputField v-model="form.email" label="Email" type="email" :disabled="loading || isEditMode" required />
+      <PhoneNumberInput v-model="form.phoneNumber" @valid="isPhoneValid = $event" :disabled="loading" />
+      <InputField v-model="form.address" label="Address" type="text"
+        :disabled="loading || form.roles[0] === USER_ROLES.ADMIN" />
+      <v-select v-model="form.roles" :items="roles" label="Role" chips :multiple="false"
+        :disabled="loading || !canEditRole" required variant="outlined" />
+      <Button :label="isEditMode ? 'Update' : 'Save'" color="primary" :disabled="loading ||
+        !form.firstName ||
+        !form.lastName ||
+        !form.username ||
+        !form.email ||
+        !form.phoneNumber ||
+        isPhoneValid
+        " :loading="loading" @click="saveProfile" />
+      <v-alert v-if="message" :type="messageType" class="mt-3" closable @click:close="message = ''">
         {{ message }}
       </v-alert>
     </v-card-text>
@@ -112,25 +34,17 @@ import Button from "@/components/Button.vue";
 import apiService from "@/api/apiService";
 import PageContainer from "@/components/PageContainer.vue";
 import { USER_ROLES } from "@/utils/constants";
+import PhoneNumberInput from "@/components/PhoneNumberInput.vue";
 
-// Router
-const router = useRouter();
 const route = useRoute();
 
-// Get profile from query (if editing)
 const propsProfile = ref(
   route.query.profile
     ? JSON.parse(route.query.profile)
     : JSON.parse(localStorage.getItem("profile") || "{}")
 );
-
-// Roles array
 const roles = [USER_ROLES.CLIENT, USER_ROLES.MECHANIC, USER_ROLES.CAR_WASH, USER_ROLES.ADMIN];
-
-// Edit mode if profile exists
 const isEditMode = computed(() => !!propsProfile.value?.firstName || !!propsProfile.value?.lastName);
-
-// Form state
 const form = ref({
   firstName: "",
   lastName: "",
@@ -141,8 +55,6 @@ const form = ref({
   address: "",
   roles: [] // always an array
 });
-
-// Supported countries: phone code, currency, and expected local number lengths (excluding country code)
 const countryOptions = [
   { label: "South Africa (ZAR)", code: "+27", currency: "R", length: 9 },
   { label: "United States (USD)", code: "+1", currency: "$", length: 10 },
@@ -243,7 +155,7 @@ const saveProfile = async () => {
     messageType.value = "error";
   } finally {
     loading.value = false;
-    
+
   }
 };
 </script>
