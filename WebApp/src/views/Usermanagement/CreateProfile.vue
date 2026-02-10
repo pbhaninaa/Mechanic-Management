@@ -11,14 +11,16 @@
         :disabled="loading || form.roles[0] === USER_ROLES.ADMIN" />
       <v-select v-model="form.roles" :items="roles" label="Role" chips :multiple="false"
         :disabled="loading || !canEditRole" required variant="outlined" />
-      <Button :label="isEditMode ? 'Update' : 'Save'" color="primary" :disabled="loading ||
+      <Button :label="isEditMode ? 'Update' : 'Save'" color="primary" :disabled="
+        loading ||
         !form.firstName ||
         !form.lastName ||
         !form.username ||
         !form.email ||
         !form.phoneNumber ||
-        isPhoneValid
-        " :loading="loading" @click="saveProfile" />
+        !isPhoneValid
+      "
+      :loading="loading" @click="saveProfile" />
       <v-alert v-if="message" :type="messageType" class="mt-3" closable @click:close="message = ''">
         {{ message }}
       </v-alert>
@@ -35,6 +37,7 @@ import apiService from "@/api/apiService";
 import PageContainer from "@/components/PageContainer.vue";
 import { USER_ROLES } from "@/utils/constants";
 import PhoneNumberInput from "@/components/PhoneNumberInput.vue";
+import { countries } from "@/utils/helper";
 
 const route = useRoute();
 
@@ -55,21 +58,17 @@ const form = ref({
   address: "",
   roles: [] // always an array
 });
-const countryOptions = [
-  { label: "South Africa (ZAR)", code: "+27", currency: "R", length: 9 },
-  { label: "United States (USD)", code: "+1", currency: "$", length: 10 },
-  { label: "United Kingdom (GBP)", code: "+44", currency: "£", length: 10 },
-];
+const selectedCountry = computed(() =>
+  countries.find(c => c.code === form.value.countryCode)
+);
 
-const requiredPhoneLength = computed(() => {
-  const found = countryOptions.find(c => c.code === form.value.countryCode);
-  return found?.length ?? 9;
-});
+const requiredPhoneLength = computed(() =>
+  selectedCountry.value?.maxLength ?? 9
+);
 
-const isPhoneValid = computed(() => {
-  const digitsOnly = (form.value.phoneNumber || "").replace(/\D/g, "");
-  return digitsOnly.length === requiredPhoneLength.value;
-});
+
+const isPhoneValid = ref(false);
+
 
 // Loading and feedback
 const loading = ref(false);
@@ -91,71 +90,83 @@ const canEditRole = computed(() => {
 
 // Fill form if editing
 onMounted(() => {
-  if (propsProfile.value) {
-    form.value = {
-      ...form.value,
-      ...propsProfile.value,
-      roles: propsProfile.value.roles ? [...propsProfile.value.roles] : []
-    };
+  if (!propsProfile.value) return;
+
+  const profile = propsProfile.value;
+
+  let phone = profile.phoneNumber || "";
+  const countryCode = profile.countryCode || "+27";
+
+  // Strip country code if backend stored full number
+  if (phone.startsWith(countryCode)) {
+    phone = phone.slice(countryCode.length);
   }
+
+  form.value = {
+    ...form.value,
+    ...profile,
+    phoneNumber: phone,
+    countryCode,
+    roles: profile.roles ? [...profile.roles] : []
+  };
+
+  // Mark phone as valid immediately if it matches length
+  const digitsOnly = phone.replace(/\D/g, "");
+  isPhoneValid.value = digitsOnly.length === requiredPhoneLength.value;
 });
+
+
 
 // Save or update profile
 const saveProfile = async () => {
-  // Validate phone number length based on selected country code
-  const digitsOnly = (form.value.phoneNumber || "").replace(/\D/g, "");
-  if (digitsOnly.length !== requiredPhoneLength.value) {
-    message.value = `Phone number must be exactly ${requiredPhoneLength.value} digits for the selected country.`;
+  if (!isPhoneValid.value) {
+    message.value = "Please enter a valid phone number.";
     messageType.value = "error";
     return;
   }
 
-  // Prevent non-admins from changing roles
+  // Lock roles for non-admins
   if (!canEditRole.value) {
-    form.value.roles = propsProfile.value.roles ? [...propsProfile.value.roles] : [];
+    form.value.roles = propsProfile.value.roles
+      ? [...propsProfile.value.roles]
+      : [];
   }
 
   loading.value = true;
   message.value = "";
+
   try {
-    // Persist selected country/currency for use elsewhere (e.g. Help page, navbar)
-    if (form.value.countryCode) {
-      localStorage.setItem("phoneCountryCode", form.value.countryCode);
-      const selectedCountry = countryOptions.find(c => c.code === form.value.countryCode);
-      if (selectedCountry?.currency) {
-        localStorage.setItem("currencySymbol", selectedCountry.currency);
-      }
+    // Persist country + currency
+    if (selectedCountry.value) {
+      localStorage.setItem("phoneCountryCode", selectedCountry.value.code);
+      localStorage.setItem("currencySymbol", selectedCountry.value.currency);
     }
 
-    // Ensure roles is always an array
-    if (form.value.roles && !Array.isArray(form.value.roles)) {
+    if (!Array.isArray(form.value.roles)) {
       form.value.roles = [form.value.roles];
     }
 
-    if (isEditMode.value) {
-      const res = await apiService.updateUserProfile(form.value);
-      localStorage.setItem("userProfile", JSON.stringify(res.data));
-      message.value = "Profile updated successfully!";
-    } else {
-      const res = await apiService.createUserProfile(form.value);
-      localStorage.setItem("userProfile", JSON.stringify(res.data));
-      message.value = "Profile saved successfully!";
-    }
+    const res = isEditMode.value
+      ? await apiService.updateUserProfile(form.value)
+      : await apiService.createUserProfile(form.value);
+
+    localStorage.setItem("userProfile", JSON.stringify(res.data));
+    message.value = isEditMode.value
+      ? "Profile updated successfully!"
+      : "Profile saved successfully!";
 
     messageType.value = "success";
 
-    // Give a short delay for localStorage to settle, then reload the app.
-    // This remounts the navbar so it pulls the latest profile/role.
-    setTimeout(() => {
-      window.location.reload();
-    }, 200);
+    setTimeout(() => window.location.reload(), 200);
   } catch (err) {
-    console.error("Error saving profile:", err);
-    message.value = err.response?.data?.message || err.message || "Failed to save profile";
+    message.value =
+      err.response?.data?.message ||
+      err.message ||
+      "Failed to save profile";
     messageType.value = "error";
   } finally {
     loading.value = false;
-
   }
 };
+
 </script>

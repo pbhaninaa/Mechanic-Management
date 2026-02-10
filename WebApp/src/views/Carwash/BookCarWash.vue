@@ -3,120 +3,40 @@
     <v-card>
       <v-card-title>Car Wash Booking</v-card-title>
       <v-card-text>
-      <v-form ref="form" v-model="formValid" lazy-validation>
-          <v-row class="mt-5" dense>
-            <!-- Car Type -->
-            <v-col cols="12" md="6">
-              <DropdownField
-                v-model="newBooking.carType"
-                :items="carTypes"
-                label="Car Type"
-                required
-              />
+        <v-form ref="form" v-model="formValid" lazy-validation>
+          <v-row>
+            <v-col cols="12" md="4">
+              <DropdownField v-model="newBooking.carType" :items="carTypes" label="Car Type" required />
             </v-col>
-
-            <!-- Car Description -->
-            <v-col cols="12" md="6">
-              <InputField
-                v-model="newBooking.carDescription"
-                label="Car Description (Make/Model/Year/Color)"
-                type="text"
-                :disabled="loading"
-                required
-              />
+            <v-col cols="12" md="4">
+              <InputField v-model="newBooking.carDescription" label="Car Description (Make/Model/Year/Color)"
+                type="text" :disabled="loading" required />
             </v-col>
-
-            <!-- Car Plate -->
-            <v-col cols="12" md="6">
-              <InputField
-                v-model="newBooking.carPlate"
-                label="Car Plate Number"
-                type="text"
-                :disabled="loading"
-                required
-              />
-            </v-col>
-
-            <!-- Service Types -->
-            <v-col cols="12" md="6">
-              <DropdownField
-                v-model="newBooking.serviceTypes"
-                :items="serviceTypes"
-                label="Select Services"
-                multiple
-                chips
-                required
-              />
-            </v-col>
-<!-- Location Choice -->
-<v-col cols="12" md="6">
-  <v-radio-group v-model="useCurrentLocation" row>
-    <v-radio label="Use My Current Location" :value="true" />
-    <v-radio label="Enter Location Manually" :value="false" />
-  </v-radio-group>
-</v-col>
-
-            <!-- Location -->
-           <v-col cols="12" md="6">
-  <InputField
-    v-model="newBooking.location"
-    label="Location"
-    type="text"
-    :disabled="loading || useCurrentLocation"
-    :readonly="useCurrentLocation"
-    required
-  />
-</v-col>
-
-
-            <!-- Total Price -->
-            <v-col cols="12" md="6">
-              <InputField
-                v-model="formattedPrice"
-                label="Total Price (R)"
-                type="text"
-                :disabled="true"
-              />
-            </v-col>
-
-            <!-- Date Picker -->
-            <v-col cols="12" md="6">
-              <v-menu
-                v-model="menu"
-                :close-on-content-click="false"
-                transition="scale-transition"
-                offset-y
-                min-width="290px"
-              >
-                <template #activator="{ props }">
-                  <v-text-field
-                    v-model="newBooking.date"
-                    label="Preferred Date"
-                    readonly
-                    v-bind="props"
-                    outlined
-                    :disabled="loading"
-                    required
-                  />
-                </template>
-                <v-date-picker
-                  v-model="newBooking.date"
-                  :min="today"
-                  color="primary"
-                  @update:model-value="menu = false"
-                />
-              </v-menu>
+            <v-col cols="12" md="4">
+              <InputField v-model="newBooking.carPlate" label="Car Plate Number" type="text" :disabled="loading"
+                required />
             </v-col>
           </v-row>
 
-          <!-- Submit -->
-          <Button
-            :label="isEditMode ? 'Update' : 'Book Now'"
-            color="primary"
-            @click="submitBooking"
-            :loading="loading"
-            :disabled="loading || !isFormComplete"
-          />
+          <DropdownField v-model="newBooking.serviceTypes" :items="serviceTypes" label="Select Services" multiple chips
+            required />
+          <v-radio-group v-model="useCurrentLocation" row>
+            <v-radio label="Use My Current Location" :value="true" />
+            <v-radio label="Enter Location Manually" :value="false" />
+          </v-radio-group>
+          <InputField v-model="newBooking.location" label="Location" type="text"
+            :disabled="loading || useCurrentLocation" :readonly="useCurrentLocation" required />
+          <InputField v-model="formattedPrice" label="Total Price (R)" type="text" :disabled="true" />
+          <v-menu v-model="menu" :close-on-content-click="false" transition="scale-transition" offset-y
+            min-width="290px">
+            <template #activator="{ props }">
+              <v-text-field v-model="newBooking.date" label="Preferred Date" readonly v-bind="props" outlined
+                :disabled="loading" required />
+            </template>
+            <v-date-picker v-model="newBooking.date" :min="today" color="primary" @update:model-value="menu = false" />
+          </v-menu>
+          <Button :label="isEditMode ? 'Update' : 'Book Now'" color="primary" @click="submitBooking" :loading="loading"
+            :disabled="loading || !isFormComplete" />
         </v-form>
       </v-card-text>
     </v-card>

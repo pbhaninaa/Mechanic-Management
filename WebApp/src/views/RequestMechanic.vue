@@ -9,86 +9,35 @@
           <v-radio label="For Myself" :value="true" />
           <v-radio label="For Someone Else" :value="false" />
         </v-radio-group>
+        <!-- Location -->
+        <InputField v-model="request.location" label="Location"
+          placeholder="Please be as specific as possible ie. 123 Main St, City" :extra-rules="[rules.required]"
+          :disabled="loading || request.forSelf" :readonly="request.forSelf" required />
 
         <!-- Service Description Dropdown -->
-        <v-select
-          v-model="request.description"
-          :items="jobOptions"
-          label="Service Description"
-          placeholder="Select Service Description"
-          :rules="[rules.required]"
-          :disabled="loading"
-          variant="outlined"
-        />
+        <DropdownField v-model="request.description" :items="jobOptions" label="Service Description"
+          placeholder="Select Service Description" :rules="[rules.required]" :disabled="loading" variant="outlined" />
+
 
         <!-- Custom explanation if "Other" is selected -->
-        <v-text-field
-          v-if="request.description === 'Other'"
-          v-model="request.customDescription"
-          label="Please specify"
-          :rules="[rules.required]"
-          :disabled="loading"
-          outlined
-        />
-
-        <!-- Location -->
-        <InputField
-          v-model="request.location"
-          label="Location"
-          placeholder="Please be as specific as possible ie. 123 Main St, City"
-          :extra-rules="[rules.required]"
-          :disabled="loading || request.forSelf"
-          :readonly="request.forSelf"
-          required
-        />
+        <InputField v-if="request.description === 'Other'" v-model="request.customDescription" label="Please specify"
+          :rules="[rules.required]" :disabled="loading" outlined />
 
         <!-- Preferred Date -->
-        <v-menu
-          v-model="menu"
-          :close-on-content-click="false"
-          transition="scale-transition"
-          offset-y
-          variant="outlined"
-
-          min-width="290px"
-        >
+        <v-menu v-model="menu" :close-on-content-click="false" transition="scale-transition" offset-y variant="outlined"
+          min-width="290px">
           <template #activator="{ props }">
-            <v-text-field
-              v-model="request.date"
-              label="Preferred Date"
-              readonly
-              v-bind="props"
-              outlined
-              :rules="[rules.required]"
-              :disabled="loading"
-              required
-            />
+            <v-text-field v-model="request.date" label="Preferred Date" readonly v-bind="props" outlined
+              :rules="[rules.required]" :disabled="loading" required />
           </template>
-          <v-date-picker
-            v-model="request.date"
-            :min="today"
-            color="primary"
-            @update:model-value="menu = false" 
-          />
+          <v-date-picker v-model="request.date" :min="today" color="primary" @update:model-value="menu = false" />
         </v-menu>
 
         <!-- Submit Button -->
-        <Button
-          label="Request Mechanic"
-          :color="STATUS_COLORS.REJECTED"
-          block
-          :loading="loading"
-          :disabled="!isFormValid"
-          @click="submitRequest"
-        />
+        <Button label="Request Mechanic" :color="STATUS_COLORS.REJECTED" block :loading="loading"
+          :disabled="!isFormValid" @click="submitRequest" />
 
-        <v-alert
-          v-if="message"
-          :type="messageType"
-          class="mt-3"
-          closable
-          @click:close="message = ''"
-        >
+        <v-alert v-if="message" :type="messageType" class="mt-3" closable @click:close="message = ''">
           {{ message }}
         </v-alert>
       </v-form>
@@ -106,6 +55,7 @@ import { STATUS_COLORS } from "@/utils/constants";
 import { useRoute, useRouter } from "vue-router";
 import { JOB_STATUS } from "@/utils/constants";
 import { getCurrentLocationWithName } from "@/utils/helper";
+import DropdownField from "@/components/DropdownField.vue";
 
 // Router
 const router = useRouter();
@@ -215,7 +165,7 @@ const submitRequest = async () => {
     const res = await apiService.createRequestMechanic(payload);
     message.value = res.message || "Mechanic request submitted successfully!";
     messageType.value = "success";
-  setTimeout(() => {
+    setTimeout(() => {
       router.push({ name: "RequestHistory" });
     }, 1000);
     request.value = {
