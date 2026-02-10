@@ -53,6 +53,67 @@ export const logoutUser = () => {
 export const goToSignup = () => {
   router.push("/signup");
 };
+export const countries = [
+  { label: "Afghanistan (+93)", code: "+93", iso: "AF", maxLength: 9 },
+  { label: "Albania (+355)", code: "+355", iso: "AL", maxLength: 9 },
+  { label: "Algeria (+213)", code: "+213", iso: "DZ", maxLength: 9 },
+  { label: "Argentina (+54)", code: "+54", iso: "AR", maxLength: 10 },
+  { label: "Australia (+61)", code: "+61", iso: "AU", maxLength: 9 },
+  { label: "Austria (+43)", code: "+43", iso: "AT", maxLength: 10 },
+  { label: "Bangladesh (+880)", code: "+880", iso: "BD", maxLength: 10 },
+  { label: "Belgium (+32)", code: "+32", iso: "BE", maxLength: 9 },
+  { label: "Brazil (+55)", code: "+55", iso: "BR", maxLength: 11 },
+  { label: "Bulgaria (+359)", code: "+359", iso: "BG", maxLength: 9 },
+  { label: "Canada (+1)", code: "+1", iso: "CA", maxLength: 10 },
+  { label: "China (+86)", code: "+86", iso: "CN", maxLength: 11 },
+  { label: "Croatia (+385)", code: "+385", iso: "HR", maxLength: 9 },
+  { label: "Czech Republic (+420)", code: "+420", iso: "CZ", maxLength: 9 },
+  { label: "Denmark (+45)", code: "+45", iso: "DK", maxLength: 8 },
+  { label: "Egypt (+20)", code: "+20", iso: "EG", maxLength: 10 },
+  { label: "Finland (+358)", code: "+358", iso: "FI", maxLength: 10 },
+  { label: "France (+33)", code: "+33", iso: "FR", maxLength: 9 },
+  { label: "Germany (+49)", code: "+49", iso: "DE", maxLength: 11 },
+  { label: "Ghana (+233)", code: "+233", iso: "GH", maxLength: 9 },
+  { label: "Greece (+30)", code: "+30", iso: "GR", maxLength: 10 },
+  { label: "Hungary (+36)", code: "+36", iso: "HU", maxLength: 9 },
+  { label: "India (+91)", code: "+91", iso: "IN", maxLength: 10 },
+  { label: "Indonesia (+62)", code: "+62", iso: "ID", maxLength: 11 },
+  { label: "Ireland (+353)", code: "+353", iso: "IE", maxLength: 9 },
+  { label: "Israel (+972)", code: "+972", iso: "IL", maxLength: 9 },
+  { label: "Italy (+39)", code: "+39", iso: "IT", maxLength: 10 },
+  { label: "Japan (+81)", code: "+81", iso: "JP", maxLength: 10 },
+  { label: "Kenya (+254)", code: "+254", iso: "KE", maxLength: 9 },
+  { label: "Malaysia (+60)", code: "+60", iso: "MY", maxLength: 9 },
+  { label: "Mexico (+52)", code: "+52", iso: "MX", maxLength: 10 },
+  { label: "Netherlands (+31)", code: "+31", iso: "NL", maxLength: 9 },
+  { label: "New Zealand (+64)", code: "+64", iso: "NZ", maxLength: 9 },
+  { label: "Nigeria (+234)", code: "+234", iso: "NG", maxLength: 10 },
+  { label: "Norway (+47)", code: "+47", iso: "NO", maxLength: 8 },
+  { label: "Pakistan (+92)", code: "+92", iso: "PK", maxLength: 10 },
+  { label: "Philippines (+63)", code: "+63", iso: "PH", maxLength: 10 },
+  { label: "Poland (+48)", code: "+48", iso: "PL", maxLength: 9 },
+  { label: "Portugal (+351)", code: "+351", iso: "PT", maxLength: 9 },
+  { label: "Romania (+40)", code: "+40", iso: "RO", maxLength: 9 },
+  { label: "Russia (+7)", code: "+7", iso: "RU", maxLength: 10 },
+  { label: "Saudi Arabia (+966)", code: "+966", iso: "SA", maxLength: 9 },
+  { label: "Singapore (+65)", code: "+65", iso: "SG", maxLength: 8 },
+  { label: "South Africa (+27)", code: "+27", iso: "ZA", maxLength: 9 },
+  { label: "South Korea (+82)", code: "+82", iso: "KR", maxLength: 10 },
+  { label: "Spain (+34)", code: "+34", iso: "ES", maxLength: 9 },
+  { label: "Sweden (+46)", code: "+46", iso: "SE", maxLength: 9 },
+  { label: "Switzerland (+41)", code: "+41", iso: "CH", maxLength: 9 },
+  { label: "Tanzania (+255)", code: "+255", iso: "TZ", maxLength: 9 },
+  { label: "Thailand (+66)", code: "+66", iso: "TH", maxLength: 9 },
+  { label: "Turkey (+90)", code: "+90", iso: "TR", maxLength: 10 },
+  { label: "Uganda (+256)", code: "+256", iso: "UG", maxLength: 9 },
+  { label: "Ukraine (+380)", code: "+380", iso: "UA", maxLength: 9 },
+  { label: "United Arab Emirates (+971)", code: "+971", iso: "AE", maxLength: 9 },
+  { label: "United Kingdom (+44)", code: "+44", iso: "GB", maxLength: 10 },
+  { label: "United States (+1)", code: "+1", iso: "US", maxLength: 10 },
+  { label: "Vietnam (+84)", code: "+84", iso: "VN", maxLength: 9 },
+  { label: "Zambia (+260)", code: "+260", iso: "ZM", maxLength: 9 },
+  { label: "Zimbabwe (+263)", code: "+263", iso: "ZW", maxLength: 9 }
+];
 
 export const getDistanceToLocation = async (locationName) => {
   try {
@@ -96,6 +157,57 @@ export const getDistanceToLocation = async (locationName) => {
   } catch (err) {
     console.error("Error getting distance:", err);
     return { success: false, message: err.message };
+  }
+};
+export const getCurrentLocationWithName = async () => {
+  if (!navigator.geolocation) {
+    return {
+      success: false,
+      message: "Geolocation is not supported by this browser",
+    };
+  }
+
+  try {
+    // 1️⃣ Get current coordinates
+    const position = await new Promise((resolve, reject) => {
+      navigator.geolocation.getCurrentPosition(resolve, reject);
+    });
+
+    const latitude = position.coords.latitude;
+    const longitude = position.coords.longitude;
+
+    // 2️⃣ Reverse geocode to get location name
+    let locationName = `${latitude}, ${longitude}`;
+
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`
+      );
+      const data = await response.json();
+
+      if (data?.display_name) {
+        locationName = data.display_name;
+      }
+    } catch (e) {
+      // fallback already handled
+      console.warn("Reverse geocoding failed, using coords only");
+    }
+
+    // 3️⃣ Return JSON
+    return {
+      success: true,
+      coords: {
+        latitude,
+        longitude,
+      },
+      locationName,
+    };
+  } catch (err) {
+    console.error("Failed to get current location:", err);
+    return {
+      success: false,
+      message: err.message || "Failed to get current location",
+    };
   }
 };
 

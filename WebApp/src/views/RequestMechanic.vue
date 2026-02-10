@@ -102,6 +102,8 @@ import apiService from "@/api/apiService";
 import { STATUS_COLORS } from "@/utils/constants";
 import { useRoute, useRouter } from "vue-router";
 import { JOB_STATUS } from "@/utils/constants";
+import { getCurrentLocationWithName } from "@/utils/helper";
+
 // Router
 const router = useRouter();
 const route = useRoute();
@@ -151,46 +153,36 @@ const isFormValid = computed(
 // Get current user from local storage
 const username = JSON.parse(localStorage.getItem("profile") || "{}").username;
 
-// Geolocation for "For Myself"
-const getCurrentLocation = () => {
-  if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        request.value.latitude = pos.coords.latitude;
-        request.value.longitude = pos.coords.longitude;
-        await getLocationName(pos.coords.latitude, pos.coords.longitude);
-      },
-      (err) => {
-        console.error(err);
-        message.value = "Failed to get your location. Please enter manually.";
-        messageType.value = "error";
-        request.value.forSelf = false;
-      }
-    );
+const fetchCurrentLocation = async () => {
+  const result = await getCurrentLocationWithName();
+
+  if (!result.success) {
+    message.value = result.message || "Failed to get your location";
+    messageType.value = "error";
+    request.value.forSelf = false;
+    return;
   }
+
+  request.value.latitude = result.coords.latitude;
+  request.value.longitude = result.coords.longitude;
+  request.value.location = result.locationName;
 };
 
-// Reverse geocoding
-const getLocationName = async (lat: number, lng: number) => {
-  try {
-    const res = await fetch(
-      `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`
-    );
-    const data = await res.json();
-    request.value.location = data.display_name || `${lat}, ${lng}`;
-  } catch {
-    request.value.location = `${lat}, ${lng}`;
-  }
-};
 
 // Watch "For Myself" toggle
 watch(
   () => request.value.forSelf,
-  (val) => {
-    if (val) getCurrentLocation();
-    else request.value.location = "";
+  async (val) => {
+    if (val) {
+      await fetchCurrentLocation();
+    } else {
+      request.value.location = "";
+      request.value.latitude = null;
+      request.value.longitude = null;
+    }
   }
 );
+
 
 const submitRequest = async () => {
   const { valid } = await form.value.validate();
@@ -233,7 +225,7 @@ const submitRequest = async () => {
       date: "",
     };
     form.value.resetValidation();
-    getCurrentLocation();
+    fetchCurrentLocation;
   } catch (err: any) {
     message.value = err.message || "Failed to submit request";
     messageType.value = "error";
@@ -244,7 +236,7 @@ const submitRequest = async () => {
 
 // On mount
 onMounted(() => {
-  if (request.value.forSelf) getCurrentLocation();
+  if (request.value.forSelf) fetchCurrentLocation();
 });
 </script>
 
