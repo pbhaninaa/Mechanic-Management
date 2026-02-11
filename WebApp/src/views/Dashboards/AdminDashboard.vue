@@ -92,7 +92,7 @@ const loadDashboardData = async () => {
     carwashes.value = users.value.filter((u: any) => u.roles.includes("CARWASH"));
 
     // Payments
-    const resPayments = await apiService.getAllPayments();
+    const resPayments = await apiService.getPaymentsByClients();
     payments.value = resPayments.data || [];
 
     jobsCompleted.value = payments.value.length;
