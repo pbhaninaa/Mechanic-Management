@@ -31,7 +31,8 @@ public class PaymentController {
     }
 
     // Get all payments
-    @GetMapping
+
+    @GetMapping("/getPayments")
     public ResponseEntity<ApiResponse<List<Payment>>> getAllPayments() {
         List<Payment> payments = paymentService.getAllPayments();
         ApiResponse<List<Payment>> response = new ApiResponse<>(

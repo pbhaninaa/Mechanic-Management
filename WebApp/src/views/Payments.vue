@@ -2,16 +2,10 @@
   <PageContainer>
     <v-card-title>Payments</v-card-title>
     <v-card-text>
-      <p>Welcome Admin, manage all payments here.</p>
 
-      <v-data-table
-        :headers="headers"
-        :items="payments"
-        class="elevation-1"
-        :items-per-page="5"
-      >
+      <v-data-table :headers="headers" :items="payments" class="elevation-1" :items-per-page="5">
         <template #item.amount="{ item }">
-          R{{ item.amount.toFixed(2) }}
+          R{{ item.amount }}
         </template>
 
         <template #item.status="{ item }">
@@ -21,12 +15,7 @@
         </template>
 
         <template #item.actions="{ item }">
-          <v-btn
-            small
-            color="green"
-            :disabled="item.status.toLowerCase() === 'completed'"
-            @click="markCompleted(item)"
-          >
+          <v-btn small color="green" :disabled="item.status.toLowerCase() === 'completed'" @click="markCompleted(item)">
             Mark Completed
           </v-btn>
         </template>
@@ -60,9 +49,9 @@ const payments = ref<Payment[]>([]);
 
 const headers = [
   { title: "Client", value: "client" },
-  { title: "Mechanic", value: "mechanic" },
   { title: "Amount", value: "amount" },
-  { title: "Date", value: "date" },
+  { title: "Jod Description", value: "jobDescription" },
+  { title: "Payment Date", value: "date" },
   { title: "Status", value: "status" },
   { title: "Actions", value: "actions", sortable: false },
 ];
@@ -72,21 +61,16 @@ const headers = [
 // Load payments from API
 const loadPayments = async () => {
   try {
-    const res = await apiService.getPaymentsByClient(localStorage.getItem("userProfile") ? JSON.parse(localStorage.getItem("userProfile") || "{}").username : "");
-    console.log("Raw response:", res);
-
-    // res is an ApiResponse, the actual payments are in res.data
+    const res = await apiService.getPaymentsByClients();   
     payments.value = res.data.map((p: any) => ({
       id: p.id,
       client: p.clientUsername,
-      mechanic: p.mechanicId || "Unassigned",
-      amount: p.amount,
+      jobDescription: p.jobDescription,
+      amount: Number(p.amount+p.platformFee).toFixed(2),
       date: p.paidAt,
       status: p.status || JOB_STATUS.PAID,
       jobId: p.jobId
     }));
-
-    console.log("Mapped payments:", payments.value);
   } catch (err) {
     console.error("Failed to load payments:", err);
   }
@@ -99,10 +83,9 @@ const markCompleted = async (payment) => {
 
 
     const job = await apiService.getMechanicRequestsById(payment.jobId);
-    const payload = { ...job, status: JOB_STATUS.COMPLETED};
-    alert("Test "+JSON.stringify(payload));
+    const payload = { ...job, status: JOB_STATUS.COMPLETED };
     await apiService.updateRequestMechanic(payload);
-    await loadPayments(); // Refresh table after update
+    await loadPayments();
   } catch (err) {
     console.error("Failed to update payment status:", err);
   }

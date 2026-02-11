@@ -181,6 +181,9 @@ async getAllPayments() {
 async getPaymentsByClient(username) {
   return this.get(`${API_ENDPOINTS.PAYMENTS}/client/${username}`);
 }
+async getPaymentsByClients() {
+  return this.get(`${API_ENDPOINTS.PAYMENTS}/getPayments`);
+}
 
 async getPaymentsByMechanic(mechanicId) {
   return this.get(`${API_ENDPOINTS.PAYMENTS}/mechanic/${mechanicId}`);

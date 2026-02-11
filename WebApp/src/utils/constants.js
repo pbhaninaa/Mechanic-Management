@@ -26,6 +26,7 @@ export const API_ENDPOINTS = {
   // Payment Endpoints
   PAYMENTS: '/payments',
   PAYMENT_BY_CLIENT: (username) => `/payments/client/${username}`,
+
   PAYMENT_BY_MECHANIC: (mechanicId) => `/payments/mechanic/${mechanicId}`,
   PAYMENT_BY_CARWASHID: (carWashId) => `/payments/carWash/${carWashId}`,
 
