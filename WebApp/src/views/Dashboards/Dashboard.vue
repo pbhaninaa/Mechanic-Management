@@ -24,7 +24,6 @@
 <script setup>
 import { ref, computed, onMounted } from "vue";
 import PageContainer from "@/components/PageContainer.vue";
-import apiService from "@/api/apiService";
 import { useProfile } from "@/composables/useProfile";
 
 import ClientDashboard from "./ClientDashboard.vue";

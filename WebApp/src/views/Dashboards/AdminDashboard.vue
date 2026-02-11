@@ -114,6 +114,7 @@ const loadDashboardData = async () => {
 
 // Charts
 const renderCharts = () => {
+  let earningsChartInstance: Chart | null = null;
   // Progress Pie Chart
   if (progressPieChart.value) {
     new Chart(progressPieChart.value.getContext("2d"), {
@@ -149,80 +150,42 @@ const renderCharts = () => {
     });
   }
 
-  // Earnings Line Chart
-  if (earningsChart.value && payments.value.length > 0) {
-    const sortedPayments = [...payments.value].sort(
-      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
-    );
+if (earningsChart.value) {
+  const TARGET = 1_000;
+  const earned = revenue.value;
+  const remaining = Math.max(TARGET - earned, 0);
 
-    const firstDate = new Date(sortedPayments[0].date);
-    const lastDate = new Date(sortedPayments[sortedPayments.length - 1].date);
-
-    // Build monthly buckets
-    const monthlyTotals: Record<string, number> = {};
-    const cursor = new Date(firstDate);
-
-    while (
-      cursor.getFullYear() < lastDate.getFullYear() ||
-      (cursor.getFullYear() === lastDate.getFullYear() && cursor.getMonth() <= lastDate.getMonth())
-    ) {
-      const key = `${cursor.getFullYear()}-${String(cursor.getMonth() + 1).padStart(2, "0")}`;
-      monthlyTotals[key] = 0;
-      cursor.setMonth(cursor.getMonth() + 1);
-    }
-
-    // Fill buckets with payments
-    payments.value.forEach((p: any) => {
-      const d = new Date(p.date);
-      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-      if (monthlyTotals[key] !== undefined) {
-        monthlyTotals[key] += p.amount || 0;
-      }
-    });
-
-    // Labels & Values
-    const labels = Object.keys(monthlyTotals).map(key => {
-      const [y, m] = key.split("-");
-      return new Date(Number(y), Number(m) - 1).toLocaleString("default", {
-        month: "short",
-        year: "numeric",
-      });
-    });
-
-    const values = Object.values(monthlyTotals);
-
-    new Chart(earningsChart.value.getContext("2d"), {
-      type: "line",
-      data: {
-        labels,
-        datasets: [
-          {
-            label: "Earnings (R)",
-            data: values,
-            borderColor: "rgba(54, 162, 235, 0.9)",
-            backgroundColor: "rgba(54, 162, 235, 0.2)",
-            tension: 0.3,
-            fill: true,
-            pointBackgroundColor: "rgba(54, 162, 235, 1)",
-          },
-        ],
-      },
-      options: {
-        responsive: true,
-        plugins: {
-          legend: { display: false },
-          datalabels: {
-            color: "#000",
-            anchor: "end",
-            align: "top",
-            formatter: (val: number) => `R ${val.toLocaleString()}`,
+  earningsChartInstance = new Chart(earningsChart.value, {
+    type: "pie",
+    data: {
+      labels: ["Earned", "Remaining"],
+      datasets: [
+        {
+          data: [earned, remaining],
+          backgroundColor: ["#4caf50", "#e0e0e0"],
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      cutout: "1%", // makes it look modern
+      plugins: {
+        legend: { position: "bottom" },
+        datalabels: {
+          color: "#000",
+          formatter: (value: number, context) => {
+            const total = context.dataset.data.reduce(
+              (a: number, b: number) => a + b,
+              0
+            );
+            const percent = ((value / total) * 100).toFixed(1);
+            return `${percent}%`;
           },
         },
-        scales: { y: { beginAtZero: true } },
       },
-      plugins: [ChartDataLabels],
-    });
-  }
+    },
+  });
+}
 };
 
 // Init
