@@ -37,7 +37,13 @@
           <InputField v-model="selectedUser.lastName" label="Last Name" required />
           <InputField v-model="selectedUser.username" label="Username" required disabled />
           <InputField v-model="selectedUser.email" label="Email" type="email" required />
-          <PhoneNumberInput v-model="selectedUser.phoneNumber" @valid="isPhoneValid = $event" :disabled="loading" />
+          <PhoneNumberInput
+            v-model="selectedUser.phoneNumber"
+            :initial-value="selectedUser.phoneNumber"
+            @valid="isPhoneValid = $event"
+            :disabled="loading"
+          />
+
 
           <!-- Editable Roles Multi-Select -->
           <v-select v-model="selectedUser.roles" :items="availableRoles" label="Roles" :multiple="false" chips
