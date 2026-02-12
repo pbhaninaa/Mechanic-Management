@@ -168,13 +168,13 @@ if (earningsChart.value) {
     },
     options: {
       responsive: true,
-      cutout: "1%", // makes it look modern
+      cutout: "%", // makes it look modern
       plugins: {
         legend: { position: "bottom" },
         datalabels: {
           color: "#000",
           formatter: (value: number, context) => {
-            const total = context.dataset.data.reduce(
+            const total:any = context.dataset.data.reduce(
               (a: number, b: number) => a + b,
               0
             );
