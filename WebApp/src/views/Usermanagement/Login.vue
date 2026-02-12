@@ -72,6 +72,7 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import { loginUser, goToSignup } from "@/utils/helper";
+import { useRouter } from 'vue-router';
 import InputField from "@/components/InputField.vue";
 import Button from "@/components/Button.vue";
 const username = ref("");
@@ -79,6 +80,7 @@ const password = ref("");
 const message = ref("");
 const messageType = ref("success");
 const loading = ref(false);
+const router = useRouter();
 
 const handleLogin = async () => {
   loading.value = true;
@@ -90,10 +92,10 @@ const handleLogin = async () => {
     message.value = result.message;
     messageType.value = "success";
     
-    // Redirect after successful login
+    // Redirect after successful login — wait so message is readable
     setTimeout(() => {
-      window.location.reload();
-    }, 1000);
+      router.push('/dashboard');
+    }, 3000);
   } else {
     message.value = result.message;
     messageType.value = "error";

@@ -1,6 +1,6 @@
 import axios from "axios";
-import { useRouter } from "vue-router";
-import { API_CONFIG } from "../utils/constants";
+import router from "../router";
+import { API_CONFIG, API_ENDPOINTS } from "../utils/constants";
 
 const API = axios.create({
   baseURL: API_CONFIG.BASE_URL,
@@ -28,9 +28,19 @@ API.interceptors.response.use(
   },
   (error) => {
     if (error.response?.status === 401) {
-      // Token expired or invalid
-      localStorage.removeItem("token");
-      window.location.href = "/login";
+      // Token expired or invalid — avoid redirect for login requests themselves
+      const requestUrl = error.config?.url || "";
+      // If this is NOT the login endpoint, clear token and navigate to login route
+      if (!requestUrl.includes(API_ENDPOINTS.LOGIN)) {
+        localStorage.removeItem("token");
+        // Use SPA navigation so we don't force a hard reload
+        try {
+          router.push("/login");
+        } catch (e) {
+          // fallback to href if router push fails
+          window.location.href = "/login";
+        }
+      }
     }
     
     if (error.code === "ECONNABORTED") {
