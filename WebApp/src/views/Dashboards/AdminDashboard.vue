@@ -168,7 +168,7 @@ if (earningsChart.value) {
     },
     options: {
       responsive: true,
-      cutout: "%", // makes it look modern
+      cutout: "1%", // makes it look modern
       plugins: {
         legend: { position: "bottom" },
         datalabels: {
