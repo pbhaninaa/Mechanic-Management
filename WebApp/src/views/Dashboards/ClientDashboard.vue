@@ -49,7 +49,7 @@ import { ref, onMounted, watchEffect } from "vue";
 import PageContainer from "@/components/PageContainer.vue";
 import Chart from "chart.js/auto";
 import apiService from "@/api/apiService";
-import { JOB_STATUS } from "@/utils/constants";
+import { JOB_STATUS, COLORS } from "@/utils/constants";
 
 const summaryCards = ref([]);
 const jobRequests = ref([]);
@@ -117,10 +117,10 @@ watchEffect(() => {
 
   // Summary cards
   summaryCards.value = [
-    { title: "My Requests", value: total, icon: "mdi-car-wrench", color: "blue" },
-    { title: "Completed Jobs", value: completed, icon: "mdi-clipboard-check", color: "green" },
-    { title: "Pending Payments", value: accepted, icon: "mdi-credit-card", color: "orange" },
-    { title: "Total Spent", value: formatCurrency(moneySpent.value), icon: "mdi-cash", color: "purple" },
+    { title: "My Requests", value: total, icon: "mdi-car-wrench", color: COLORS.CARD_BLUE },
+    { title: "Completed Jobs", value: completed, icon: "mdi-clipboard-check", color: COLORS.CARD_GREEN },
+    { title: "Pending Payments", value: accepted, icon: "mdi-credit-card", color: COLORS.CARD_ORANGE },
+    { title: "Total Spent", value: formatCurrency(moneySpent.value), icon: "mdi-cash", color: COLORS.CARD_PURPLE },
   ];
 
   // Progress chart → Completed + Pending Payments + Remaining
@@ -136,7 +136,7 @@ watchEffect(() => {
         datasets: [
           {
             data: total === 0 ? [0, 0, 1] : [completed, accepted, remaining],
-            backgroundColor: ["#4caf50", "#ff9800", "#2196f3"],
+            backgroundColor: [COLORS.CHART_GREEN, COLORS.CHART_ORANGE, COLORS.CHART_BLUE],
           },
         ],
       },
@@ -174,8 +174,8 @@ watchEffect(() => {
           {
             label: "Requests Made",
             data: monthlyData,
-            borderColor: "rgba(54, 162, 235, 0.9)",
-            backgroundColor: "rgba(54, 162, 235, 0.2)",
+            borderColor: COLORS.BORDER_BLUE,
+            backgroundColor: COLORS.OVERLAY_BLUE,
             tension: 0.3,
             fill: true,
           },

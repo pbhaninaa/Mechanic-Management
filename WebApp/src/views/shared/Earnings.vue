@@ -35,7 +35,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, watch } from "vue";
-import PageContainer from "../components/PageContainer.vue";
+import PageContainer from "@/components/PageContainer.vue";
 import apiService from "@/api/apiService";
 import { format } from "date-fns";
 import { getStatusColor } from "@/utils/helper";
@@ -43,15 +43,18 @@ import { USER_ROLES } from "@/utils/constants";
 
 // Logged in user
 const loggedInUser = JSON.parse(localStorage.getItem("userProfile") || "{}");
-  const role = loggedInUser.roles?.[0];
+const role = loggedInUser.roles?.[0];
 // Table headers
 const headers = [
   { title: "Job Description", value: "jobDescription" },
   { title: "Date", value: "paidAt" },
   { title: "Amount", value: "amount" },
-  role === USER_ROLES.ADMIN ? { title: "Platform Fee", value: "platformFee" } : null,
+  ...(role === USER_ROLES.ADMIN
+    ? [{ title: "Platform Fee", value: "platformFee" }]
+    : []),
   { title: "Status", value: "status" },
 ];
+
 
 // State
 const earnings = ref([]);
@@ -66,35 +69,33 @@ const fetchEarnings = async () => {
   message.value = "";
 
   try {
-    let response;  
-
+    let response;
     if (role === USER_ROLES.MECHANIC) {
       response = await apiService.getPaymentsByMechanic(loggedInUser.id);
-    } else if (role === USER_ROLES.CARWASH) {
+    } else if (role === USER_ROLES.CAR_WASH) {
       response = await apiService.getPaymentsByCarWash(loggedInUser.id);
-    
-  } else if (role === USER_ROLES.ADMIN) {
-    response = await apiService.getPaymentsByClients();
-  } else {
-    throw new Error("Invalid user role for earnings");
-  }
+    } else if (role === USER_ROLES.ADMIN) {
+      response = await apiService.getPaymentsByClients();
+    } else {
+      throw new Error("Invalid user role for earnings");
+    }
 
-  // Map backend data to table-friendly format
-  earnings.value = (response.data || []).map((p) => ({
-    id: p.id,
-    jobDescription: p.jobDescription || `Job #${p.jobId}`,
-    paidAt: format(new Date(p.paidAt), "dd MMM yyyy, HH:mm"),
-    amount: Number(p.amount+p.platformFee).toFixed(2),
-    platformFee: role === USER_ROLES.ADMIN ? Number(p.platformFee).toFixed(2) : undefined,
-    status: "Paid",
-  }));
-} catch (err: any) {
-  console.error("Error fetching earnings:", err);
-  message.value = err.message || "Failed to load earnings";
-  messageType.value = "error";
-} finally {
-  loading.value = false;
-}
+    // Map backend data to table-friendly format
+    earnings.value = (response.data || []).map((p) => ({
+      id: p.id,
+      jobDescription: p.jobDescription || `Job #${p.jobId}`,
+      paidAt: format(new Date(p.paidAt), "dd MMM yyyy, HH:mm"),
+      amount: Number(p.amount + (p.platformFee || 0)).toFixed(2),
+      platformFee: role === USER_ROLES.ADMIN ? Number(p.platformFee).toFixed(2) : undefined,
+      status: "Paid",
+    }));
+  } catch (err: any) {
+    console.error("Error fetching earnings:", err);
+    message.value = err.message || "Failed to load earnings";
+    messageType.value = "error";
+  } finally {
+    loading.value = false;
+  }
 };
 
 // Hide success message automatically when loading finishes

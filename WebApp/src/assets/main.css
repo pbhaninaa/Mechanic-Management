@@ -1,5 +1,7 @@
 @import './base.css';
 
+/* Note: Color values here should match COLORS constant in src/utils/constants.js */
+
 #app {
   width: 100%;
   height: 100vh;
@@ -91,7 +93,7 @@ html, body, #app, .v-application {
   }
 }
 
-/* Global table header styling */
+/* Global table header styling - Color value from COLORS.BG_LIGHT_GREY_TABLE */
 .v-data-table thead th {
   font-weight: 700;
   background-color: #f3f4f6; /* light grey to distinguish header row */

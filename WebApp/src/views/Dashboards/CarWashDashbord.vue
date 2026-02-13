@@ -126,7 +126,7 @@ const renderCharts = () => {
 const loadSummaryData = async () => {
   try {
     const usersRes = await apiService.getAllUsers();
-    const paymentsRes = await apiService.getAllPayments();
+    const paymentsRes = await apiService.getPaymentsByClients();
     const loggedInUser = JSON.parse(localStorage.getItem("userProfile") || "{}");
 
     const clients = (usersRes.data || []).filter(u => u.roles.includes("CLIENT"));

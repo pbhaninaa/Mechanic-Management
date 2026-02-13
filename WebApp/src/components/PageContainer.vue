@@ -8,6 +8,7 @@
 
 <script setup>
 import { ref, onMounted } from "vue";
+import { COLORS } from "@/utils/constants";
 const isAuthenticated = ref(false);
 const checkAuth = () => {
   isAuthenticated.value = !!localStorage.getItem("token");

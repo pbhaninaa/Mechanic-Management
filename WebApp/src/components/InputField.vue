@@ -46,6 +46,7 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue'
+import { COLORS } from '@/utils/constants'
 
 
 

@@ -62,6 +62,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { logoutUser } from '@/utils/helper'
 import apiService from '@/api/apiService'
+import { COLORS } from '@/utils/constants'
 
 // Router
 const router = useRouter()
