@@ -1,7 +1,10 @@
 <template>
   <PageContainer>
     <div>
-      <v-card-title>Users Management</v-card-title>
+      <v-card-title>
+        Users Management
+       
+      </v-card-title>
       <v-card-text>
         <v-data-table :headers="headers" :items="users" :loading="loading" class="elevation-1">
           <!-- Full Name Column -->
@@ -74,6 +77,24 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+     <v-spacer />
+        <Button max-width="120px" color="primary" label="Add User" @click="createUser()" :disabled="loading" />
+        <Button max-width="120px" color="error" label="Delete All" class="ml-2" @click="confirmDeleteAll" :disabled="loading || users.length === 0" />
+
+    <!-- Delete All Confirmation Dialog -->
+    <v-dialog v-model="deleteAllDialog" max-width="500px">
+      <v-card>
+        <v-card-title class="headline red--text">Confirm Delete All</v-card-title>
+        <v-card-text>
+          This will permanently delete all users. This action cannot be undone. Continue?
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <Button text label="Cancel" @click="deleteAllDialog = false" />
+          <Button color="error" label="Delete All" @click="deleteAllConfirmed" :loading="deleteAllLoading" />
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </PageContainer>
 </template>
 
@@ -85,6 +106,7 @@ import InputField from '@/components/InputField.vue';
 import Button from '@/components/Button.vue';
 import apiService from '@/api/apiService';
 import PhoneNumberInput from '@/components/PhoneNumberInput.vue';
+import { USER_ROLES } from '@/utils/constants';
 const router = useRouter();
 
 const users = ref([]);
@@ -108,6 +130,13 @@ const selectedUser = ref<any>({});
 const deleteDialog = ref(false);
 const userToDelete = ref<any>(null);
 
+// Delete all dialog
+const deleteAllDialog = ref(false);
+const deleteAllLoading = ref(false);
+
+const loggedInUser = JSON.parse(localStorage.getItem('userProfile') || '{}');
+const isAdmin = (loggedInUser.roles || []).includes(USER_ROLES.ADMIN);
+
 // Available roles
 const availableRoles = ['CLIENT', 'MECHANIC', 'ADMIN', 'CARWASH'];
 
@@ -123,7 +152,9 @@ const isFormValid = computed(() => {
   );
 });
 
-
+const createUser = () => {
+        router.replace({ name: "CreateProfile" });
+};
 
 // Load all users
 const loadUsers = async () => {
@@ -214,6 +245,31 @@ const deleteUserConfirmed = async () => {
     error.value = err.message || 'Failed to delete user';
   } finally {
     loading.value = false;
+  }
+};
+
+// Confirm delete all users
+const confirmDeleteAll = () => {
+  deleteAllDialog.value = true;
+};
+
+const deleteAllConfirmed = async () => {
+  if (!users.value.length) return;
+  deleteAllLoading.value = true;
+  try {
+    for (const u of users.value) {
+      try {
+        await apiService.deleteUserByUsername(u.username);
+      } catch (e) {
+        console.error('Failed to delete user', u.username, e);
+      }
+    }
+    deleteAllDialog.value = false;
+    await loadUsers();
+  } catch (err: any) {
+    error.value = err.message || 'Failed to delete users';
+  } finally {
+    deleteAllLoading.value = false;
   }
 };
 
