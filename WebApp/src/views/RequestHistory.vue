@@ -42,7 +42,7 @@ import PageContainer from "@/components/PageContainer.vue";
 import apiService from "@/api/apiService";
 import { JOB_STATUS } from "@/utils/constants";
 import { useRouter } from 'vue-router';
-import { getStatusColor } from "@/utils/helper";
+import { getStatusColor } from "../utils/helper";
 const router = useRouter();
 // TypeScript interface matching backend entity
 interface RequestHistory {

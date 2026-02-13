@@ -6,21 +6,21 @@ import SignUp from "../views/Usermanagement/SignUp.vue";
 import CreateProfile from "../views/Usermanagement/CreateProfile.vue";
 import Profile from "../views/Usermanagement/Profile.vue";
 import Dashboard from "../views/Dashboards/Dashboard.vue";
-import RequestMechanic from "../views/RequestMechanic.vue";
-import RequestHistory from "../views/RequestHistory.vue";
-import Payments from "../views/Payments.vue";
+import RequestMechanic from "@/views/shared/RequestMechanic.vue"
+import RequestHistory from "../views/shared/RequestHistory.vue";
+import Payments from "../views/shared/Payments.vue";
 import JobRequests from "../views/shared/JobRequests.vue";
 import Earnings from "../views/shared/Earnings.vue";
 import UserManagement from "../views/Usermanagement/UserManagement.vue";
-import Reports from "../views/Reports.vue";
+import Reports from "../views/shared/Reports.vue";
 import { USER_ROLES } from "@/utils/constants";
 import CarWashBookingsTable from "@/views/Carwash/CarWashBookingsTable.vue";
 import ManageWashes from "@/views/Carwash/ManageWashes.vue";
 import BookCarWash from "@/views/Carwash/BookCarWash.vue";
 import MyWashes from "@/views/Carwash/MyWashes.vue";
-import Mapview from "@/views/Mapview.vue";
-import HelpPage from "@/views/HelpPage.vue";
-import PaymentScreen from "@/views/PaymentScreen.vue";
+import Mapview from "@/views/shared/Mapview.vue";
+import HelpPage from "@/views/shared/HelpPage.vue";
+import PaymentScreen from "@/views/shared/PaymentScreen.vue";
 
 const routes = [
   { path: "/", redirect: "/login" },

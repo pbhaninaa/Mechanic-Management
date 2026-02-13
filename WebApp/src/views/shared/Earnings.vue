@@ -35,7 +35,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, watch } from "vue";
-import PageContainer from "../components/PageContainer.vue";
+import PageContainer from "@/components/PageContainer.vue";
 import apiService from "@/api/apiService";
 import { format } from "date-fns";
 import { getStatusColor } from "@/utils/helper";
