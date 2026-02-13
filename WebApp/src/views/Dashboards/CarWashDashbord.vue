@@ -59,9 +59,9 @@ const earningsChart = ref<HTMLCanvasElement | null>(null);
 
 // Summary cards
 const summaryCards = ref([
-  { title: "Total Customers", value: 0, icon: "mdi-account", color: COLORS.CARD_BLUE },
-  { title: "Cars Washed", value: 0, icon: "mdi-car", color: COLORS.CARD_GREEN },
-  { title: "Revenue", value: "R 0", icon: "mdi-cash", color: COLORS.CARD_ORANGE },
+  { title: "Total Customers", value: 0, icon: "mdi-account", color: COLORS.CARD_BLUE, chartColor: COLORS.CHART_BLUE },
+  { title: "Cars Washed", value: 0, icon: "mdi-car", color: COLORS.CARD_GREEN, chartColor: COLORS.CHART_GREEN },
+  { title: "Revenue", value: "R 0", icon: "mdi-cash", color: COLORS.CARD_ORANGE, chartColor: COLORS.CHART_ORANGE },
 ]);
 
 // Earnings per month
@@ -78,7 +78,7 @@ const renderCharts = () => {
         labels: summaryCards.value.map(c => c.title),
         datasets: [{
           data: summaryCards.value.map(c => Number(String(c.value).replace(/[^0-9.-]+/g,""))),
-          backgroundColor: summaryCards.value.map(c => c.color),
+          backgroundColor: summaryCards.value.map(c => c.chartColor),
         }],
       },
       options: {
@@ -135,9 +135,9 @@ const loadSummaryData = async () => {
 
     // Update summary cards
     summaryCards.value = [
-      { title: "Total Customers", value: clients.length, icon: "mdi-account", color: COLORS.CARD_BLUE },
-      { title: "Cars Washed", value: carWashPayments.length, icon: "mdi-car", color: COLORS.CARD_GREEN },
-      { title: "Revenue", value: carWashPayments.reduce((sum, p) => sum + (p.amount || 0), 0), icon: "mdi-cash", color: COLORS.CARD_ORANGE },
+      { title: "Total Customers", value: clients.length, icon: "mdi-account", color: COLORS.CARD_BLUE, chartColor: COLORS.CHART_BLUE },
+      { title: "Cars Washed", value: carWashPayments.length, icon: "mdi-car", color: COLORS.CARD_GREEN, chartColor: COLORS.CHART_GREEN },
+      { title: "Revenue", value: carWashPayments.reduce((sum, p) => sum + (p.amount || 0), 0), icon: "mdi-cash", color: COLORS.CARD_ORANGE, chartColor: COLORS.CHART_ORANGE },
     ];
 
     // Calculate monthly earnings for full year

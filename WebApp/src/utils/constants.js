@@ -87,19 +87,21 @@ export const COLORS = {
   WARNING_YELLOW: '#FFC107',
   INFO_BLUE: '#2196F3',
   
-  // Chart Colors
-  CHART_BLUE: '#2196f3',
-  CHART_GREEN: '#4caf50',
-  CHART_PURPLE: '#9c27b0',
-  CHART_ORANGE: '#ff9800',
-  
-  // Dashboard Card Colors
+  // Dashboard Card Colors (Vuetify color names for icon styling)
   CARD_BLUE: 'blue',
   CARD_TEAL: 'teal',
   CARD_GREEN: 'green',
   CARD_INDIGO: 'indigo',
   CARD_PURPLE: 'purple',
   CARD_ORANGE: 'orange',
+  
+  // Chart Colors (Hex values matching Vuetify colors for visual consistency)
+  CHART_BLUE: '#2196F3',        // matches Vuetify blue
+  CHART_TEAL: '#009688',         // matches Vuetify teal
+  CHART_GREEN: '#4CAF50',        // matches Vuetify green
+  CHART_INDIGO: '#3F51B5',       // matches Vuetify indigo
+  CHART_PURPLE: '#9C27B0',       // matches Vuetify purple
+  CHART_ORANGE: '#FF9800',       // matches Vuetify orange
   
   // Text Colors
   TEXT_WHITE: '#fff',

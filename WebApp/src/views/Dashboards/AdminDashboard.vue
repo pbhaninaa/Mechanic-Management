@@ -130,7 +130,7 @@ const renderCharts = () => {
               carwashes.value.length,
               jobsCompleted.value,
             ],
-            backgroundColor: [COLORS.CHART_BLUE, COLORS.CHART_GREEN, COLORS.CHART_PURPLE, COLORS.CHART_ORANGE],
+            backgroundColor: [COLORS.CHART_TEAL, COLORS.CHART_GREEN, COLORS.CHART_INDIGO, COLORS.CHART_PURPLE],
           },
         ],
       },
@@ -163,7 +163,7 @@ if (earningsChart.value) {
       datasets: [
         {
           data: [earned, remaining],
-          backgroundColor: [COLORS.CHART_GREEN, COLORS.BORDER_LIGHT_GREY],
+          backgroundColor: [COLORS.CARD_ORANGE, COLORS.BORDER_LIGHT_GREY],
         },
       ],
     },
