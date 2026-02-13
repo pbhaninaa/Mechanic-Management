@@ -20,9 +20,9 @@
       </v-col>
     </v-row>
 
-    <!-- Charts -->
+    <!-- Charts Layout -->
     <v-row dense class="mt-2">
-      <!-- Doughnut -->
+      <!-- Progress Donut Chart -->
       <v-col cols="12" md="6">
         <div class="mt-6 pa-4 chart-card">
           <h3>Service Progress</h3>
@@ -31,7 +31,7 @@
         </div>
       </v-col>
 
-      <!-- Line -->
+      <!-- Monthly Earnings Line Chart -->
       <v-col cols="12" md="6">
         <div class="mt-6 pa-4 chart-card">
           <h3>Monthly Earnings</h3>
@@ -44,57 +44,40 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, nextTick } from "vue";
+import { ref, onMounted } from "vue";
 import PageContainer from "@/components/PageContainer.vue";
 import Chart from "chart.js/auto";
 import ChartDataLabels from "chartjs-plugin-datalabels";
 import apiService from "@/api/apiService";
-import { COLORS } from "@/utils/constants";
 
 Chart.register(ChartDataLabels);
 
-// Canvas refs
+// Chart refs
 const progressPieChart = ref<HTMLCanvasElement | null>(null);
 const earningsChart = ref<HTMLCanvasElement | null>(null);
 
-// Chart instances
-let progressChartInstance: Chart | null = null;
-let earningsChartInstance: Chart | null = null;
-
 // Summary cards
 const summaryCards = ref([
-  { title: "Total Customers", value: 0, icon: "mdi-account", color: COLORS.CARD_BLUE, chartColor: COLORS.CHART_BLUE },
-  { title: "Cars Washed", value: 0, icon: "mdi-car", color: COLORS.CARD_GREEN, chartColor: COLORS.CHART_GREEN },
-  { title: "Revenue", value: "R 0.00", icon: "mdi-cash", color: COLORS.CARD_ORANGE, chartColor: COLORS.CHART_ORANGE },
+  { title: "Total Customers", value: 0, icon: "mdi-account", color: "blue" },
+  { title: "Cars Washed", value: 0, icon: "mdi-car", color: "green" },
+  { title: "Revenue", value: "R 0", icon: "mdi-cash", color: "orange" },
 ]);
 
-// Monthly earnings
+// Earnings per month
 const monthlyEarnings = ref<number[]>(Array(12).fill(0));
 const monthLabels = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
-/* -------------------------
-   Render Charts
--------------------------- */
+// Function to render charts dynamically
 const renderCharts = () => {
-  // Destroy old charts
-  if (progressChartInstance) {
-    progressChartInstance.destroy();
-  }
-  if (earningsChartInstance) {
-    earningsChartInstance.destroy();
-  }
-
-  /* Doughnut Chart */
+  // Doughnut chart (Service Progress)
   if (progressPieChart.value) {
-    progressChartInstance = new Chart(progressPieChart.value, {
+    new Chart(progressPieChart.value.getContext("2d"), {
       type: "doughnut",
       data: {
         labels: summaryCards.value.map(c => c.title),
         datasets: [{
-          data: summaryCards.value.map(c =>
-            Number(String(c.value).replace(/[^0-9.-]+/g, ""))
-          ),
-          backgroundColor: summaryCards.value.map(c => c.chartColor),
+          data: summaryCards.value.map(c => Number(String(c.value).replace(/[^0-9.-]+/g,""))),
+          backgroundColor: summaryCards.value.map(c => c.color),
         }],
       },
       options: {
@@ -103,92 +86,76 @@ const renderCharts = () => {
           legend: { position: "bottom" },
           datalabels: {
             color: "#fff",
-            formatter: (value: any, context: any) => {
-              const total = context.dataset.data.reduce((a: number, b: number) => a + b, 0);
-              return total ? `${((value / total) * 100).toFixed(1)}%` : "0%";
+            formatter: (value, context) => {
+              const total = context.dataset.data.reduce((a, b) => Number(a) + Number(b), 0);
+              return total ? `${((Number(value) / Number(total)) * 100).toFixed(1)}%` : "0%";
             },
           },
         },
       },
+      plugins: [ChartDataLabels],
     });
   }
 
-  /* Line Chart */
+  // Line chart (Monthly Earnings)
   if (earningsChart.value) {
-    earningsChartInstance = new Chart(earningsChart.value, {
+    new Chart(earningsChart.value.getContext("2d"), {
       type: "line",
       data: {
         labels: monthLabels,
         datasets: [{
           label: "Earnings (R)",
           data: monthlyEarnings.value,
-          borderColor: COLORS.BORDER_BLUE,
-          backgroundColor: COLORS.OVERLAY_BLUE,
+          borderColor: "rgba(54, 162, 235, 0.9)",
+          backgroundColor: "rgba(54, 162, 235, 0.2)",
           tension: 0.3,
           fill: true,
-          pointBackgroundColor: COLORS.POINT_BLUE,
+          pointBackgroundColor: "rgba(54, 162, 235, 1)",
         }],
       },
       options: {
         responsive: true,
         plugins: { legend: { display: false } },
-        scales: {
-          y: { beginAtZero: true }
-        },
+        scales: { y: { beginAtZero: true } },
       },
     });
   }
 };
 
-/* -------------------------
-   Load Data
--------------------------- */
+// Load real data from API
 const loadSummaryData = async () => {
   try {
     const usersRes = await apiService.getAllUsers();
     const paymentsRes = await apiService.getPaymentsByClients();
     const loggedInUser = JSON.parse(localStorage.getItem("userProfile") || "{}");
 
-    const clients = (usersRes.data || []).filter(u =>
-      u.roles?.includes("CLIENT")
-    );
+    const clients = (usersRes.data || []).filter(u => u.roles.includes("CLIENT"));
+    const carWashPayments = (paymentsRes.data || []).filter(p => p.carWashId == loggedInUser.id);
 
-    const carWashPayments = (paymentsRes.data || []).filter(p =>
-      p.carWashId == loggedInUser.id
-    );
-
-    const totalRevenue = carWashPayments.reduce(
-      (sum, p) => sum + (p.amount || 0),
-      0
-    );
-
+    // Update summary cards
     summaryCards.value = [
-      { title: "Total Customers", value: clients.length, icon: "mdi-account", color: COLORS.CARD_BLUE, chartColor: COLORS.CHART_BLUE },
-      { title: "Cars Washed", value: carWashPayments.length, icon: "mdi-car", color: COLORS.CARD_GREEN, chartColor: COLORS.CHART_GREEN },
-      { title: "Revenue", value: `R ${totalRevenue.toFixed(2)}`, icon: "mdi-cash", color: COLORS.CARD_ORANGE, chartColor: COLORS.CHART_ORANGE },
+      { title: "Total Customers", value: clients.length, icon: "mdi-account", color: "blue" },
+      { title: "Cars Washed", value: carWashPayments.length, icon: "mdi-car", color: "green" },
+      { title: "Revenue", value: carWashPayments.reduce((sum, p) => sum + (p.amount || 0), 0), icon: "mdi-cash", color: "orange" },
     ];
 
+    // Calculate monthly earnings for full year
     const monthTotals: number[] = Array(12).fill(0);
     carWashPayments.forEach(p => {
-      if (p.paidAt) {
-        const month = new Date(p.paidAt).getMonth();
-        monthTotals[month] += p.amount || 0;
-      }
+      const month = new Date(p.paidAt).getMonth(); // 0=Jan, 11=Dec
+      monthTotals[month] += p.amount || 0;
     });
-
     monthlyEarnings.value = monthTotals;
 
-    // WAIT for DOM update before rendering charts
-    await nextTick();
+    // Render charts
     renderCharts();
-
   } catch (err) {
     console.error("Failed to load summary data:", err);
   }
 };
 
-onMounted(async () => {
-  await loadSummaryData();
+onMounted(() => {
+  loadSummaryData();
 });
 </script>
 
