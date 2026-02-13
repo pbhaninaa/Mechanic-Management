@@ -34,27 +34,36 @@
 
           <!-- Minimal action buttons -->
           <template #item.actions="{ item }">
-            <v-btn
-              variant="text"
-              size="small"
-              color="green"
-              class="mr-1"
-              @click="updateStatus(item, JOB_STATUS.ACCEPTED)"
-              :disabled="item.status === JOB_STATUS.ACCEPTED"
-            >
-              <v-icon size="18">mdi-check</v-icon>
-            </v-btn>
+            <v-tooltip text="Accept" location="top">
+              <template #activator="{ props }">
+                <v-btn
+                  v-bind="props"
+                  variant="text"
+                  size="small"
+                  color="green"
+                  class="mr-1"
+                  @click="updateStatus(item, JOB_STATUS.ACCEPTED)"
+                  :disabled="item.status === JOB_STATUS.ACCEPTED"
+                >
+                  <v-icon size="18">mdi-check</v-icon>
+                </v-btn>
+              </template>
+            </v-tooltip>
 
-            <v-btn
-            v-if="false"
-              variant="text"
-              size="small"
-              color="red"
-              @click="updateStatus(item, JOB_STATUS.DECLINED)"
-              :disabled="item.status === JOB_STATUS.DECLINED"
-            >
-              <v-icon size="18">mdi-close</v-icon>
-            </v-btn>
+            <v-tooltip v-if="false" text="Decline" location="top">
+              <template #activator="{ props }">
+                <v-btn
+                  v-bind="props"
+                  variant="text"
+                  size="small"
+                  color="red"
+                  @click="updateStatus(item, JOB_STATUS.DECLINED)"
+                  :disabled="item.status === JOB_STATUS.DECLINED"
+                >
+                  <v-icon size="18">mdi-close</v-icon>
+                </v-btn>
+              </template>
+            </v-tooltip>
           </template>
         </v-data-table>
 
