@@ -72,7 +72,7 @@
 <script setup>
 import { ref, onMounted } from "vue";
 import PageContainer from "../components/PageContainer.vue";
-import { STATUS_COLORS } from "../utils/constants";
+import { STATUS_COLORS } from "../../utils/constants";
 import { getStatusColor } from "@/utils/helper";
 
 // Demo data for testing
