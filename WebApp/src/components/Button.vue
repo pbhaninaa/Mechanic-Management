@@ -64,6 +64,7 @@
 
 <script setup>
 import { computed } from 'vue'
+import { COLORS } from '@/utils/constants'
 
 // Props
 const props = defineProps({

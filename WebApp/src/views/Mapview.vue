@@ -20,6 +20,7 @@ import { onMounted, ref, onBeforeUnmount, nextTick } from "vue";
 import PageContainer from "@/components/PageContainer.vue";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import { COLORS } from "@/utils/constants";
 
 interface Props {
   destination: {
@@ -52,7 +53,7 @@ const drawRoute = async (from: { lat: number; lng: number }, to: { lat: number; 
     if (routeLayer.value) map.value.removeLayer(routeLayer.value);
 
     // Draw new route
-    routeLayer.value = L.geoJSON(routeGeoJSON, { style: { color: "blue", weight: 5 } }).addTo(map.value);
+    routeLayer.value = L.geoJSON(routeGeoJSON, { style: { color: COLORS.MAP_ROUTE_BLUE, weight: 5 } }).addTo(map.value);
 
     // Fit map to route
     map.value.fitBounds(L.geoJSON(routeGeoJSON).getBounds(), { padding: [50, 50] });

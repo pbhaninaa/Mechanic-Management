@@ -41,6 +41,7 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue'
+import { COLORS } from '@/utils/constants'
 
 const props = defineProps({
   modelValue: { type: [String, Number, Array], default: "" },

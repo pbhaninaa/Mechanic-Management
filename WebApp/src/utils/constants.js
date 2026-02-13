@@ -74,6 +74,69 @@ export const JOB_STATUS = {
   OTHER: 'other'
 };
 
+// Color Palette
+export const COLORS = {
+  // Primary Colors
+  PRIMARY_BLUE: '#1976D2',
+  SECONDARY_GREY: '#424242',
+  ACCENT_LIGHT_BLUE: '#82B1FF',
+  
+  // Semantic Colors
+  SUCCESS_GREEN: '#4CAF50',
+  ERROR_RED: '#FF5252',
+  WARNING_YELLOW: '#FFC107',
+  INFO_BLUE: '#2196F3',
+  
+  // Chart Colors
+  CHART_BLUE: '#2196f3',
+  CHART_GREEN: '#4caf50',
+  CHART_PURPLE: '#9c27b0',
+  CHART_ORANGE: '#ff9800',
+  
+  // Dashboard Card Colors
+  CARD_BLUE: 'blue',
+  CARD_TEAL: 'teal',
+  CARD_GREEN: 'green',
+  CARD_INDIGO: 'indigo',
+  CARD_PURPLE: 'purple',
+  CARD_ORANGE: 'orange',
+  
+  // Text Colors
+  TEXT_WHITE: '#fff',
+  TEXT_BLACK: '#000',
+  TEXT_DARK_GREY: '#424242',
+  TEXT_LIGHT_GREY: '#9e9e9e',
+  TEXT_RED: 'red',
+  
+  // Background Colors
+  BG_WHITE: '#fff',
+  BG_LIGHT_GREY: '#f5f5f5',
+  BG_LIGHT_BLUE: 'aliceblue',
+  BG_LIGHT_GREY_TABLE: '#f3f4f6',
+  BG_YELLOW: 'yellow',
+  
+  // Border Colors
+  BORDER_LIGHT_GREY: '#e0e0e0',
+  BORDER_BLUE: 'rgba(54, 162, 235, 0.9)',
+  
+  // Shadow/Overlay Colors
+  SHADOW_DARK: 'rgba(0, 0, 0, 0.1)',
+  SHADOW_DARK_STRONG: 'rgba(0, 0, 0, 0.15)',
+  OVERLAY_BLUE: 'rgba(54, 162, 235, 0.2)',
+  POINT_BLUE: 'rgba(54, 162, 235, 1)',
+  
+  // Map Colors
+  MAP_ROUTE_BLUE: 'blue',
+  
+  // Soft/faded colors (semi-transparent)
+  SOFT_GREEN: 'rgba(0, 255, 0, 0.45)',
+  SOFT_RED: 'rgba(255, 0, 0, 0.45)',
+  SOFT_ORANGE: 'rgba(255, 165, 0, 0.45)',
+  SOFT_BLUE: 'rgba(0, 0, 255, 0.45)',
+  SOFT_PURPLE: 'rgba(128, 0, 128, 0.45)',
+  SOFT_GREEN_DARK: 'rgba(0, 128, 0, 0.45)',
+};
+
 // Status Colors (using JOB_STATUS instead of APPLICATION_STATUS)
 export const STATUS_COLORS = {
   [JOB_STATUS.ACCEPTED]: '#00C853',   // Neon Green

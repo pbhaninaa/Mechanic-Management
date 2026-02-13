@@ -53,6 +53,7 @@ import PageContainer from "@/components/PageContainer.vue";
 import Chart from "chart.js/auto";
 import ChartDataLabels from "chartjs-plugin-datalabels";
 import apiService from "@/api/apiService";
+import { COLORS } from "@/utils/constants";
 
 // Register Chart.js plugin
 Chart.register(ChartDataLabels);
@@ -68,12 +69,12 @@ const revenue = ref<number>(0);
 
 // Summary Cards
 const summaryCards = ref([
-  { title: "Total Users", value: 0, icon: "mdi-account", color: "blue" },
-  { title: "Clients", value: 0, icon: "mdi-account-group", color: "teal" },
-  { title: "Mechanics", value: 0, icon: "mdi-wrench", color: "green" },
-  { title: "Carwashes", value: 0, icon: "mdi-car-wash", color: "indigo" },
-  { title: "Jobs Completed", value: 0, icon: "mdi-clipboard-check", color: "purple" },
-  { title: "Revenue", value: "R 0", icon: "mdi-cash", color: "orange" },
+  { title: "Total Users", value: 0, icon: "mdi-account", color: COLORS.CARD_BLUE },
+  { title: "Clients", value: 0, icon: "mdi-account-group", color: COLORS.CARD_TEAL },
+  { title: "Mechanics", value: 0, icon: "mdi-wrench", color: COLORS.CARD_GREEN },
+  { title: "Carwashes", value: 0, icon: "mdi-car-wash", color: COLORS.CARD_INDIGO },
+  { title: "Jobs Completed", value: 0, icon: "mdi-clipboard-check", color: COLORS.CARD_PURPLE },
+  { title: "Revenue", value: "R 0", icon: "mdi-cash", color: COLORS.CARD_ORANGE },
 ]);
 
 // Chart Refs
@@ -100,12 +101,12 @@ const loadDashboardData = async () => {
 
     // Update Summary Cards
     summaryCards.value = [
-      { title: "Total Users", value: users.value.length, icon: "mdi-account", color: "blue" },
-      { title: "Clients", value: clients.value.length, icon: "mdi-account-group", color: "teal" },
-      { title: "Mechanics", value: mechanics.value.length, icon: "mdi-wrench", color: "green" },
-      { title: "Carwashes", value: carwashes.value.length, icon: "mdi-car-wash", color: "indigo" },
-      { title: "Jobs Completed", value: jobsCompleted.value, icon: "mdi-clipboard-check", color: "purple" },
-      { title: "Revenue", value: `R ${revenue.value.toLocaleString()}`, icon: "mdi-cash", color: "orange" },
+      { title: "Total Users", value: users.value.length, icon: "mdi-account", color: COLORS.CARD_BLUE },
+      { title: "Clients", value: clients.value.length, icon: "mdi-account-group", color: COLORS.CARD_TEAL },
+      { title: "Mechanics", value: mechanics.value.length, icon: "mdi-wrench", color: COLORS.CARD_GREEN },
+      { title: "Carwashes", value: carwashes.value.length, icon: "mdi-car-wash", color: COLORS.CARD_INDIGO },
+      { title: "Jobs Completed", value: jobsCompleted.value, icon: "mdi-clipboard-check", color: COLORS.CARD_PURPLE },
+      { title: "Revenue", value: `R ${revenue.value.toLocaleString()}`, icon: "mdi-cash", color: COLORS.CARD_ORANGE },
     ];
   } catch (error) {
     console.error("Failed to load dashboard data:", error);
@@ -129,7 +130,7 @@ const renderCharts = () => {
               carwashes.value.length,
               jobsCompleted.value,
             ],
-            backgroundColor: ["#2196f3", "#4caf50", "#9c27b0", "#ff9800"],
+            backgroundColor: [COLORS.CHART_BLUE, COLORS.CHART_GREEN, COLORS.CHART_PURPLE, COLORS.CHART_ORANGE],
           },
         ],
       },
@@ -138,7 +139,7 @@ const renderCharts = () => {
         plugins: {
           legend: { position: "bottom" },
           datalabels: {
-            color: "#fff",
+            color: COLORS.TEXT_WHITE,
             formatter: (value, context) => {
               const total = context.dataset.data.reduce((a: number, b: number) => a + b, 0);
               return `${((value /Number( total)) * 100).toFixed(1)}%`;
@@ -162,7 +163,7 @@ if (earningsChart.value) {
       datasets: [
         {
           data: [earned, remaining],
-          backgroundColor: ["#4caf50", "#e0e0e0"],
+          backgroundColor: [COLORS.CHART_GREEN, COLORS.BORDER_LIGHT_GREY],
         },
       ],
     },
@@ -172,7 +173,7 @@ if (earningsChart.value) {
       plugins: {
         legend: { position: "bottom" },
         datalabels: {
-          color: "#000",
+          color: COLORS.TEXT_BLACK,
           formatter: (value: number, context) => {
             const total:any = context.dataset.data.reduce(
               (a: number, b: number) => a + b,

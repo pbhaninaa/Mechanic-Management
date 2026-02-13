@@ -54,8 +54,7 @@ import { ref, onMounted, computed } from "vue";
 import PageContainer from "@/components/PageContainer.vue";
 import apiService from "@/api/apiService";
 import TooltipText from "@/components/TooltipText.vue";
-// import { STATUS_COLORS } from "@/utils/constants";
-import { JOB_STATUS } from "@/utils/constants";
+import { JOB_STATUS, COLORS } from "@/utils/constants";
 
 
 const loading = ref(false);
@@ -72,10 +71,10 @@ interface JobRequest {
 }
 // Stats cards data
 const statsCards = computed(() => [
-  { title: "Pending Jobs", value: pendingJobs.value, color: "rgba(255, 165, 0, 0.45)" }, // soft orange
-  { title: "Completed Jobs", value: completedJobs.value, color: "rgba(0, 128, 0, 0.45)" }, // soft green
-  { title: "Payments Pending", value: `R${pendingPayments.value}`, color: "rgba(0, 0, 255, 0.45)" }, // soft blue
-  { title: "Active Requests", value: activeRequests.value, color: "rgba(128, 0, 128, 0.45)" }, // soft purple
+  { title: "Pending Jobs", value: pendingJobs.value, color: COLORS.SOFT_ORANGE },
+  { title: "Completed Jobs", value: completedJobs.value, color: COLORS.SOFT_GREEN_DARK },
+  { title: "Payments Pending", value: `R${pendingPayments.value}`, color: COLORS.SOFT_BLUE },
+  { title: "Active Requests", value: activeRequests.value, color: COLORS.SOFT_PURPLE },
 ]);
 
 // Table headers
