@@ -94,6 +94,7 @@ const handleLogin = async () => {
     
     // Redirect after successful login — wait so message is readable
     setTimeout(() => {
+      window.location.reload(); // Refresh to load user-specific data
       router.push('/dashboard');
     }, 3000);
   } else {

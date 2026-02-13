@@ -70,10 +70,9 @@ const fetchEarnings = async () => {
 
   try {
     let response;
-
     if (role === USER_ROLES.MECHANIC) {
       response = await apiService.getPaymentsByMechanic(loggedInUser.id);
-    } else if (role === USER_ROLES.CARWASH) {
+    } else if (role === USER_ROLES.CAR_WASH) {
       response = await apiService.getPaymentsByCarWash(loggedInUser.id);
     } else if (role === USER_ROLES.ADMIN) {
       response = await apiService.getPaymentsByClients();
