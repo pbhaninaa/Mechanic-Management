@@ -175,5 +175,8 @@ public class UserProfileController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(new ApiResponse<>("Profile does not exist for this user", 404, null, true));
         }
+
     }
+
+
 }

@@ -13,7 +13,7 @@ export const API_ENDPOINTS = {
   PROFILE: '/user-profile',
   APPLICATIONS: '/job-applications',
   DELETE_ACCOUNT: '/users',
-
+   DELETE_ALL_USERS: '/users/all',
   // Request History Endpoints
   REQUEST_HISTORY: '/request-history',
   REQUEST_HISTORY_BY_USER: (username) => `/request-history/user/${username}`,

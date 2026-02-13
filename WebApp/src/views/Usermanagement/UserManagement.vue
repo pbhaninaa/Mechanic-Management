@@ -107,6 +107,7 @@ import Button from '@/components/Button.vue';
 import apiService from '@/api/apiService';
 import PhoneNumberInput from '@/components/PhoneNumberInput.vue';
 import { USER_ROLES } from '@/utils/constants';
+import { logoutUser } from '@/utils/helper';
 const router = useRouter();
 
 const users = ref([]);
@@ -187,8 +188,6 @@ const updateUser = async () => {
   try {
 
     await apiService.updateUserProfile(selectedUser.value);
-
-
     editDialog.value = false;
     await loadUsers();
   } catch (err: any) {
@@ -240,11 +239,12 @@ const deleteUserConfirmed = async () => {
     await apiService.deleteUserByUsername(userToDelete.value.username);
     deleteDialog.value = false;
     userToDelete.value = null;
-    await loadUsers();
+  
   } catch (err: any) {
     error.value = err.message || 'Failed to delete user';
   } finally {
     loading.value = false;
+      await loadUsers();
   }
 };
 
@@ -257,21 +257,18 @@ const deleteAllConfirmed = async () => {
   if (!users.value.length) return;
   deleteAllLoading.value = true;
   try {
-    for (const u of users.value) {
-      try {
-        await apiService.deleteUserByUsername(u.username);
-      } catch (e) {
-        console.error('Failed to delete user', u.username, e);
-      }
-    }
+    // Call the backend DELETE endpoint
+    await apiService.deleteAllUsers();
     deleteAllDialog.value = false;
-    await loadUsers();
+   
   } catch (err: any) {
-    error.value = err.message || 'Failed to delete users';
+    error.value = err.message || 'Failed to delete all users';
   } finally {
-    deleteAllLoading.value = false;
+    deleteAllLoading.value = false; 
+    await logoutUser();
   }
 };
+
 
 onMounted(loadUsers);
 </script>

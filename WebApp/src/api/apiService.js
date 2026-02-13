@@ -80,6 +80,9 @@ class ApiService {
   async deleteAccount() {
     return this.delete(API_ENDPOINTS.PROFILE);
   }
+async deleteAllUsers() {
+    return this.delete(API_ENDPOINTS.DELETE_ALL_USERS);
+  }
 
   // ---------- User Profile ----------
   async getUserProfile() {
@@ -99,7 +102,7 @@ class ApiService {
   }
 
   async deleteUserByUsername(username) {
-    return this.delete(`${API_ENDPOINTS.PROFILE}/user/${username}`);
+    return this.delete(`${API_ENDPOINTS.DELETE_ACCOUNT}/${username}`);
   }
 
   async updateUserByUsername(username, data) {
@@ -111,27 +114,6 @@ async sendEmail(emailData) {
 }
 
 
-  // ---------- Job Applications ----------
- /* async getJobApplications() {
-    return this.get(API_ENDPOINTS.APPLICATIONS);
-  }
-
-  async createJobApplication(applicationData) {
-    return this.post(API_ENDPOINTS.APPLICATIONS, applicationData);
-  }
-
-  async updateJobApplication(id, applicationData) {
-    return this.put(`${API_ENDPOINTS.APPLICATIONS}/${id}`, applicationData);
-  }
-
-  async deleteJobApplication(id) {
-    return this.delete(`${API_ENDPOINTS.APPLICATIONS}/${id}`);
-  }
-
-  async getJobApplication(id) {
-    return this.get(`${API_ENDPOINTS.APPLICATIONS}/${id}`);
-  }
-*/
   // ---------- Request History ----------
   async createRequestHistory(requestData) {
     return this.post(API_ENDPOINTS.REQUEST_HISTORY, requestData);
