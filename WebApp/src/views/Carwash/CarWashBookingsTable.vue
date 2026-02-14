@@ -1,66 +1,54 @@
 <template>
   <PageContainer>
-      <v-card-text>
-    <TableComponent title="Car Wash Bookings" :headers="headers" :items="bookings" class="elevation-1" :items-per-page="5" :loading="loading">
+    <v-card-text>
+      <TableComponent title="Car Wash Bookings" :headers="headers" :items="bookings" class="elevation-1"
+        :items-per-page="5" :loading="loading">
         <template #item.location="{ item }">
-            <TooltipText :text="item.location" :maxLength="50" />
-          </template>
+          <TooltipText :text="item.location" :maxLength="50" />
+        </template>
 
-          <!-- Service Types as comma-separated string -->
-          <template #item.serviceTypes="{ item }">
-            {{ item.serviceTypes.join(", ") }}
-          </template>
+        <!-- Service Types as comma-separated string -->
+        <template #item.serviceTypes="{ item }">
+          {{ item.serviceTypes.join(", ") }}
+        </template>
 
-          <!-- Date formatting -->
-          <template #item.date="{ item }">
-            {{ formatDate(item.date) }}
-          </template>
+        <!-- Date formatting -->
+        <template #item.date="{ item }">
+          {{ formatDate(item.date) }}
+        </template>
 
-          <!-- Status column with colored chips -->
-          <template #item.status="{ item }">
-            <v-chip :color="getStatusColor(item.status)" dark>
-              {{ item.status }}
-            </v-chip>
-          </template>
+        <!-- Status column with colored chips -->
+        <template #item.status="{ item }">
+          <v-chip :color="getStatusColor(item.status)" dark>
+            {{ item.status }}
+          </v-chip>
+        </template>
 
-          <!-- Minimal action buttons -->
-          <template #item.actions="{ item }">
-            <v-tooltip text="Accept" location="top">
-              <template #activator="{ props }">
-                <v-btn
-                  v-bind="props"
-                  variant="text"
-                  size="small"
-                  color="green"
-                  class="mr-1"
-                  @click="updateStatus(item, JOB_STATUS.ACCEPTED)"
-                  :disabled="item.status === JOB_STATUS.ACCEPTED"
-                >
-                  <v-icon size="18">mdi-check</v-icon>
-                </v-btn>
-              </template>
-            </v-tooltip>
+        <!-- Minimal action buttons -->
+        <template #item.actions="{ item }">
+          <v-tooltip text="Accept" location="top">
+            <template #activator="{ props }">
+              <v-btn v-bind="props" variant="text" size="small" color="green" class="mr-1"
+                @click="updateStatus(item, JOB_STATUS.ACCEPTED)" :disabled="item.status === JOB_STATUS.ACCEPTED">
+                <v-icon size="18">mdi-check</v-icon>
+              </v-btn>
+            </template>
+          </v-tooltip>
 
-            <v-tooltip v-if="false" text="Decline" location="top">
-              <template #activator="{ props }">
-                <v-btn
-                  v-bind="props"
-                  variant="text"
-                  size="small"
-                  color="red"
-                  @click="updateStatus(item, JOB_STATUS.DECLINED)"
-                  :disabled="item.status === JOB_STATUS.DECLINED"
-                >
-                  <v-icon size="18">mdi-close</v-icon>
-                </v-btn>
-              </template>
-            </v-tooltip>
-          </template>
-     </TableComponent>
-       
+          <v-tooltip v-if="false" text="Decline" location="top">
+            <template #activator="{ props }">
+              <v-btn v-bind="props" variant="text" size="small" color="red"
+                @click="updateStatus(item, JOB_STATUS.DECLINED)" :disabled="item.status === JOB_STATUS.DECLINED">
+                <v-icon size="18">mdi-close</v-icon>
+              </v-btn>
+            </template>
+          </v-tooltip>
+        </template>
+      </TableComponent>
 
-        
-      </v-card-text>
+
+
+    </v-card-text>
   </PageContainer>
 </template>
 
@@ -136,18 +124,18 @@ const fetchBookings = async () => {
 };
 
 
-const loggedInUser =JSON.parse( localStorage.getItem("userProfile"))
+const loggedInUser = JSON.parse(localStorage.getItem("userProfile"))
 const updateStatus = async (booking: Booking, status: string) => {
   const previousStatus = booking.status;
-  booking.status = status; 
-  booking.carWashId= loggedInUser.id
+  booking.status = status;
+  booking.carWashId = loggedInUser.id
 
   try {
     await apiService.updateCarWashBooking(booking.id, booking);
     console.log(`Booking ${booking.id} status updated to ${status}`);
   } catch (err) {
     console.error("Failed to update status:", err);
-    booking.status = previousStatus; 
+    booking.status = previousStatus;
   }
 };
 

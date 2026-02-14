@@ -20,9 +20,7 @@
       </TableComponent>
   
 
-      <div v-if="payments.length === 0" class="mt-3">
-        No payments found.
-      </div>
+     
     </v-card-text>
  
   </PageContainer>
