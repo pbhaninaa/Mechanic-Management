@@ -21,14 +21,9 @@
 
     <!-- Pending Job Requests Table -->
     <v-card class="mt-6" outlined v-if="!loading && !error">
-      <v-card-title>
-        Pending Job Requests
-        <!-- <InputField v-model="search" label="Search" dense hide-details solo clearable style="max-width: 200px" /> -->
-      </v-card-title>
-
-      <!-- Remove pagination-related props -->
-      <v-data-table :headers="tableHeaders" :items="pendingJobRequests" :search="search" item-key="id"
-        class="elevation-1" dense no-pagination>
+   
+<TableComponent title=" Pending Job Requests" :headers="tableHeaders" :items="pendingJobRequests" :search="search" item-key="id"
+        class="elevation-1" dense no-pagination :loading="loading">
 
         <template #item.actions="{ item }">
           <div class="d-flex justify-center">
@@ -40,9 +35,8 @@
         <template #item.location="{ item }">
           <TooltipText :text="item.location" :maxLength="80" />
         </template>
-
-
-      </v-data-table>
+      </TableComponent>
+     
 
     </v-card>
 
@@ -55,6 +49,7 @@ import PageContainer from "@/components/PageContainer.vue";
 import apiService from "@/api/apiService";
 import TooltipText from "@/components/TooltipText.vue";
 import { JOB_STATUS, COLORS } from "@/utils/constants";
+import TableComponent from "@/components/TableComponent.vue";
 
 
 const loading = ref(false);

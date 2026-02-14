@@ -1,17 +1,8 @@
 <template>
   <PageContainer>
-      <v-card-title>Car Wash Bookings</v-card-title>
       <v-card-text>
-    
-        <v-data-table
-          :headers="headers"
-          :items="bookings"
-          class="elevation-1"
-          :items-per-page="5"
-          :loading="loading"
-        >
-          <!-- Location column with truncation -->
-          <template #item.location="{ item }">
+    <TableComponent title="Car Wash Bookings" :headers="headers" :items="bookings" class="elevation-1" :items-per-page="5" :loading="loading">
+        <template #item.location="{ item }">
             <TooltipText :text="item.location" :maxLength="50" />
           </template>
 
@@ -65,11 +56,10 @@
               </template>
             </v-tooltip>
           </template>
-        </v-data-table>
+     </TableComponent>
+       
 
-        <div v-if="bookings.length === 0 && !loading" class="mt-3">
-          No bookings found.
-        </div>
+        
       </v-card-text>
   </PageContainer>
 </template>
@@ -81,6 +71,7 @@ import TooltipText from "@/components/TooltipText.vue";
 import apiService from "@/api/apiService";
 import { getStatusColor } from "@/utils/helper";
 import { JOB_STATUS } from "@/utils/constants";
+import TableComponent from "@/components/TableComponent.vue";
 
 interface Booking {
   id: number;

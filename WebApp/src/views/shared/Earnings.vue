@@ -1,10 +1,9 @@
 <template>
   <PageContainer>
-    <v-card-title>Earnings</v-card-title>
     <v-card-text>
       <!-- Earnings Table -->
-
-      <v-data-table :headers="headers" :items="earnings" class="elevation-1" :items-per-page="5" :loading="loading">
+      <TableComponent title="Earnings" :headers="headers" :items="earnings" class="elevation-1" :items-per-page="5"
+        :loading="loading">
 
         <template #item.amount="{ item }">
           R {{ item.amount }}
@@ -23,7 +22,8 @@
         <template #no-data>
           No earnings found.
         </template>
-      </v-data-table>
+      </TableComponent>
+
 
       <!-- Feedback -->
       <v-alert v-if="message && messageType === 'error'" type="error" class="mt-3" closable @click:close="message = ''">
@@ -40,6 +40,7 @@ import apiService from "@/api/apiService";
 import { format } from "date-fns";
 import { getStatusColor } from "@/utils/helper";
 import { USER_ROLES } from "@/utils/constants";
+import TableComponent from "@/components/TableComponent.vue";
 
 // Logged in user
 const loggedInUser = JSON.parse(localStorage.getItem("userProfile") || "{}");
@@ -110,7 +111,5 @@ onMounted(fetchEarnings);
 </script>
 
 <style scoped>
-.v-data-table th {
-  font-weight: 600;
-}
+
 </style>

@@ -1,35 +1,29 @@
 <template>
   <PageContainer>
-    <div>
-      <v-card-title>
-        Users Management
-       
-      </v-card-title>
+   
       <v-card-text>
-        <v-data-table :headers="headers" :items="users" :loading="loading" class="elevation-1">
-          <!-- Full Name Column -->
+        <TableComponent title="Users Management" :headers="headers" :items="users" :loading="loading">
           <template #item.fullName="{ item }">
             {{ item.firstName }} {{ item.lastName }}
           </template>
 
-          <!-- Roles Column -->
           <template #item.roles="{ item }">
             <v-chip v-for="role in item.roles" :key="role" class="ma-1" color="primary" dark small>
               {{ role }}
             </v-chip>
           </template>
 
-          <!-- Actions Column -->
           <template #item.actions="{ item }">
             <v-btn class="mr-4" color="primary" small @click="editUser(item)">Edit</v-btn>
             <v-btn color="error" small @click="confirmDelete(item)">Delete</v-btn>
           </template>
-        </v-data-table>
+        </TableComponent>
+
+        
 
         <!-- Error Alert -->
         <v-alert v-if="error" type="error" class="mt-3">{{ error }}</v-alert>
       </v-card-text>
-    </div>
 
     <!-- Edit User Dialog -->
     <v-dialog v-model="editDialog" max-width="900px">
@@ -40,12 +34,8 @@
           <InputField v-model="selectedUser.lastName" label="Last Name" required />
           <InputField v-model="selectedUser.username" label="Username" required disabled />
           <InputField v-model="selectedUser.email" label="Email" type="email" required />
-          <PhoneNumberInput
-            v-model="selectedUser.phoneNumber"
-            :initial-value="selectedUser.phoneNumber"
-            @valid="isPhoneValid = $event"
-            :disabled="loading"
-          />
+          <PhoneNumberInput v-model="selectedUser.phoneNumber" :initial-value="selectedUser.phoneNumber"
+            @valid="isPhoneValid = $event" :disabled="loading" />
 
 
           <!-- Editable Roles Multi-Select -->
@@ -77,9 +67,10 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
-     <v-spacer />
-        <Button max-width="120px" color="primary" label="Add User" @click="createUser()" :disabled="loading" />
-        <Button max-width="120px" color="error" label="Delete All" class="ml-2" @click="confirmDeleteAll" :disabled="loading || users.length === 0" />
+    <v-spacer />
+    <Button max-width="120px" color="primary" label="Add User" @click="createUser()" :disabled="loading" />
+    <Button max-width="120px" color="error" label="Delete All" class="ml-2" @click="confirmDeleteAll"
+      :disabled="loading || users.length === 0" />
 
     <!-- Delete All Confirmation Dialog -->
     <v-dialog v-model="deleteAllDialog" max-width="500px">
@@ -108,6 +99,7 @@ import apiService from '@/api/apiService';
 import PhoneNumberInput from '@/components/PhoneNumberInput.vue';
 import { USER_ROLES } from '@/utils/constants';
 import { logoutUser } from '@/utils/helper';
+import TableComponent from '@/components/TableComponent.vue';
 const router = useRouter();
 
 const users = ref([]);
@@ -154,7 +146,7 @@ const isFormValid = computed(() => {
 });
 
 const createUser = () => {
-        router.replace({ name: "CreateProfile" });
+  router.replace({ name: "CreateProfile" });
 };
 
 // Load all users
@@ -239,12 +231,12 @@ const deleteUserConfirmed = async () => {
     await apiService.deleteUserByUsername(userToDelete.value.username);
     deleteDialog.value = false;
     userToDelete.value = null;
-  
+
   } catch (err: any) {
     error.value = err.message || 'Failed to delete user';
   } finally {
     loading.value = false;
-      await loadUsers();
+    await loadUsers();
   }
 };
 
@@ -260,11 +252,11 @@ const deleteAllConfirmed = async () => {
     // Call the backend DELETE endpoint
     await apiService.deleteAllUsers();
     deleteAllDialog.value = false;
-   
+
   } catch (err: any) {
     error.value = err.message || 'Failed to delete all users';
   } finally {
-    deleteAllLoading.value = false; 
+    deleteAllLoading.value = false;
     await logoutUser();
   }
 };

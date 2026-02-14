@@ -1,80 +1,30 @@
 <template>
   <PageContainer>
-    <v-card-title>My Car Wash History</v-card-title>
 
     <v-card-text>
-      <v-data-table
-        :headers="headers"
-        :items="bookings"
-        :loading="loading"
-        class="elevation-1"
-      >
-        <!-- Services column with chips and tooltip -->
-        <template #item.serviceTypes="{ item }">
-          <div class="d-flex align-center">
-            <v-chip v-if="item.serviceTypes.length" small outlined class="ma-1">
-              {{ item.serviceTypes[0] }}
-            </v-chip>
-
-            <div v-if="item.serviceTypes.length > 1">
-              <v-tooltip bottom>
-                <template #activator="{ props }">
-                  <v-chip v-bind="props" small outlined class="ma-1">
-                    +{{ item.serviceTypes.length - 1 }} more
-                  </v-chip>
-                </template>
-                <div class="pa-2" style="max-width: 250px; white-space: pre-line;">
-                  {{ item.serviceTypes.slice(1).join('\n') }}
-                </div>
-              </v-tooltip>
-            </div>
-          </div>
+      <TableComponent title="My Car Wash History" :headers="headers" :items="bookings" class="elevation-1" :items-per-page="5" :loading="loading">
+        <template #item.location="{ item }">
+          <TooltipText :text="item.location" :maxLength="80" />
         </template>
 
-        <!-- Date formatting -->
+        <template #item.serviceTypes="{ item }">
+          {{ item.serviceTypes.join(", ") }}
+        </template>
+
         <template #item.date="{ item }">
           {{ formatDate(item.date) }}
         </template>
 
-        <!-- Price formatting -->
-        <template #item.price="{ item }">
-          R {{ (item.servicePrice || 0).toFixed(2) }}
-        </template>
-
-        <!-- Status with Pay & Directions buttons -->
         <template #item.status="{ item }">
-          <div class="d-flex align-center">
-        <!-- Status column -->
-            <v-chip class="mr-4" :color="getStatusColor(item.status)" dark>
-              {{ item.status }}
-            </v-chip>
-
-            <!-- Pay button if status is accepted             -->
-            <v-btn 
-             v-if="item.status === JOB_STATUS.ACCEPTED"
-              color="primary"
-              size="small"
-              class="mr-2"
-              @click="payForRequest(item)"
-            >
-              Pay
-            </v-btn>
-
-            <!-- Directions button -->
-            <v-btn
-              color="green"
-              size="small"
-              @click="goToDirections(item)"
-            >
-              Directions
-            </v-btn>
-          </div>
+          <v-chip :color="getStatusColor(item.status)" dark>
+            {{ item.status }}
+          </v-chip>
         </template>
 
         <template #no-data>
-          No bookings found.
+          You have no past car washes.
         </template>
-      </v-data-table>
+      </TableComponent>
     </v-card-text>
   </PageContainer>
 </template>
@@ -87,6 +37,7 @@ import apiService from "@/api/apiService";
 import { getStatusColor } from "@/utils/helper";
 import {useRouter} from 'vue-router'
 import { JOB_STATUS } from "@/utils/constants";
+import TableComponent from "@/components/TableComponent.vue";
 
 // Booking interface matching backend
 interface Booking {
@@ -173,7 +124,5 @@ onMounted(fetchBookings);
 </script>
 
 <style scoped>
-.v-data-table th {
-  font-weight: 600;
-}
+
 </style>

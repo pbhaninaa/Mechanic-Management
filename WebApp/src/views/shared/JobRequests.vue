@@ -1,30 +1,22 @@
 <template>
   <PageContainer>
-    <v-card-title>Job Requests</v-card-title>
     <v-card-text>
-      <p>See all job requests from clients.</p>
-
-      <!-- Job requests table -->
-      <v-data-table :headers="headers" :items="jobRequests" class="elevation-1" :items-per-page="5">
-        <!-- Location column with truncation -->
+      <TableComponent title="Job Requests" :headers="headers" :items="jobRequests" :loading="false">
         <template #item.location="{ item }">
           <TooltipText :text="item.location" :maxLength="80" />
         </template>
 
-
-        <!-- Status column with colored chips -->
         <template #item.status="{ item }">
           <v-chip :color="getStatusColor(item.status)" dark>
             {{ item.status }}
           </v-chip>
         </template>
 
-        <!-- Minimal icon-only action buttons -->
         <template #item.actions="{ item }">
           <v-tooltip text="Accept" location="top">
             <template #activator="{ props }">
-              <v-btn v-bind="props" variant="text" size="small" color="green" class="mr-1" @click="updateJobStatus(item, JOB_STATUS.ACCEPTED)"
-                :disabled="item.status === JOB_STATUS.ACCEPTED">
+              <v-btn v-bind="props" variant="text" size="small" color="green" class="mr-1"
+                @click="updateJobStatus(item, JOB_STATUS.ACCEPTED)" :disabled="item.status === JOB_STATUS.ACCEPTED">
                 <v-icon size="18">mdi-check</v-icon>
               </v-btn>
             </template>
@@ -32,18 +24,15 @@
 
           <v-tooltip text="Decline" location="top">
             <template #activator="{ props }">
-              <v-btn v-bind="props" variant="text" size="small" color="red" @click="updateJobStatus(item, JOB_STATUS.DECLINED)"
-                :disabled="item.status === JOB_STATUS.DECLINED">
+              <v-btn v-bind="props" variant="text" size="small" color="red"
+                @click="updateJobStatus(item, JOB_STATUS.DECLINED)" :disabled="item.status === JOB_STATUS.DECLINED">
                 <v-icon size="18">mdi-close</v-icon>
               </v-btn>
             </template>
           </v-tooltip>
         </template>
-      </v-data-table>
+      </TableComponent>
 
-      <div v-if="jobRequests.length === 0" class="mt-3">
-        No job requests found.
-      </div>
     </v-card-text>
   </PageContainer>
 </template>
@@ -56,6 +45,7 @@ import apiService from "@/api/apiService";
 import TooltipText from "@/components/TooltipText.vue";
 import { JOB_STATUS } from "@/utils/constants";
 import { getStatusColor } from "@/utils/helper";
+import TableComponent from "@/components/TableComponent.vue";
 interface JobRequest {
   id: number;
   username: string;
@@ -91,8 +81,8 @@ const loadJobRequests = async () => {
 };
 const updateJobStatus = async (job: JobRequest, status: string) => {
   try {
- 
-    const payload = { ...job, status, mechanicId:JSON.parse(localStorage.getItem("userProfile")).id };
+
+    const payload = { ...job, status, mechanicId: JSON.parse(localStorage.getItem("userProfile")).id };
 
     await apiService.updateRequestMechanic(payload);
     job.status = status;

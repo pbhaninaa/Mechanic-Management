@@ -1,9 +1,7 @@
 <template>
   <PageContainer>
-    <v-card-title>Payments</v-card-title>
     <v-card-text>
-
-      <v-data-table :headers="headers" :items="payments" class="elevation-1" :items-per-page="5">
+<TableComponent title="Payments" :headers="headers" :items="payments" :loading="false">
         <template #item.amount="{ item }">
           R{{ item.amount }}
         </template>
@@ -19,12 +17,14 @@
             Mark Completed
           </v-btn>
         </template>
-      </v-data-table>
+      </TableComponent>
+  
 
       <div v-if="payments.length === 0" class="mt-3">
         No payments found.
       </div>
     </v-card-text>
+ 
   </PageContainer>
 </template>
 
@@ -34,7 +34,8 @@ import PageContainer from "@/components/PageContainer.vue";
 import apiService from "@/api/apiService";
 import { JOB_STATUS } from "@/utils/constants";
 import { getStatusColor } from "@/utils/helper";
-
+import TableComponent from "@/components/TableComponent.vue";
+import Test from "@/views/Test.vue";
 interface Payment {
   id: number;
   client: string;
