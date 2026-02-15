@@ -29,7 +29,6 @@ public class JwtUtil {
     }
 
     public String generateToken(String username, List<String> roles) {
-        System.out.printf("-===========================================Roles: %s%n", roles);
         return Jwts.builder()
                 .setSubject(username)
                 .claim("roles", roles)

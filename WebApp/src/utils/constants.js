@@ -1,10 +1,8 @@
 // API Configuration
-// API Configuration
 export const API_CONFIG = {
   BASE_URL: import.meta.env.VITE_API_URL,
   TIMEOUT: 10000
 };
-
 
 // API Endpoints
 export const API_ENDPOINTS = {
@@ -23,11 +21,9 @@ export const API_ENDPOINTS = {
   REQUEST_MECHANIC_BY_USER: (username) =>`/request-mechanic/user/username/${username}`,
   REQUEST_MECHANIC_BY_ID: (id) => `/request-mechanic/${id}`,
 
-
   // Payment Endpoints
   PAYMENTS: '/payments',
   PAYMENT_BY_CLIENT: (username) => `/payments/client/${username}`,
-
   PAYMENT_BY_MECHANIC: (mechanicId) => `/payments/mechanic/${mechanicId}`,
   PAYMENT_BY_CARWASHID: (carWashId) => `/payments/carWash/${carWashId}`,
 

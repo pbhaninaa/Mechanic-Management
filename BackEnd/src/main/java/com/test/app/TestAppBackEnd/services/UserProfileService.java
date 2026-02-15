@@ -62,7 +62,6 @@ public class UserProfileService {
     }
 
     public Iterable<UserProfile> getAllProfiles() {
-        System.out.println("============================Fetching all profiles===============================");
         return repository.findAll();
     }
 
