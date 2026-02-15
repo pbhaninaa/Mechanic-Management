@@ -1,7 +1,7 @@
 <template>
   <PageContainer>
     <v-card-text>
-      <TableComponent title="Car Wash Bookings" :headers="headers" :items="bookings" class="elevation-1"
+      <TableComponent title="Car Wash Bookings" :headers="headers" :items="bookings" 
         :items-per-page="5" :loading="loading">
         <template #item.location="{ item }">
           <TooltipText :text="item.location" :maxLength="50" />

@@ -1,7 +1,7 @@
 <template>
   <PageContainer>
     <v-card-text>
-      <TableComponent title="Manage Washes" :headers="headers" :items="washes" class="elevation-1" :items-per-page="5" :loading="loading">
+      <TableComponent title="Manage Washes" :headers="headers" :items="washes"  :items-per-page="5" :loading="loading">
         <!-- Status with colored chips -->
         <template #item.status="{ item }">
           <v-chip :color="getStatusColor(item.status)" dark>

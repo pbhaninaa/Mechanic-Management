@@ -1,7 +1,7 @@
 <template>
   <PageContainer>
     <v-card-text>
-<TableComponent title="Reports" :headers="headers" :items="reports" class="elevation-1" :items-per-page="5" :loading="loading">
+<TableComponent title="Reports" :headers="headers" :items="reports"  :items-per-page="5" :loading="false">
         <template #item.status="{ item }">
           <v-chip :color="item.status === 'Completed' ? 'green' : 'orange'" dark>
             {{ item.status }}

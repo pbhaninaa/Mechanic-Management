@@ -1,7 +1,7 @@
 // API Configuration
 // API Configuration
 export const API_CONFIG = {
-  BASE_URL: import.meta.env.VITE_API_URL, 
+  BASE_URL: import.meta.env.VITE_API_URL,
   TIMEOUT: 10000
 };
 
@@ -13,15 +13,16 @@ export const API_ENDPOINTS = {
   PROFILE: '/user-profile',
   APPLICATIONS: '/job-applications',
   DELETE_ACCOUNT: '/users',
-   DELETE_ALL_USERS: '/users/all',
+  DELETE_ALL_USERS: '/users/all',
   // Request History Endpoints
   REQUEST_HISTORY: '/request-history',
   REQUEST_HISTORY_BY_USER: (username) => `/request-history/user/${username}`,
 
   // Request Mechanic Endpoints
   REQUEST_MECHANIC: '/request-mechanic',
-  REQUEST_MECHANIC_BY_USER: (username) => `/request-mechanic/user/${username}`,
+  REQUEST_MECHANIC_BY_USER: (username) =>`/request-mechanic/user/username/${username}`,
   REQUEST_MECHANIC_BY_ID: (id) => `/request-mechanic/${id}`,
+
 
   // Payment Endpoints
   PAYMENTS: '/payments',
@@ -39,8 +40,8 @@ export const API_ENDPOINTS = {
   CREATE_CARWASH_BOOKING: '/carwash-bookings/create',
   UPDATE_CARWASH_BOOKING: (id) => `/carwash-bookings/update/${id}`,
   DELETE_CARWASH_BOOKING: (id) => `/carwash-bookings/delete/${id}`,
-    // New Email Endpoint
-  SEND_EMAIL: '/send-email' 
+  // New Email Endpoint
+  SEND_EMAIL: '/send-email'
 };
 
 // User Roles
@@ -70,7 +71,7 @@ export const JOB_STATUS = {
   DRAFT: 'draft',
   ARCHIVED: 'archived',
   FAILED: 'failed',
-  PAID:'paid',
+  PAID: 'paid',
   OTHER: 'other'
 };
 
@@ -80,13 +81,13 @@ export const COLORS = {
   PRIMARY_BLUE: '#1976D2',
   SECONDARY_GREY: '#424242',
   ACCENT_LIGHT_BLUE: '#82B1FF',
-  
+
   // Semantic Colors
   SUCCESS_GREEN: '#4CAF50',
   ERROR_RED: '#FF5252',
   WARNING_YELLOW: '#FFC107',
   INFO_BLUE: '#2196F3',
-  
+
   // Dashboard Card Colors (Vuetify color names for icon styling)
   CARD_BLUE: 'blue',
   CARD_TEAL: 'teal',
@@ -94,7 +95,7 @@ export const COLORS = {
   CARD_INDIGO: 'indigo',
   CARD_PURPLE: 'purple',
   CARD_ORANGE: 'orange',
-  
+
   // Chart Colors (Hex values matching Vuetify colors for visual consistency)
   CHART_BLUE: '#2196F3',        // matches Vuetify blue
   CHART_TEAL: '#009688',         // matches Vuetify teal
@@ -102,34 +103,34 @@ export const COLORS = {
   CHART_INDIGO: '#3F51B5',       // matches Vuetify indigo
   CHART_PURPLE: '#9C27B0',       // matches Vuetify purple
   CHART_ORANGE: '#FF9800',       // matches Vuetify orange
-  
+
   // Text Colors
   TEXT_WHITE: '#fff',
   TEXT_BLACK: '#000',
   TEXT_DARK_GREY: '#424242',
   TEXT_LIGHT_GREY: '#9e9e9e',
   TEXT_RED: 'red',
-  
+
   // Background Colors
   BG_WHITE: '#fff',
   BG_LIGHT_GREY: '#f5f5f5',
   BG_LIGHT_BLUE: 'aliceblue',
   BG_LIGHT_GREY_TABLE: '#f3f4f6',
   BG_YELLOW: 'yellow',
-  
+
   // Border Colors
   BORDER_LIGHT_GREY: '#e0e0e0',
   BORDER_BLUE: 'rgba(54, 162, 235, 0.9)',
-  
+
   // Shadow/Overlay Colors
   SHADOW_DARK: 'rgba(0, 0, 0, 0.1)',
   SHADOW_DARK_STRONG: 'rgba(0, 0, 0, 0.15)',
   OVERLAY_BLUE: 'rgba(54, 162, 235, 0.2)',
   POINT_BLUE: 'rgba(54, 162, 235, 1)',
-  
+
   // Map Colors
   MAP_ROUTE_BLUE: 'blue',
-  
+
   // Soft/faded colors (semi-transparent)
   SOFT_GREEN: 'rgba(0, 255, 0, 0.45)',
   SOFT_RED: 'rgba(255, 0, 0, 0.45)',

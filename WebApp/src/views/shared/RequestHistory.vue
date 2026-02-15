@@ -4,7 +4,7 @@
       <div v-if="historyLoading">Loading your requests...</div>
       <div v-else-if="historyError" class="error">{{ historyError }}</div>
       <div v-else>
-        <TableComponent title="My Request History" headers="headers" :items="requests" class="elevation-1" :items-per-page="5" :loading="historyLoading">
+        <TableComponent title="My Request History" :headers="headers" :items="requests"  :items-per-page="5" :loading="historyLoading">
           <template #item.location="{ item }">
             {{ truncateLocation(item.location) }}
           </template>
@@ -15,12 +15,15 @@
             </v-chip>
           </template>
 
-          <template #item.actions="{ item }">
-            <v-btn small color="green" :disabled="item.status.toLowerCase() !== 'accepted'"
-              @click="payForRequest(item)">
-              Pay
-            </v-btn>
-          </template>
+           <template #item.actions="{ item }">
+          <v-btn small color="green" :disabled="item.status.toLowerCase() !== 'accepted'" @click="payForRequest(item)">
+            Pay
+          </v-btn>
+          <v-btn v-if="false" small color="blue" :disabled="item.status.toLowerCase() !== 'accepted'"
+            @click="goToDirections(item)">
+            Directions
+          </v-btn>
+        </template>
 
           <template #no-data>
             You have no past requests.
@@ -74,14 +77,21 @@ const loadRequests = async () => {
   historyError.value = null;
 
   try {
-    const res = await apiService.getUserRequestHistory(username);
-    requests.value = res.data;
+    const response = await apiService.getUserRequestHistory(username);
+    requests.value = Array.isArray(response.data) ? response.data : [];
   } catch (err: any) {
     console.error(err);
     historyError.value = err.message || "Failed to load request history";
   } finally {
     historyLoading.value = false;
   }
+};
+const goToDirections = (booking: any) => {
+  router.push({
+    name: "Mapview",
+    query: { lat: booking.locationLat, lng: booking.locationLng },
+
+  });
 };
 const truncateLocation = (location: string) => {
   const parts = location.split(",");

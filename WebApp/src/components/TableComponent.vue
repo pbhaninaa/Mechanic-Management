@@ -48,7 +48,7 @@ import { withDefaults, defineProps, toRefs } from "vue";
 import NoDataMessage from "@/components/NoDataMessage.vue";
 
 interface TableHeader {
-  text: string;   // Vuetify 2 uses "text"
+  text: string;  
   value: string;
   sortable?: boolean;
   formatter?: (item: any) => string;

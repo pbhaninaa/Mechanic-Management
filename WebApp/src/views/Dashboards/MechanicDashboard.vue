@@ -23,7 +23,7 @@
     <v-card class="mt-6" outlined v-if="!loading && !error">
    
 <TableComponent title=" Pending Job Requests" :headers="tableHeaders" :items="pendingJobRequests" :search="search" item-key="id"
-        class="elevation-1" dense no-pagination :loading="loading">
+       dense no-pagination :loading="loading">
 
         <template #item.actions="{ item }">
           <div class="d-flex justify-center">
