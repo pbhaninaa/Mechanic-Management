@@ -37,12 +37,6 @@ public class RequestHistoryController {
     public ResponseEntity<ApiResponse<List<MechanicRequest>>> getByUsername(@PathVariable String username) {
         List<MechanicRequest> histories = mechanicRequestService.getByUsername(username);
 
-        if (histories.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
-                    new ApiResponse<>("No request history found for user: " + username, HttpStatus.NOT_FOUND.value(), histories, false)
-            );
-        }
-
         return ResponseEntity.ok(
                 new ApiResponse<>("Fetched request history for user: " + username, HttpStatus.OK.value(), histories, false)
         );
