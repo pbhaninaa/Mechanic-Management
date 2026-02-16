@@ -1,80 +1,43 @@
 <template>
   <PageContainer>
-    <v-card-title>My Car Wash History</v-card-title>
 
     <v-card-text>
-      <v-data-table
-        :headers="headers"
-        :items="bookings"
-        :loading="loading"
-        class="elevation-1"
-      >
-        <!-- Services column with chips and tooltip -->
-        <template #item.serviceTypes="{ item }">
-          <div class="d-flex align-center">
-            <v-chip v-if="item.serviceTypes.length" small outlined class="ma-1">
-              {{ item.serviceTypes[0] }}
-            </v-chip>
+      <TableComponent title="My Car Wash History" :headers="headers" :items="bookings" 
+        :items-per-page="5" :loading="loading">
 
-            <div v-if="item.serviceTypes.length > 1">
-              <v-tooltip bottom>
-                <template #activator="{ props }">
-                  <v-chip v-bind="props" small outlined class="ma-1">
-                    +{{ item.serviceTypes.length - 1 }} more
-                  </v-chip>
-                </template>
-                <div class="pa-2" style="max-width: 250px; white-space: pre-line;">
-                  {{ item.serviceTypes.slice(1).join('\n') }}
-                </div>
-              </v-tooltip>
-            </div>
-          </div>
+
+        <template #item.serviceTypes="{ item }">
+          {{ item.serviceTypes.join(", ") }}
         </template>
 
-        <!-- Date formatting -->
         <template #item.date="{ item }">
           {{ formatDate(item.date) }}
         </template>
-
-        <!-- Price formatting -->
         <template #item.price="{ item }">
-          R {{ (item.servicePrice || 0).toFixed(2) }}
+          ${{ item.servicePrice.toFixed(2) }}
         </template>
-
-        <!-- Status with Pay & Directions buttons -->
+        <template #item.location="{ item }">
+          {{ truncateLocation(item.location) }}
+        </template>
         <template #item.status="{ item }">
-          <div class="d-flex align-center">
-        <!-- Status column -->
-            <v-chip class="mr-4" :color="getStatusColor(item.status)" dark>
-              {{ item.status }}
-            </v-chip>
-
-            <!-- Pay button if status is accepted             -->
-            <v-btn 
-             v-if="item.status === JOB_STATUS.ACCEPTED"
-              color="primary"
-              size="small"
-              class="mr-2"
-              @click="payForRequest(item)"
-            >
-              Pay
-            </v-btn>
-
-            <!-- Directions button -->
-            <v-btn
-              color="green"
-              size="small"
-              @click="goToDirections(item)"
-            >
-              Directions
-            </v-btn>
-          </div>
+          <v-chip :color="getStatusColor(item.status)" dark>
+            {{ item.status }}
+          </v-chip>
+        </template>
+        <template #item.actions="{ item }">
+          <v-btn small color="green" :disabled="item.status.toLowerCase() !== 'accepted'" @click="payForRequest(item)">
+            Pay
+          </v-btn>
+          <v-btn v-if="false" small color="blue" :disabled="item.status.toLowerCase() !== 'accepted'"
+            @click="goToDirections(item)">
+            Directions
+          </v-btn>
         </template>
 
         <template #no-data>
-          No bookings found.
+          You have no past car washes.
         </template>
-      </v-data-table>
+      </TableComponent>
     </v-card-text>
   </PageContainer>
 </template>
@@ -85,8 +48,8 @@ import PageContainer from "@/components/PageContainer.vue";
 import { format } from "date-fns";
 import apiService from "@/api/apiService";
 import { getStatusColor } from "@/utils/helper";
-import {useRouter} from 'vue-router'
-import { JOB_STATUS } from "@/utils/constants";
+import { useRouter } from 'vue-router'
+import TableComponent from "@/components/TableComponent.vue";
 
 // Booking interface matching backend
 interface Booking {
@@ -108,12 +71,13 @@ interface Booking {
 // Table headers
 const headers = [
   { title: "Car Plate", value: "carPlate" },
-  { title: "Car Type", value: "carType" },
+  // { title: "Car Type", value: "carType" },
   { title: "Services", value: "serviceTypes" },
   { title: "Date", value: "date" },
   { title: "Price", value: "price" },
   { title: "Location", value: "location" },
   { title: "Status", value: "status" },
+  { title: "Actions", value: "actions", sortable: false }
 ];
 
 // Reactive states
@@ -137,7 +101,13 @@ const fetchBookings = async () => {
     loading.value = false;
   }
 };
-
+const truncateLocation = (location: string) => {
+  const parts = location.split(",");
+  if (parts.length > 3) {
+    return parts.slice(0, 3).join(",") + ", ...";
+  }
+  return location;
+};
 // Format date for table
 const formatDate = (dateStr: string) => format(new Date(dateStr), "dd MMM yyyy");
 
@@ -146,13 +116,13 @@ const formatDate = (dateStr: string) => format(new Date(dateStr), "dd MMM yyyy")
 const payForRequest = async (request) => {
 
   router.push({
-    name:"PaymentScreen",
-    query:{
-      bookingId:request.id,
-      amount:request.servicePrice,
-      clientUsername:JSON.parse(localStorage.getItem("userProfile")||"{}").username||"",
-      carWashId:request.carWashId,
-      jobDes:"Car wash service"
+    name: "PaymentScreen",
+    query: {
+      bookingId: request.id,
+      amount: request.servicePrice,
+      clientUsername: JSON.parse(localStorage.getItem("userProfile") || "{}").username || "",
+      carWashId: request.carWashId,
+      jobDes: "Car wash service"
     }
   });
 
@@ -164,7 +134,7 @@ const goToDirections = (booking: Booking) => {
   router.push({
     name: "Mapview",
     query: { lat: booking.locationLat, lng: booking.locationLng },
-    
+
   });
 };
 
@@ -172,8 +142,4 @@ const goToDirections = (booking: Booking) => {
 onMounted(fetchBookings);
 </script>
 
-<style scoped>
-.v-data-table th {
-  font-weight: 600;
-}
-</style>
+<style scoped></style>

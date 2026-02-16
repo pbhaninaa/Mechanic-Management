@@ -1,25 +1,21 @@
 <template>
   <PageContainer>
-    <v-card-title>Manage Washes</v-card-title>
     <v-card-text>
-      <!-- Washes Table -->
-      <v-data-table :headers="headers" :items="washes" :loading="loading" class="elevation-1" :items-per-page="5">
-       
-
+      <TableComponent title="Manage Washes" :headers="headers" :items="washes"  :items-per-page="5" :loading="loading">
         <!-- Status with colored chips -->
-        <template v-slot:item.status="{ item }">
+        <template #item.status="{ item }">
           <v-chip :color="getStatusColor(item.status)" dark>
             {{ item.status }}
           </v-chip>
         </template>
 
         <!-- Service types as comma-separated -->
-        <template v-slot:item.serviceTypes="{ item }">
+        <template #item.serviceTypes="{ item }">
           {{ item.serviceTypes.join(", ") }}
         </template>
 
         <!-- Actions: Update Status -->
-        <template v-slot:item.actions="{ item }">
+        <template #item.actions="{ item }">
           <!-- Start / In progress button -->
           <v-tooltip text="Mark as In Progress" location="top">
             <template #activator="{ props }">
@@ -40,13 +36,8 @@
             </template>
           </v-tooltip>
         </template>
-
-
-      </v-data-table>
-
-      <div v-if="washes.length === 0" class="mt-3">
-        No accepted wash jobs assigned to you.
-      </div>
+      </TableComponent>
+    
     </v-card-text>
   </PageContainer>
 </template>
@@ -57,6 +48,7 @@ import PageContainer from "@/components/PageContainer.vue";
 import { getStatusColor } from "@/utils/helper";
 import apiService from "@/api/apiService";
 import { JOB_STATUS } from "@/utils/constants";
+import TableComponent from "@/components/TableComponent.vue";
 
 
 const loggedInUser = JSON.parse(localStorage.getItem("userProfile") || "{}");

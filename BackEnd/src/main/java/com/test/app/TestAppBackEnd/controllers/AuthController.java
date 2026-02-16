@@ -8,7 +8,9 @@ import com.test.app.TestAppBackEnd.models.LoginResponse;
 import com.test.app.TestAppBackEnd.entities.User;
 import com.test.app.TestAppBackEnd.models.ApiResponse;
 
+import com.test.app.TestAppBackEnd.services.UserProfileService;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.transaction.Transactional;
 import org.springframework.http.*;
 import org.springframework.security.authentication.*;
 import org.springframework.security.core.Authentication;
@@ -28,17 +30,19 @@ public class AuthController {
     private final UserRepository userRepository;
     private final UserProfileRepository userProfileRepository;
     private final AuthenticationManager authenticationManager;
+    private UserProfileService userProfileService;
     private final JwtUtil jwtUtil;
     private final PasswordEncoder passwordEncoder;
 
     public AuthController(UserRepository userRepository,
                           UserProfileRepository userProfileRepository,
-                          AuthenticationManager authenticationManager,
+                          AuthenticationManager authenticationManager, UserProfileService userProfileService,
                           JwtUtil jwtUtil,
                           PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.userProfileRepository = userProfileRepository;
         this.authenticationManager = authenticationManager;
+        this.userProfileService = userProfileService;
         this.jwtUtil = jwtUtil;
         this.passwordEncoder = passwordEncoder;
     }
@@ -189,6 +193,7 @@ public class AuthController {
 
     // ================= DELETE USER =================
     @DeleteMapping("/{username}")
+    @Transactional
     public ResponseEntity<ApiResponse<Void>> deleteUser(@PathVariable String username, HttpServletRequest request) {
 
         boolean tokenValid = isTokenValid(request);
@@ -198,8 +203,36 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(new ApiResponse<>("User not found", 404, null, tokenValid));
         }
-
+        userProfileRepository.deleteByUsername(username);
         userRepository.delete(existingUser.get());
         return ResponseEntity.ok(new ApiResponse<>("User deleted successfully", 200, null, tokenValid));
     }
+    // ================= DELETE ALL USERS =================
+    @DeleteMapping("/all")
+
+    public ResponseEntity<ApiResponse<Void>> deleteAllUsers(
+            Authentication authentication) {
+
+        String username = authentication.getName();
+        boolean isAdmin = userProfileService.isAdminByUsername(username);
+
+        if (!isAdmin) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(new ApiResponse<>("Only admins can delete all users", 403, null, true));
+        }
+
+        try {
+            userProfileRepository.deleteAll();
+
+            userRepository.deleteAll();
+
+            return ResponseEntity.status(HttpStatus.NO_CONTENT)
+                    .body(new ApiResponse<>("All users deleted successfully", 204, null, true));
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse<>("Failed to delete users", 500, null, true));
+        }
+    }
+
 }

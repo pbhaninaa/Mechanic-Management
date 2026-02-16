@@ -8,7 +8,6 @@
 
 <script setup>
 import { ref, onMounted } from "vue";
-import { COLORS } from "@/utils/constants";
 const isAuthenticated = ref(false);
 const checkAuth = () => {
   isAuthenticated.value = !!localStorage.getItem("token");
@@ -21,8 +20,9 @@ onMounted(() => {
 
 <style scoped>
 .page-container {
-  margin-right: 15%;
-  width: 85%;
+  margin-right: 18%;
+  width: 80%;
+  height: 100%;
 }
 
 .unauth-centered {

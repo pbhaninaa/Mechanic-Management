@@ -21,10 +21,10 @@
     </v-row>
 
     <!-- Charts Layout -->
-    <v-row dense class="mt-2">
+    <v-row >
       <!-- Progress Donut Chart -->
       <v-col cols="12" md="6">
-        <div class="mt-6 pa-4 chart-card">
+        <div class="mt-6 pa-4 ">
           <h3>Service Progress</h3>
           <v-divider class="mb-4" />
           <canvas ref="progressPieChart" class="mini-chart"></canvas>
@@ -33,7 +33,7 @@
 
       <!-- Monthly Earnings Line Chart -->
       <v-col cols="12" md="6">
-        <div class="mt-6 pa-4 chart-card">
+        <div class="mt-6 pa-4 ">
           <h3>Monthly Earnings</h3>
           <v-divider class="mb-4" />
           <canvas ref="earningsChart" class="mini-chart"></canvas>

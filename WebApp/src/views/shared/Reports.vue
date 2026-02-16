@@ -1,26 +1,14 @@
 <template>
   <PageContainer>
-    <v-card-title>Reports</v-card-title>
     <v-card-text>
-      <p>System reports and analytics for Admin.</p>
-
-      <!-- Demo Reports Table -->
-      <v-data-table
-        :headers="headers"
-        :items="reports"
-        class="elevation-1"
-        :items-per-page="5"
-      >
+<TableComponent title="Reports" :headers="headers" :items="reports"  :items-per-page="5" :loading="false">
         <template #item.status="{ item }">
-          <v-chip :color="item.status === JOB_STATUS.COMPLETED? 'green' : 'orange'" dark>
+          <v-chip :color="item.status === 'Completed' ? 'green' : 'orange'" dark>
             {{ item.status }}
           </v-chip>
         </template>
-      </v-data-table>
-
-      <div v-if="reports.length === 0" class="mt-3">
-        No reports available.
-      </div>
+      </TableComponent>
+     
     </v-card-text>
   </PageContainer>
 </template>
@@ -28,7 +16,7 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import PageContainer from "@/components/PageContainer.vue";
-import { JOB_STATUS } from "@/utils/constants";
+import TableComponent from "@/components/TableComponent.vue";
 
 interface Report {
   id: number;
