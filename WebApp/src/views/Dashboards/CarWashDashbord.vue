@@ -49,6 +49,7 @@ import PageContainer from "@/components/PageContainer.vue";
 import Chart from "chart.js/auto";
 import ChartDataLabels from "chartjs-plugin-datalabels";
 import apiService from "@/api/apiService";
+import { COLORS, USER_ROLES } from "@/utils/constants";
 
 Chart.register(ChartDataLabels);
 
@@ -58,9 +59,9 @@ const earningsChart = ref<HTMLCanvasElement | null>(null);
 
 // Summary cards
 const summaryCards = ref([
-  { title: "Total Customers", value: 0, icon: "mdi-account", color: "blue" },
-  { title: "Cars Washed", value: 0, icon: "mdi-car", color: "green" },
-  { title: "Revenue", value: "R 0", icon: "mdi-cash", color: "orange" },
+  { title: "Total Customers", value: 0, icon: "mdi-account", color:COLORS.CHART_BLUE },
+  { title: "Cars Washed", value: 0, icon: "mdi-car", color: COLORS.CHART_GREEN },
+  { title: "Revenue", value: "R 0", icon: "mdi-cash", color: COLORS.CHART_ORANGE },
 ]);
 
 // Earnings per month
@@ -85,7 +86,7 @@ const renderCharts = () => {
         plugins: {
           legend: { position: "bottom" },
           datalabels: {
-            color: "#fff",
+            color: COLORS.TEXT_WHITE,
             formatter: (value, context) => {
               const total = context.dataset.data.reduce((a, b) => Number(a) + Number(b), 0);
               return total ? `${((Number(value) / Number(total)) * 100).toFixed(1)}%` : "0%";
@@ -106,11 +107,11 @@ const renderCharts = () => {
         datasets: [{
           label: "Earnings (R)",
           data: monthlyEarnings.value,
-          borderColor: "rgba(54, 162, 235, 0.9)",
-          backgroundColor: "rgba(54, 162, 235, 0.2)",
+          borderColor: COLORS.CHART_BLUE,
+          backgroundColor: COLORS.OVERLAY_BLUE,
           tension: 0.3,
           fill: true,
-          pointBackgroundColor: "rgba(54, 162, 235, 1)",
+          pointBackgroundColor: COLORS.CHART_BLUE,
         }],
       },
       options: {
@@ -129,20 +130,20 @@ const loadSummaryData = async () => {
     const paymentsRes = await apiService.getPaymentsByClients();
     const loggedInUser = JSON.parse(localStorage.getItem("userProfile") || "{}");
 
-    const clients = (usersRes.data || []).filter(u => u.roles.includes("CLIENT"));
+    const clients = (usersRes.data || []).filter(u => u.roles.includes(USER_ROLES.CLIENT));
     const carWashPayments = (paymentsRes.data || []).filter(p => p.carWashId == loggedInUser.id);
 
     // Update summary cards
     summaryCards.value = [
-      { title: "Total Customers", value: clients.length, icon: "mdi-account", color: "blue" },
-      { title: "Cars Washed", value: carWashPayments.length, icon: "mdi-car", color: "green" },
-      { title: "Revenue", value: carWashPayments.reduce((sum, p) => sum + (p.amount || 0), 0), icon: "mdi-cash", color: "orange" },
+      { title: "Total Customers", value: clients.length, icon: "mdi-account", color: COLORS.CHART_BLUE },
+      { title: "Cars Washed", value: carWashPayments.length, icon: "mdi-car", color: COLORS.CHART_GREEN },
+      { title: "Revenue", value: carWashPayments.reduce((sum, p) => sum + (p.amount || 0), 0), icon: "mdi-cash", color: COLORS.CHART_ORANGE },
     ];
 
     // Calculate monthly earnings for full year
     const monthTotals: number[] = Array(12).fill(0);
     carWashPayments.forEach(p => {
-      const month = new Date(p.paidAt).getMonth(); // 0=Jan, 11=Dec
+      const month = new Date(p.paidAt).getMonth(); 
       monthTotals[month] += p.amount || 0;
     });
     monthlyEarnings.value = monthTotals;

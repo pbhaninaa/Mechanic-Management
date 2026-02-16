@@ -2,7 +2,6 @@
   <PageContainer>
     <v-card-title>Job Requests</v-card-title>
     <v-card-text>
-      <p>See all job requests from clients.</p>
 
       <!-- Job requests table -->
       <v-data-table :headers="headers" :items="jobRequests" class="elevation-1" :items-per-page="5">
