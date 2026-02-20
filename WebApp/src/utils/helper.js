@@ -266,18 +266,23 @@ export const getUserProfile = () => {
   if (!profileStr) return null;
   return JSON.parse(profileStr);
 };
+
 export const getUserRole = () => {
   return localStorage.getItem("role");
 };  
+
 export const isUserMechanic = () => {
   return localStorage.getItem("isMechanic") === "true";
 }
+
 export const isUserAdmin = () => {
   return localStorage.getItem("isAdmin") === "true";
 }   
+
 export const isUserClient = () => {
   return localStorage.getItem("isClient") === "true";
 } 
+
 export const getBookings = async () => {
   try {
     const res = await apiService.getBookings();
@@ -291,6 +296,7 @@ export const getBookings = async () => {
     return { success: false, message: err.message || "Failed to fetch bookings" };
   } 
 };
+
 export const getMechanics = async () => {
   try {
     const res = await apiService.getMechanics();    
@@ -305,6 +311,7 @@ export const getMechanics = async () => {
     return { success: false, message: err.message || "Failed to fetch mechanics" };
   }
 };
+
 export const bookService = async (bookingData) => {
   try {
     const res = await apiService.bookService(bookingData);
@@ -319,6 +326,7 @@ export const bookService = async (bookingData) => {
     return { success: false, message: err.message || "Failed to book service" };
   }
 };
+
 export const updateBookingStatus = async (bookingId, status) => {
   try {
 
@@ -332,3 +340,28 @@ export const updateBookingStatus = async (bookingId, status) => {
     return { success: false, message: err.message || "Failed to update booking status" };
   }
 };
+export const getServices = async () => {
+  try {
+    const res = await apiService.getServices();
+    if (res?.data) {
+      return { success: true, services: res.data };
+    }
+    throw new Error("Invalid response format");
+  } catch (err) {
+    console.error("Error fetching services:", err);
+    return { success: false, message: err.message || "Failed to fetch services" };
+  }
+};
+export const getServiceById = async (serviceId) => {
+  try {
+    const res = await apiService.getServiceById(serviceId);
+    if (res?.data) {
+      return { success: true, service: res.data };
+    }
+    throw new Error("Invalid response format");
+  }
+  catch (err) { 
+    console.error("Error fetching service by ID:", err);
+    return { success: false, message: err.message || "Failed to fetch service details" };
+  }
+} 

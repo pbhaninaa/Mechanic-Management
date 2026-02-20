@@ -24,7 +24,9 @@ export default defineConfig(({ mode }) => {
       __VITE_APP_ENV__: JSON.stringify(env.VITE_APP_ENV),
     },
     server: {
-      port: 3000
+      host: '0.0.0.0',
+      port: 3000,
+      strictPort: true,
     }
   }
 })

@@ -47,6 +47,7 @@ dependencies {
 
 	// Email sender
 	implementation 'org.springframework.boot:spring-boot-starter-mail'
+	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.3.0'
 }
 
 tasks.named('test') {
