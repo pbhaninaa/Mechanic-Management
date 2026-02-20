@@ -255,4 +255,80 @@ export const getStatusColor = (status) => {
     default:
       return "grey";
   }
+
+
+
+  
+};
+// ==============================================================================================================
+export const getUserProfile = () => {
+  const profileStr = localStorage.getItem("profile");
+  if (!profileStr) return null;
+  return JSON.parse(profileStr);
+};
+export const getUserRole = () => {
+  return localStorage.getItem("role");
+};  
+export const isUserMechanic = () => {
+  return localStorage.getItem("isMechanic") === "true";
+}
+export const isUserAdmin = () => {
+  return localStorage.getItem("isAdmin") === "true";
+}   
+export const isUserClient = () => {
+  return localStorage.getItem("isClient") === "true";
+} 
+export const getBookings = async () => {
+  try {
+    const res = await apiService.getBookings();
+    if (res?.data) {
+      return { success: true, bookings: res.data };
+    } else {
+      throw new Error("Invalid response format");
+    }
+  } catch (err) {
+    console.error("Error fetching bookings:", err);
+    return { success: false, message: err.message || "Failed to fetch bookings" };
+  } 
+};
+export const getMechanics = async () => {
+  try {
+    const res = await apiService.getMechanics();    
+    if (res?.data) {
+      return { success: true, mechanics: res.data };
+
+    } else {
+      throw new Error("Invalid response format");
+    }
+  } catch (err) {
+    console.error("Error fetching mechanics:", err);
+    return { success: false, message: err.message || "Failed to fetch mechanics" };
+  }
+};
+export const bookService = async (bookingData) => {
+  try {
+    const res = await apiService.bookService(bookingData);
+    if (res?.data) {
+      return { success: true, booking: res.data };
+    }
+
+    throw new Error("Invalid response format");
+  }
+  catch (err) {
+    console.error("Error booking service:", err);
+    return { success: false, message: err.message || "Failed to book service" };
+  }
+};
+export const updateBookingStatus = async (bookingId, status) => {
+  try {
+
+    const res = await apiService.updateBookingStatus(bookingId, status);
+    if (res?.data) {
+      return { success: true, booking: res.data };
+    }
+    throw new Error("Invalid response format");
+  } catch (err) {
+    console.error("Error updating booking status:", err);
+    return { success: false, message: err.message || "Failed to update booking status" };
+  }
 };
