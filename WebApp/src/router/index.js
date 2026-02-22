@@ -6,20 +6,19 @@ import SignUp from "../views/Usermanagement/SignUp.vue";
 import CreateProfile from "../views/Usermanagement/CreateProfile.vue";
 import Profile from "../views/Usermanagement/Profile.vue";
 import Dashboard from "../views/Dashboards/Dashboard.vue";
-import RequestMechanic from "@/views/shared/RequestMechanic.vue"
-import RequestHistory from "../views/shared/RequestHistory.vue";
+import RequestHistory from "../views/Client/RequestHistory.vue";
 import Payments from "../views/shared/Payments.vue";
-import JobRequests from "../views/shared/JobRequests.vue";
+import JobRequests from "../views/Mechanic/MechanicRequests.vue";
 import Earnings from "../views/shared/Earnings.vue";
 import UserManagement from "../views/Usermanagement/UserManagement.vue";
-import Reports from "../views/shared/Reports.vue";
 import { USER_ROLES } from "@/utils/constants";
 import CarWashBookingsTable from "@/views/Carwash/CarWashBookingsTable.vue";
 import ManageWashes from "@/views/Carwash/ManageWashes.vue";
 import BookCarWash from "@/views/Carwash/BookCarWash.vue";
+import RequestMechanic from "../views/Mechanic/RequestMechanic.vue";
 import MyWashes from "@/views/Carwash/MyWashes.vue";
 import Mapview from "@/views/shared/Mapview.vue";
-import HelpPage from "@/views/shared/HelpPage.vue";
+import HelpPage from "@/views/Client/HelpPage.vue";
 import PaymentScreen from "@/views/shared/PaymentScreen.vue";
 
 const routes = [
@@ -36,7 +35,6 @@ const routes = [
   { path: "/jobs", name: "JobRequests", component: JobRequests, meta: { requiresAuth: true } },
   { path: "/earnings", name: "Earnings", component: Earnings, meta: { requiresAuth: true } },
   { path: "/users", name: "UserManagement", component: UserManagement, meta: { requiresAuth: true } },
-  { path: "/reports", name: "Reports", component: Reports, meta: { requiresAuth: true } },
   {path: "/car-wash-bookings", name: "CarWashBookingsTable",component:CarWashBookingsTable,  meta: { requiresAuth: true } },
   {path:"/manage-washes", name:"ManageWashes", component:ManageWashes, meta:{requiresAuth:true}},
   {path: "/book-wash", name: "BookCarWash", component: BookCarWash, meta: { requiresAuth: true } },

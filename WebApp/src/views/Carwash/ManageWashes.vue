@@ -108,7 +108,7 @@ const updateStatus = async (job: WashJob, newStatus: string) => {
 const fetchWashes = async () => {
   loading.value = true;
   try {
-    const res = await apiService.getAllCarWashBookings();
+    const res = await apiService.getCarWashBookingsByClient(loggedInUser.username);
     const allBookings = Array.isArray(res.data) ? res.data : [];
 
     const userId = String(loggedInUser.id);

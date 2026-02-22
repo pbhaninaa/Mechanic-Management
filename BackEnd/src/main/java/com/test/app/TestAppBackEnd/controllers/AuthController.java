@@ -64,6 +64,7 @@ public class AuthController {
     // ================= LOGIN =================
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<LoginResponse>> login(@RequestBody LoginRequest request) {
+        System.out.println("Request:"+request.getUsername()+" "+request.getPassword());
         try {
             Authentication auth = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
