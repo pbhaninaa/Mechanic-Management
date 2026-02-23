@@ -1,4 +1,4 @@
-package com.test.app.TestAppBackEnd.controllers;
+package com.test.app.TestAppBackEnd.models;
 
 
 public class EmailRequest {

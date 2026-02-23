@@ -28,7 +28,7 @@ public class RequestHistoryController {
     public ResponseEntity<ApiResponse<List<MechanicRequest>>> getAll() {
         List<MechanicRequest> histories = mechanicRequestService.getAll();
         return ResponseEntity.ok(
-                new ApiResponse<>("Fetched all request histories", HttpStatus.OK.value(), histories, false)
+                new ApiResponse<>("Fetched all request histories", HttpStatus.OK.value(), histories)
         );
     }
 
@@ -38,7 +38,7 @@ public class RequestHistoryController {
         List<MechanicRequest> histories = mechanicRequestService.getByUsername(username);
 
         return ResponseEntity.ok(
-                new ApiResponse<>("Fetched request history for user: " + username, HttpStatus.OK.value(), histories, false)
+                new ApiResponse<>("Fetched request history for user: " + username, HttpStatus.OK.value(), histories)
         );
     }
 
@@ -48,12 +48,12 @@ public class RequestHistoryController {
         List<MechanicRequest> histories = mechanicRequestService.getByMechanicId(mechanicId);
         if (histories.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
-                    new ApiResponse<>("No request history found for mechanic ID: " + mechanicId, HttpStatus.NOT_FOUND.value(), histories, false)
+                    new ApiResponse<>("No request history found for mechanic ID: " + mechanicId, HttpStatus.NOT_FOUND.value(), histories)
             );
         }
 
         return ResponseEntity.ok(
-                new ApiResponse<>("Fetched request history for mechanic ID: " + mechanicId, HttpStatus.OK.value(), histories, false)
+                new ApiResponse<>("Fetched request history for mechanic ID: " + mechanicId, HttpStatus.OK.value(), histories)
         );
     }
 
@@ -62,7 +62,7 @@ public class RequestHistoryController {
     public ResponseEntity<ApiResponse<RequestHistory>> create(@RequestBody RequestHistory requestHistory) {
         RequestHistory saved = requestHistoryService.save(requestHistory);
         return ResponseEntity.status(HttpStatus.CREATED).body(
-                new ApiResponse<>("Request history created", HttpStatus.CREATED.value(), saved, false)
+                new ApiResponse<>("Request history created", HttpStatus.CREATED.value(), saved)
         );
     }
 
@@ -73,7 +73,7 @@ public class RequestHistoryController {
 
         if (existingHistories.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
-                    new ApiResponse<>("No request history found for user: " + username, HttpStatus.NOT_FOUND.value(), null, false)
+                    new ApiResponse<>("No request history found for user: " + username, HttpStatus.NOT_FOUND.value(), null)
             );
         }
 
@@ -87,7 +87,7 @@ public class RequestHistoryController {
         RequestHistory saved = requestHistoryService.save(existing);
 
         return ResponseEntity.ok(
-                new ApiResponse<>("Request history updated successfully for user: " + username, HttpStatus.OK.value(), saved, false)
+                new ApiResponse<>("Request history updated successfully for user: " + username, HttpStatus.OK.value(), saved)
         );
     }
 
@@ -98,14 +98,14 @@ public class RequestHistoryController {
 
         if (existingHistories.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
-                    new ApiResponse<>("No request history found for user: " + username, HttpStatus.NOT_FOUND.value(), null, false)
+                    new ApiResponse<>("No request history found for user: " + username, HttpStatus.NOT_FOUND.value(), null)
             );
         }
 
         existingHistories.forEach(history -> requestHistoryService.delete(history.getId()));
 
         return ResponseEntity.ok(
-                new ApiResponse<>("All request histories deleted for user: " + username, HttpStatus.OK.value(), null, false)
+                new ApiResponse<>("All request histories deleted for user: " + username, HttpStatus.OK.value(), null)
         );
     }
 }

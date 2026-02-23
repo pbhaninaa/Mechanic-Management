@@ -21,21 +21,21 @@ public class CarWashBookingController {
     @PostMapping("/create")
     public ResponseEntity<ApiResponse<CarWashBooking>> createBooking(@RequestBody CarWashBooking booking) {
         CarWashBooking saved = bookingService.createBooking(booking);
-        return ResponseEntity.ok(new ApiResponse<>("Booking created successfully", HttpStatus.OK.value(), saved, false));
+        return ResponseEntity.ok(new ApiResponse<>("Booking created successfully", HttpStatus.OK.value(), saved));
     }
 
     // Get all bookings
     @GetMapping
     public ResponseEntity<ApiResponse<List<CarWashBooking>>> getAllBookings() {
         List<CarWashBooking> bookings = bookingService.getAllBookings();
-        return ResponseEntity.ok(new ApiResponse<>("Fetched all bookings", HttpStatus.OK.value(), bookings, false));
+        return ResponseEntity.ok(new ApiResponse<>("Fetched all bookings", HttpStatus.OK.value(), bookings));
     }
 
     // Get bookings by client
     @GetMapping("/client/{username}")
     public ResponseEntity<ApiResponse<List<CarWashBooking>>> getBookingsByClient(@PathVariable String username) {
         List<CarWashBooking> bookings = bookingService.getBookingsByClient(username);
-        return ResponseEntity.ok(new ApiResponse<>("Fetched bookings for client: " + username, HttpStatus.OK.value(), bookings, false));
+        return ResponseEntity.ok(new ApiResponse<>("Fetched bookings for client: " + username, HttpStatus.OK.value(), bookings));
     }
 
     // Get booking by ID
@@ -43,7 +43,7 @@ public class CarWashBookingController {
     public ResponseEntity<ApiResponse<CarWashBooking>> getBookingById(@PathVariable Long id) {
         CarWashBooking booking = bookingService.getBookingById(id)
                 .orElseThrow(() -> new RuntimeException("Booking not found with id " + id));
-        return ResponseEntity.ok(new ApiResponse<>("Booking fetched successfully", HttpStatus.OK.value(), booking, false));
+        return ResponseEntity.ok(new ApiResponse<>("Booking fetched successfully", HttpStatus.OK.value(), booking));
     }
 
     @PutMapping("/update/{id}")
@@ -51,7 +51,7 @@ public class CarWashBookingController {
             @PathVariable Long id,
             @RequestBody CarWashBooking booking) {
         CarWashBooking updated = bookingService.updateBooking(id, booking);
-        return ResponseEntity.ok(new ApiResponse<>("Booking updated successfully", HttpStatus.OK.value(), updated, false));
+        return ResponseEntity.ok(new ApiResponse<>("Booking updated successfully", HttpStatus.OK.value(), updated));
     }
 
 
@@ -59,6 +59,6 @@ public class CarWashBookingController {
     @DeleteMapping("/delete/{id}")
     public ResponseEntity<ApiResponse<Void>> deleteBooking(@PathVariable Long id) {
         bookingService.deleteBooking(id);
-        return ResponseEntity.ok(new ApiResponse<>("Booking deleted successfully", HttpStatus.OK.value(), null, false));
+        return ResponseEntity.ok(new ApiResponse<>("Booking deleted successfully", HttpStatus.OK.value(), null));
     }
 }

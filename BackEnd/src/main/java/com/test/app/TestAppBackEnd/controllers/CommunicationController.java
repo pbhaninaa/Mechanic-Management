@@ -1,5 +1,6 @@
 package com.test.app.TestAppBackEnd.controllers;
 
+import com.test.app.TestAppBackEnd.models.EmailRequest;
 import com.test.app.TestAppBackEnd.services.EmailService;
 import jakarta.mail.MessagingException;
 import org.springframework.web.bind.annotation.*;

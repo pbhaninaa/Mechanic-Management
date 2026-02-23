@@ -5,15 +5,17 @@ public class ApiResponse<T> {
     private String message;
     private int statusCode;
     private T data;
-    private boolean tokenExpired; // New field
 
     public ApiResponse() {}
 
-    public ApiResponse(String message, int statusCode, T data, boolean tokenExpired) {
+    public ApiResponse(
+            String message,
+            int statusCode,
+            T data
+    ) {
         this.message = message;
         this.statusCode = statusCode;
         this.data = data;
-        this.tokenExpired = tokenExpired;
     }
 
     // ===== Getters & Setters =====
@@ -41,11 +43,4 @@ public class ApiResponse<T> {
         this.data = data;
     }
 
-    public boolean isTokenExpired() {
-        return tokenExpired;
-    }
-
-    public void setTokenExpired(boolean tokenExpired) {
-        this.tokenExpired = tokenExpired;
-    }
 }

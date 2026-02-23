@@ -5,13 +5,11 @@ public class LoginResponse {
     private String accessToken;
     private String refreshToken;
     private boolean hasProfile;
-//    private UserProfile userProfile;
 
     public LoginResponse(String accessToken, String refreshToken, boolean hasProfile) {
         this.accessToken = accessToken;
         this.refreshToken = refreshToken;
         this.hasProfile = hasProfile;
-//        this.userProfile = userProfile;
     }
 
     public String getAccessToken() { return accessToken; }
@@ -22,6 +20,4 @@ public class LoginResponse {
 
     public boolean isHasProfile() { return hasProfile; }
     public void setHasProfile(boolean hasProfile) { this.hasProfile = hasProfile; }
-    /*public UserProfile getUserProfile() { return userProfile; }
-    public void setUserProfile(UserProfile userProfile) { this.userProfile = userProfile; }*/
 }

@@ -24,8 +24,7 @@ public class PaymentController {
         ApiResponse<Payment> response = new ApiResponse<>(
                 "Payment processed successfully",
                 HttpStatus.OK.value(),
-                payment,
-                false
+                payment
         );
         return ResponseEntity.ok(response);
     }
@@ -38,8 +37,7 @@ public class PaymentController {
         ApiResponse<List<Payment>> response = new ApiResponse<>(
                 "Fetched all payments",
                 HttpStatus.OK.value(),
-                payments,
-                false
+                payments
         );
         return ResponseEntity.ok(response);
     }
@@ -51,8 +49,7 @@ public class PaymentController {
         ApiResponse<List<Payment>> response = new ApiResponse<>(
                 "Fetched payments for client: " + username,
                 HttpStatus.OK.value(),
-                payments,
-                false
+                payments
         );
         return ResponseEntity.ok(response);
     }
@@ -64,8 +61,7 @@ public class PaymentController {
         ApiResponse<List<Payment>> response = new ApiResponse<>(
                 "Fetched payments for mechanic ID: " + mechanicId,
                 HttpStatus.OK.value(),
-                payments,
-                false
+                payments
         );
         return ResponseEntity.ok(response);
     }
@@ -77,8 +73,7 @@ public class PaymentController {
         ApiResponse<List<Payment>> response = new ApiResponse<>(
                 "Fetched payments for car wash ID: " + carWashId,
                 HttpStatus.OK.value(),
-                payments,
-                false
+                payments
         );
         return ResponseEntity.ok(response);
     }
@@ -90,8 +85,7 @@ public class PaymentController {
         ApiResponse<Payment> response = new ApiResponse<>(
                 "Payment deleted successfully",
                 HttpStatus.OK.value(),
-                deletedPayment,
-                false
+                deletedPayment
         );
         return ResponseEntity.ok(response);
     }
@@ -103,8 +97,7 @@ public class PaymentController {
         ApiResponse<Void> response = new ApiResponse<>(
                 "All payments deleted successfully",
                 HttpStatus.OK.value(),
-                null,
-                false
+                null
         );
         return ResponseEntity.ok(response);
     }

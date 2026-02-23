@@ -21,34 +21,34 @@ public class RequestMechanicController {
     @PostMapping
     public ResponseEntity<ApiResponse<MechanicRequest>> create(@RequestBody MechanicRequest request) {
         MechanicRequest saved = service.create(request);
-        return ResponseEntity.ok(new ApiResponse<>("Mechanic request submitted", 200, saved, false));
+        return ResponseEntity.ok(new ApiResponse<>("Mechanic request submitted", 200, saved));
     }
 
     @PutMapping
     public ResponseEntity<ApiResponse<Optional<MechanicRequest>>> update(@RequestBody MechanicRequest request) {
         Optional<MechanicRequest> toUpdate = service.update(request);
-        return ResponseEntity.ok(new ApiResponse<>("Mechanic request updated", 200, toUpdate, false));
+        return ResponseEntity.ok(new ApiResponse<>("Mechanic request updated", 200, toUpdate));
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<MechanicRequest>> getById(@PathVariable Long id) {
         Optional<MechanicRequest> request = service.getById(id);
         return request.map(r ->
-                        ResponseEntity.ok(new ApiResponse<>("Fetched mechanic request", 200, r, false)))
+                        ResponseEntity.ok(new ApiResponse<>("Fetched mechanic request", 200, r)))
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @GetMapping("/user/username/{username}")
     public ResponseEntity<ApiResponse<List<MechanicRequest>>> getByUsername(@PathVariable String username) {
         List<MechanicRequest> requests = service.getByUsername(username);
-        return ResponseEntity.ok(new ApiResponse<>("Fetched mechanic requests", 200, requests, false));
+        return ResponseEntity.ok(new ApiResponse<>("Fetched mechanic requests", 200, requests));
     }
 
     @DeleteMapping("/user/username/{username}")
     public ResponseEntity<ApiResponse<Void>> delete(@PathVariable String username) {
         boolean deleted = service.deleteByUsername(username);
         if (deleted) {
-            return ResponseEntity.ok(new ApiResponse<>("Mechanic request deleted", 200, null, false));
+            return ResponseEntity.ok(new ApiResponse<>("Mechanic request deleted", 200, null));
         }
         return ResponseEntity.notFound().build();
     }

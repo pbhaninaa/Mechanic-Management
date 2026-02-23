@@ -36,14 +36,14 @@ public class UserProfileController {
         if (!loggedInUsername.equals(profile.getUsername()) && !isAdmin) {
             System.out.println("[CREATE] Unauthorized attempt by " + loggedInUsername);
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(new ApiResponse<>("Unauthorized to create profile for this user", 403, null, true));
+                    .body(new ApiResponse<>("Unauthorized to create profile for this user", 403, null));
         }
 
         var response = userProfileService.createProfileForUser(profile.getUsername(), profile)
                 .map(savedProfile -> ResponseEntity.status(HttpStatus.CREATED)
-                        .body(new ApiResponse<>("Profile created successfully", 201, savedProfile, true)))
+                        .body(new ApiResponse<>("Profile created successfully", 201, savedProfile)))
                 .orElse(ResponseEntity.status(HttpStatus.CONFLICT)
-                        .body(new ApiResponse<>("Profile already exists for this user", 409, null, true)));
+                        .body(new ApiResponse<>("Profile already exists for this user", 409, null)));
 
         System.out.println("[CREATE] Response ready for user: " + profile.getUsername());
         return response;
@@ -57,9 +57,9 @@ public class UserProfileController {
         System.out.println("[GET] Logged-in user: " + loggedInUsername);
 
         var response = userProfileService.getProfileByUsername(loggedInUsername)
-                .map(profile -> ResponseEntity.ok(new ApiResponse<>("Profile retrieved", 200, profile, true)))
+                .map(profile -> ResponseEntity.ok(new ApiResponse<>("Profile retrieved", 200, profile)))
                 .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(new ApiResponse<>("Profile does not exist for this user", 404, null, true)));
+                        .body(new ApiResponse<>("Profile does not exist for this user", 404, null)));
 
         System.out.println("[GET] Response ready for user: " + loggedInUsername);
         return response;
@@ -79,21 +79,21 @@ public class UserProfileController {
 
             if (profiles.iterator().hasNext()) {
                 return ResponseEntity.ok(
-                        new ApiResponse<>("Profiles retrieved successfully", 200, profiles, true)
+                        new ApiResponse<>("Profiles retrieved successfully", 200, profiles)
                 );
             } else {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(new ApiResponse<>("No profiles found for role: " + role, 404, null, true));
+                        .body(new ApiResponse<>("No profiles found for role: " + role, 404, null));
             }
 
         } catch (IllegalArgumentException e) {
             // Role not valid in enum
             return ResponseEntity.badRequest()
-                    .body(new ApiResponse<>("Invalid role: " + role, 400, null, false));
+                    .body(new ApiResponse<>("Invalid role: " + role, 400, null));
         } catch (Exception e) {
             System.err.println("[ERROR] Failed to fetch profiles by role: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ApiResponse<>("An error occurred while fetching profiles", 500, null, false));
+                    .body(new ApiResponse<>("An error occurred while fetching profiles", 500, null));
         }
     }
 
@@ -114,7 +114,7 @@ public class UserProfileController {
 
         Iterable<UserProfile> profiles = userProfileService.getAllProfiles();
         System.out.println("[GET ALL] Response ready with all profiles");
-        return ResponseEntity.ok(new ApiResponse<>("All profiles retrieved", 200, profiles, true));
+        return ResponseEntity.ok(new ApiResponse<>("All profiles retrieved", 200, profiles));
     }
 
     // ================= UPDATE OWN PROFILE =================
@@ -132,7 +132,7 @@ public class UserProfileController {
         if (!loggedInUsername.equals(updatedProfile.getUsername()) && !isAdmin) {
             System.out.println("[UPDATE] Unauthorized attempt by " + loggedInUsername);
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(new ApiResponse<>("Unauthorized to update this profile", 403, null, true));
+                    .body(new ApiResponse<>("Unauthorized to update this profile", 403, null));
         }
 
         var response = userProfileService.updateProfile(
@@ -140,9 +140,9 @@ public class UserProfileController {
                         updatedProfile,
                         isAdmin // pass isAdmin here
                 )
-                .map(profile -> ResponseEntity.ok(new ApiResponse<>("Profile updated", 200, profile, true)))
+                .map(profile -> ResponseEntity.ok(new ApiResponse<>("Profile updated", 200, profile)))
                 .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(new ApiResponse<>("Profile does not exist for this user", 404, null, true)));
+                        .body(new ApiResponse<>("Profile does not exist for this user", 404, null)));
 
         System.out.println("[UPDATE] Response ready for user: " + updatedProfile.getUsername());
         return response;
@@ -163,17 +163,17 @@ public class UserProfileController {
         if (!loggedInUsername.equals(profile.getUsername()) && !isAdmin) {
             System.out.println("[DELETE] Unauthorized attempt by " + loggedInUsername);
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(new ApiResponse<>("Unauthorized to delete this profile", 403, null, true));
+                    .body(new ApiResponse<>("Unauthorized to delete this profile", 403, null));
         }
 
         boolean deleted = userProfileService.deleteProfile(profile.getUsername());
         System.out.println("[DELETE] Response ready for user: " + profile.getUsername() + ", Deleted: " + deleted);
 
         if (deleted) {
-            return ResponseEntity.ok(new ApiResponse<>("Profile deleted successfully", 200, null, true));
+            return ResponseEntity.ok(new ApiResponse<>("Profile deleted successfully", 200, null));
         } else {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new ApiResponse<>("Profile does not exist for this user", 404, null, true));
+                    .body(new ApiResponse<>("Profile does not exist for this user", 404, null));
         }
 
     }

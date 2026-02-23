@@ -71,7 +71,6 @@ public class JwtUtil {
                     .parseClaimsJws(token);
             return true;
         } catch (JwtException | IllegalArgumentException e) {
-            // Token is invalid for some reason (expired, malformed, etc.)
             return false;
         }
     }
