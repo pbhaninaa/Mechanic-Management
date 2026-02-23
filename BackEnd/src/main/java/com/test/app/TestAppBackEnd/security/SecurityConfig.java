@@ -35,9 +35,6 @@ public class SecurityConfig {
     }
     @Bean
     public PasswordEncoder passwordEncoder() {
-        //This gives us the password in cleat text which is poor security
-        // return NoOpPasswordEncoder.getInstance();
-        // This Hashes the Password
         return new BCryptPasswordEncoder();
     }
 

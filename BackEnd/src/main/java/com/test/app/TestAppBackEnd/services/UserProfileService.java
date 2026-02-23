@@ -2,6 +2,7 @@ package com.test.app.TestAppBackEnd.services;
 
 import com.test.app.TestAppBackEnd.constants.Role;
 import com.test.app.TestAppBackEnd.entities.UserProfile;
+import com.test.app.TestAppBackEnd.models.CommunicationRequest;
 import com.test.app.TestAppBackEnd.repositories.UserProfileRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.scheduling.annotation.Async;
@@ -14,11 +15,12 @@ import java.util.Optional;
 public class UserProfileService {
 
     private final UserProfileRepository repository;
-    private final EmailService emailService;
+    private final CommunicationService communicationService;
 
-    public UserProfileService(UserProfileRepository repository, EmailService emailService) {
+    public UserProfileService(UserProfileRepository repository, CommunicationService communicationService) {
         this.repository = repository;
-        this.emailService = emailService;
+
+        this.communicationService = communicationService;
     }
 
     // ================= HELPER METHODS =================
@@ -40,14 +42,21 @@ public class UserProfileService {
 
         UserProfile savedProfile = repository.save(profile);
 
-        // Notify user by email
-        emailService. sendEmailNotification(
-                savedProfile.getEmail(),
-                "Welcome to TestApp",
-                "Hi " + savedProfile.getFirstName() + ",\n\n" +
-                        "Your profile has been successfully created.\n\n" +
-                        "Thank you for joining our platform!"
-        );
+
+
+
+        // ================= SEND NOTIFICATION =================
+
+        CommunicationRequest request = new CommunicationRequest();
+        request.setTo(savedProfile.getEmail()); // can also be phone number or device token
+        request.setSubject("Welcome to TestApp"); // mainly for email
+        request.setBody("Hi " + savedProfile.getFirstName() + ",\n\n" +
+                "Your profile has been successfully created.\n\n" +
+                "Thank you for joining our platform!");
+        request.setType(CommunicationRequest.CommunicationType.EMAIL);
+
+        communicationService.send(request); // async send
+
 
         return Optional.of(savedProfile);
     }
@@ -85,14 +94,13 @@ public class UserProfileService {
 
                     UserProfile savedProfile = repository.save(existing);
 
-                    // Notify user by email
-                    String body = "Hi " + savedProfile.getFirstName() + ",\n\n" +
-                            "Your profile has been updated successfully.";
-                    if (rolesChanged) {
-                        body += "\nYour roles have been changed to: " + savedProfile.getRoles();
-                    }
 
-                    emailService.  sendEmailNotification(savedProfile.getEmail(), "Profile Update Notification", body);
+                    CommunicationRequest request = new CommunicationRequest();
+                    request.setTo(savedProfile.getEmail()); // can also be phone number or device token
+                    request.setSubject("Profile Update Notification"); // mainly for email
+                    request.setBody("Hi " + savedProfile.getFirstName() + ",\n\n" +
+                            "Your profile has been updated successfully.");
+                    request.setType(CommunicationRequest.CommunicationType.EMAIL);
 
                     return savedProfile;
                 });
@@ -104,14 +112,14 @@ public class UserProfileService {
                 .map(profile -> {
                     repository.delete(profile);
 
-                    // Notify user by email
-                    emailService. sendEmailNotification(
-                            profile.getEmail(),
-                            "Profile Deleted",
-                            "Hi " + profile.getFirstName() + ",\n\n" +
-                                    "Your profile has been deleted from our system."
-                    );
 
+                    CommunicationRequest request = new CommunicationRequest();
+                    request.setTo(profile.getEmail()); // can also be phone number or device token
+                    request.setSubject("Profile Deleted"); // mainly for email
+                    request.setBody("Hi " + profile.getFirstName() + ",\n\n" +
+                            "Your profile has been deleted from our system.");
+                    request.setType(CommunicationRequest.CommunicationType.EMAIL);
+                    request.setType(CommunicationRequest.CommunicationType.EMAIL);
                     return true;
                 }).orElse(false);
     }

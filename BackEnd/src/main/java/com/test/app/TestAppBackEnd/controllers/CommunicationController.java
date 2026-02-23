@@ -1,29 +1,23 @@
 package com.test.app.TestAppBackEnd.controllers;
 
-import com.test.app.TestAppBackEnd.models.EmailRequest;
-import com.test.app.TestAppBackEnd.services.EmailService;
-import jakarta.mail.MessagingException;
+import com.test.app.TestAppBackEnd.models.CommunicationRequest;
+import com.test.app.TestAppBackEnd.services.CommunicationService;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api")
-@CrossOrigin(origins = "*") // allow frontend
+@CrossOrigin(origins = "*")
 public class CommunicationController {
 
-    private final EmailService emailService;
+    private final CommunicationService communicationService;
 
-    public CommunicationController(EmailService emailService) {
-        this.emailService = emailService;
+    public CommunicationController(CommunicationService communicationService) {
+        this.communicationService = communicationService;
     }
 
-    @PostMapping("/send-email")
-    public String sendEmail(@RequestBody EmailRequest request) throws MessagingException {
-        emailService.sendEmail(
-                request.getTo(),
-                request.getFrom(),
-                request.getSubject(),
-                request.getBody()
-        );
-        return "Email sent successfully!";
+    @PostMapping("/send-message")
+    public String sendMessage(@RequestBody CommunicationRequest request) {
+        communicationService.send(request);
+        return "Message sent via " + request.getType();
     }
 }

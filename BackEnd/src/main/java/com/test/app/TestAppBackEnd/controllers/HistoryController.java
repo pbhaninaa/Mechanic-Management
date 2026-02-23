@@ -13,12 +13,12 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/request-history")
-public class RequestHistoryController {
+public class HistoryController {
 
     private final RequestHistoryService requestHistoryService;
     private final MechanicRequestService mechanicRequestService;
 
-    public RequestHistoryController(RequestHistoryService requestHistoryService, MechanicRequestService mechanicRequestService) {
+    public HistoryController(RequestHistoryService requestHistoryService, MechanicRequestService mechanicRequestService) {
         this.requestHistoryService = requestHistoryService;
         this.mechanicRequestService = mechanicRequestService;
     }

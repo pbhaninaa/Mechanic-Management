@@ -10,11 +10,11 @@ import java.util.List;
 import java.util.Optional;
 @RestController
 @RequestMapping("/api/request-mechanic")
-public class RequestMechanicController {
+public class MechanicController {
 
     private final MechanicRequestService service;
 
-    public RequestMechanicController(MechanicRequestService service) {
+    public MechanicController(MechanicRequestService service) {
         this.service = service;
     }
 

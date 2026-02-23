@@ -12,7 +12,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/carwash-bookings")
-public class CarWashBookingController {
+public class CarWashController {
 
     @Autowired
     private CarWashBookingService bookingService;
