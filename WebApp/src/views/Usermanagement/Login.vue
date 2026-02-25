@@ -52,18 +52,6 @@
             class="ml-2"
           />
         </div>
-
-        <!-- Feedback Alert -->
-        <v-alert
-          v-if="message"
-          :type="messageType"
-          class="mt-4"
-          closable
-          @click:close="message = ''"
-          transition="slide-x-reverse-transition"
-        >
-          {{ message }}
-        </v-alert>
       </v-card-text>
     </v-card>
   </v-container>
@@ -77,30 +65,22 @@ import InputField from "@/components/InputField.vue";
 import Button from "@/components/Button.vue";
 const username = ref("");
 const password = ref("");
-const message = ref("");
-const messageType = ref("success");
 const loading = ref(false);
 const router = useRouter();
 
 const handleLogin = async () => {
   loading.value = true;
-  message.value = "";
 
   const result = await loginUser(username.value, password.value);
 
   if (result.success) {
-    message.value = result.message;
-    messageType.value = "success";
-    
-    // Redirect after successful login — wait so message is readable
+    // Success toast shown by global axios interceptor
     setTimeout(() => {
       window.location.reload(); // Refresh to load user-specific data
       router.push('/dashboard');
     }, 3000);
-  } else {
-    message.value = result.message;
-    messageType.value = "error";
   }
+  // Error toast shown by global axios interceptor
 
   loading.value = false;
 };
@@ -122,11 +102,6 @@ const handleLogin = async () => {
 
 .mb-4 {
   margin-bottom: 16px;
-}
-
-.v-alert {
-  font-weight: 500;
-  border-radius: 8px;
 }
 
 .v-divider {
