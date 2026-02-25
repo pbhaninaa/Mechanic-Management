@@ -86,8 +86,9 @@ const loadJobRequests = async () => {
       results[2].status === "fulfilled" ? results[2].value.data || [] : [];
 
     jobRequests.value = [...userRequests, ...carWashBookings];
+    // User sees full amount they paid (provider payout + commission)
     moneySpent.value = payments.reduce(
-      (total, p) => total + (p.amount || 0),
+      (total, p) => total + (p.amount || 0) + (p.platformFee || 0),
       0
     );
   } catch (err) {

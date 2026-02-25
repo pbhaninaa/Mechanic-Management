@@ -64,7 +64,8 @@ const mechanics = ref<any[]>([]);
 const carwashes = ref<any[]>([]);
 const payments = ref<any[]>([]);
 const jobsCompleted = ref<number>(0);
-const revenue = ref<number>(0);
+const totalPaidByUsers = ref<number>(0);
+const totalCommission = ref<number>(0);
 
 // Summary Cards
 const summaryCards = ref([
@@ -73,7 +74,8 @@ const summaryCards = ref([
   { title: "Mechanics", value: 0, icon: "mdi-wrench", color: "green" },
   { title: "Carwashes", value: 0, icon: "mdi-car-wash", color: "indigo" },
   { title: "Jobs Completed", value: 0, icon: "mdi-clipboard-check", color: "purple" },
-  { title: "Revenue", value: "R 0", icon: "mdi-cash", color: "orange" },
+  { title: "Total Paid (Users)", value: "R 0", icon: "mdi-cash", color: "orange" },
+  { title: "Commission", value: "R 0", icon: "mdi-bank", color: "teal" },
 ]);
 
 // Chart Refs
@@ -96,7 +98,15 @@ const loadDashboardData = async () => {
     payments.value = resPayments.data || [];
 
     jobsCompleted.value = payments.value.length;
-    revenue.value = payments.value.reduce((sum, p) => sum + (p.amount || 0), 0);
+    // Admin sees: total amount paid by users, and platform commission
+    totalPaidByUsers.value = payments.value.reduce(
+      (sum, p) => sum + (p.amount || 0) + (p.platformFee || 0),
+      0
+    );
+    totalCommission.value = payments.value.reduce(
+      (sum, p) => sum + (p.platformFee || 0),
+      0
+    );
 
     // Update Summary Cards
     summaryCards.value = [
@@ -105,7 +115,8 @@ const loadDashboardData = async () => {
       { title: "Mechanics", value: mechanics.value.length, icon: "mdi-wrench", color: "green" },
       { title: "Carwashes", value: carwashes.value.length, icon: "mdi-car-wash", color: "indigo" },
       { title: "Jobs Completed", value: jobsCompleted.value, icon: "mdi-clipboard-check", color: "purple" },
-      { title: "Revenue", value: `R ${revenue.value.toLocaleString()}`, icon: "mdi-cash", color: "orange" },
+      { title: "Total Paid (Users)", value: `R ${totalPaidByUsers.value.toLocaleString()}`, icon: "mdi-cash", color: "orange" },
+      { title: "Commission", value: `R ${totalCommission.value.toLocaleString()}`, icon: "mdi-bank", color: "teal" },
     ];
   } catch (error) {
     console.error("Failed to load dashboard data:", error);
@@ -149,14 +160,15 @@ const renderCharts = () => {
     });
   }
 
-  // Earnings Line Chart
+  // Earnings Line Chart - shows total amount paid by users per month
   if (earningsChart.value && payments.value.length > 0) {
+    const getPaymentDate = (p: any) => new Date(p.paidAt || p.date || 0);
     const sortedPayments = [...payments.value].sort(
-      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+      (a, b) => getPaymentDate(a).getTime() - getPaymentDate(b).getTime()
     );
 
-    const firstDate = new Date(sortedPayments[0].date);
-    const lastDate = new Date(sortedPayments[sortedPayments.length - 1].date);
+    const firstDate = getPaymentDate(sortedPayments[0]);
+    const lastDate = getPaymentDate(sortedPayments[sortedPayments.length - 1]);
 
     // Build monthly buckets
     const monthlyTotals: Record<string, number> = {};
@@ -171,12 +183,12 @@ const renderCharts = () => {
       cursor.setMonth(cursor.getMonth() + 1);
     }
 
-    // Fill buckets with payments
+    // Fill buckets with total paid by users (amount + commission)
     payments.value.forEach((p: any) => {
-      const d = new Date(p.date);
+      const d = getPaymentDate(p);
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
       if (monthlyTotals[key] !== undefined) {
-        monthlyTotals[key] += p.amount || 0;
+        monthlyTotals[key] += (p.amount || 0) + (p.platformFee || 0);
       }
     });
 
@@ -197,7 +209,7 @@ const renderCharts = () => {
         labels,
         datasets: [
           {
-            label: "Earnings (R)",
+            label: "Total Paid by Users (R)",
             data: values,
             borderColor: "rgba(54, 162, 235, 0.9)",
             backgroundColor: "rgba(54, 162, 235, 0.2)",

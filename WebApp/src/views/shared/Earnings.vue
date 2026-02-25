@@ -8,6 +8,12 @@
         <template #item.amount="{ item }">
           R {{ item.amount }}
         </template>
+        <template #item.amountPaidByUser="{ item }">
+          R {{ item.amountPaidByUser }}
+        </template>
+        <template #item.platformFee="{ item }">
+          R {{ item.platformFee }}
+        </template>
 
         <template #item.paidAt="{ item }">
           {{ item.paidAt }}
@@ -40,17 +46,19 @@ import TableComponent from "@/components/TableComponent.vue";
 // Logged in user
 const loggedInUser = getSafeJson("userProfile", {}) || {};
 const role = loggedInUser.roles?.[0];
-// Table headers
+// Table headers: Service providers see "Amount" (their payout); Admin sees Amount Paid, Commission, Provider Payout
 const headers = [
   { title: "Job Description", value: "jobDescription" },
   { title: "Date", value: "paidAt" },
-  { title: "Amount", value: "amount" },
   ...(role === USER_ROLES.ADMIN
-    ? [{ title: "Platform Fee", value: "platformFee" }]
-    : []),
+    ? [
+        { title: "Amount Paid (User)", value: "amountPaidByUser" },
+        { title: "Commission", value: "platformFee" },
+        { title: "Provider Payout", value: "amount" },
+      ]
+    : [{ title: "Amount", value: "amount" }]),
   { title: "Status", value: "status" },
 ];
-
 
 // State
 const earnings = ref([]);
@@ -73,14 +81,21 @@ const fetchEarnings = async () => {
     }
 
     // Map backend data to table-friendly format
-    earnings.value = (response.data || []).map((p) => ({
-      id: p.id,
-      jobDescription: p.jobDescription || `Job #${p.jobId}`,
-      paidAt: format(new Date(p.paidAt), "dd MMM yyyy, HH:mm"),
-      amount: Number(p.amount + (p.platformFee || 0)).toFixed(2),
-      platformFee: role === USER_ROLES.ADMIN ? Number(p.platformFee).toFixed(2) : undefined,
-      status: "Paid",
-    }));
+    // Service providers (mechanic/carwash) see only their payout (amount). Admin sees full breakdown.
+    earnings.value = (response.data || []).map((p) => {
+      const providerPayout = Number(p.amount || 0);
+      const commission = Number(p.platformFee || 0);
+      const amountPaidByUser = providerPayout + commission;
+      return {
+        id: p.id,
+        jobDescription: p.jobDescription || `Job #${p.jobId}`,
+        paidAt: format(new Date(p.paidAt), "dd MMM yyyy, HH:mm"),
+        amount: providerPayout.toFixed(2),
+        amountPaidByUser: role === USER_ROLES.ADMIN ? amountPaidByUser.toFixed(2) : undefined,
+        platformFee: role === USER_ROLES.ADMIN ? commission.toFixed(2) : undefined,
+        status: "Paid",
+      };
+    });
   } catch (err: any) {
     console.error("Error fetching earnings:", err);
     // Error toast shown by global axios interceptor
