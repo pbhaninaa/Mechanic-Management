@@ -48,22 +48,6 @@
         <Button label="Confirm Payment" color="primary" :loading="loading" :disabled="!isFormValid || loading" @click="processPayment" />
       </v-card-actions>
     </v-card>
-
-    <!-- Success Snackbar -->
-    <v-snackbar v-model="paymentSuccess" timeout="4000" color="green">
-      Payment successful!
-      <template #action="{ attrs }">
-        <v-btn text v-bind="attrs" @click="paymentSuccess = false">Close</v-btn>
-      </template>
-    </v-snackbar>
-
-    <!-- Error Snackbar -->
-    <v-snackbar v-model="paymentError" timeout="5000" color="red">
-      {{ errorMessage || "Payment failed. Try again." }}
-      <template #action="{ attrs }">
-        <v-btn text v-bind="attrs" @click="paymentError = false">Close</v-btn>
-      </template>
-    </v-snackbar>
   </PageContainer>
 </template>
 
@@ -97,9 +81,6 @@ const cvv = ref('');
 const cardHolder = ref('');
 
 const loading = ref(false);
-const paymentSuccess = ref(false);
-const paymentError = ref(false);
-const errorMessage = ref("");
 
 // Form validation (card details optional—payment is confirmation only)
 const isFormValid = computed(() => {
@@ -111,8 +92,6 @@ const isFormValid = computed(() => {
 const processPayment = async () => {
   if (loading.value) return;
   loading.value = true;
-  paymentError.value = false;
-  paymentSuccess.value = false;
 
   try {
     const paymentPayload: any = {
@@ -143,8 +122,6 @@ const processPayment = async () => {
         await apiService.updateRequestMechanic(job);
       }
 
-      paymentSuccess.value = true;
-
       router.push({
         name: "Payments",
         query: { bookingId },
@@ -153,9 +130,7 @@ const processPayment = async () => {
       throw new Error(res?.message || "Payment was not successful");
     }
   } catch (err: any) {
-    const msg = err?.message || err?.response?.data?.message || "Payment failed. Please try again.";
-    paymentError.value = true;
-    errorMessage.value = msg;
+    // Error toast shown by global axios interceptor
   } finally {
     loading.value = false;
   }

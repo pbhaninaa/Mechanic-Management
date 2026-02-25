@@ -1,5 +1,21 @@
 <template>
   <v-app class="app-container">
+    <!-- Global success toast -->
+    <v-snackbar v-model="toastSuccessVisible" :timeout="4000" color="green" location="top">
+      {{ toastMessage }}
+      <template #action>
+        <v-btn variant="text" @click="toastSuccessVisible = false">Close</v-btn>
+      </template>
+    </v-snackbar>
+
+    <!-- Global error toast -->
+    <v-snackbar v-model="toastErrorVisible" :timeout="5000" color="red" location="top">
+      {{ toastMessage }}
+      <template #action>
+        <v-btn variant="text" @click="toastErrorVisible = false">Close</v-btn>
+      </template>
+    </v-snackbar>
+
     <!-- Sidebar Navigation -->
     <SidebarNav
       v-if="isAuthenticated"
@@ -19,8 +35,18 @@
 <script setup>
 import { ref, onMounted, onUnmounted, computed } from "vue";
 import SidebarNav from "./components/SidebarNav.vue";
+import { toast } from "./utils/toast";
 
 const isAuthenticated = ref(false);
+const toastSuccessVisible = ref(false);
+const toastErrorVisible = ref(false);
+const toastMessage = ref("");
+
+toast.subscribe(({ type, message }) => {
+  toastMessage.value = message;
+  if (type === "success") toastSuccessVisible.value = true;
+  else toastErrorVisible.value = true;
+});
 const sidebarNav = ref(null);
 const windowWidth = ref(window.innerWidth);
 

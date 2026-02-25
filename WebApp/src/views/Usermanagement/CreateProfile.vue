@@ -154,19 +154,11 @@ const saveProfile = async () => {
       : await apiService.createUserProfile(form.value);
 
     localStorage.setItem("userProfile", JSON.stringify(res.data));
-    message.value = isEditMode.value
-      ? "Profile updated successfully!"
-      : "Profile saved successfully!";
-
-    messageType.value = "success";
+    // Success toast shown by global axios interceptor
 
     setTimeout(() => window.location.reload(), 200);
   } catch (err) {
-    message.value =
-      err.response?.data?.message ||
-      err.message ||
-      "Failed to save profile";
-    messageType.value = "error";
+    // Error toast shown by global axios interceptor
   } finally {
     loading.value = false;
   }

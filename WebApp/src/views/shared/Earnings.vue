@@ -23,18 +23,12 @@
           No earnings found.
         </template>
       </TableComponent>
-
-
-      <!-- Feedback -->
-      <v-alert v-if="message && messageType === 'error'" type="error" class="mt-3" closable @click:close="message = ''">
-        {{ message }}
-      </v-alert>
     </v-card-text>
   </PageContainer>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch } from "vue";
+import { ref, onMounted } from "vue";
 import PageContainer from "@/components/PageContainer.vue";
 import apiService from "@/api/apiService";
 import { getSafeJson } from "@/utils/storage";
@@ -61,14 +55,10 @@ const headers = [
 // State
 const earnings = ref([]);
 const loading = ref(false);
-const message = ref("");
-const messageType = ref("success");
-
 
 // Fetch earnings depending on role
 const fetchEarnings = async () => {
   loading.value = true;
-  message.value = "";
 
   try {
     let response;
@@ -93,19 +83,11 @@ const fetchEarnings = async () => {
     }));
   } catch (err: any) {
     console.error("Error fetching earnings:", err);
-    message.value = err.message || "Failed to load earnings";
-    messageType.value = "error";
+    // Error toast shown by global axios interceptor
   } finally {
     loading.value = false;
   }
 };
-
-// Hide success message automatically when loading finishes
-watch(loading, (newVal) => {
-  if (!newVal && messageType.value === "success") {
-    message.value = "";
-  }
-});
 
 // Auto-fetch on mount
 onMounted(fetchEarnings);

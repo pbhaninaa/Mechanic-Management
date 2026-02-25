@@ -164,9 +164,8 @@ const submitRequest = async () => {
       status: JOB_STATUS.PENDING,
     };
 
-    const res = await apiService.createRequestMechanic(payload);
-    message.value = res.message || "Mechanic request submitted successfully!";
-    messageType.value = "success";
+    await apiService.createRequestMechanic(payload);
+    // Success toast shown by global axios interceptor
     setTimeout(() => {
       router.push({ name: "RequestHistory" });
     }, 1000);
@@ -182,8 +181,7 @@ const submitRequest = async () => {
     form.value.resetValidation();
     fetchCurrentLocation;
   } catch (err: any) {
-    message.value = err.message || "Failed to submit request";
-    messageType.value = "error";
+    // Error toast shown by global axios interceptor
   } finally {
     loading.value = false;
   }
