@@ -15,6 +15,7 @@ export const API_ENDPOINTS = {
   // Request History Endpoints
   REQUEST_HISTORY: '/request-history',
   REQUEST_HISTORY_BY_USER: (username) => `/request-history/user/${username}`,
+  REQUEST_HISTORY_BY_MECHANIC: (mechanicId) => `/request-history/mechanic/${mechanicId}`,
 
   // Request Mechanic Endpoints
   REQUEST_MECHANIC: '/request-mechanic',

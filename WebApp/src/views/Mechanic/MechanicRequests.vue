@@ -17,7 +17,7 @@
           <v-tooltip text="Accept" location="top">
             <template #activator="{ props }">
               <v-btn v-bind="props" variant="text" size="small" color="green" class="mr-1"
-                @click="updateJobStatus(item, JOB_STATUS.ACCEPTED)" :disabled="item.status === JOB_STATUS.ACCEPTED">
+                @click="onAcceptClick(item)" :disabled="!isAdmin() && isStatus(item, JOB_STATUS.ACCEPTED)">
                 <v-icon size="18">mdi-check</v-icon>
               </v-btn>
             </template>
@@ -26,15 +26,38 @@
           <v-tooltip text="Decline" location="top">
             <template #activator="{ props }">
               <v-btn v-bind="props" variant="text" size="small" color="red"
-                @click="updateJobStatus(item, JOB_STATUS.DECLINED)" :disabled="item.status === JOB_STATUS.DECLINED">
+                @click="updateJobStatus(item, JOB_STATUS.DECLINED)" :disabled="!isAdmin() && isStatus(item, JOB_STATUS.DECLINED)">
                 <v-icon size="18">mdi-close</v-icon>
               </v-btn>
             </template>
           </v-tooltip>
         </template>
       </TableComponent>
-
     </v-card-text>
+
+    <!-- Admin: Select mechanic popup when accepting -->
+    <v-dialog v-model="assignDialog" max-width="500" persistent>
+      <v-card>
+        <v-card-title>Assign Mechanic</v-card-title>
+        <v-card-text>
+          <p class="mb-4">Select the mechanic who will work on this request:</p>
+          <v-select
+            v-model="selectedMechanicId"
+            :items="mechanicOptions"
+            item-title="label"
+            item-value="id"
+            label="Choose mechanic"
+            variant="outlined"
+            :loading="mechanicsLoading"
+          />
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn variant="text" @click="assignDialog = false">Cancel</v-btn>
+          <v-btn color="primary" :disabled="!selectedMechanicId" @click="confirmAssign">Assign</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </PageContainer>
 </template>
 
@@ -61,6 +84,19 @@ interface JobRequest {
 const jobRequests = ref<JobRequest[]>([]);
 const jobStatusError = ref("");
 
+const profile = getSafeJson("userProfile", {});
+const isAdmin = () => (profile?.roles?.[0]?.toLowerCase?.() ?? "") === "admin";
+
+const isStatus = (item: JobRequest, status: string) =>
+  String(item?.status || "").toLowerCase() === String(status || "").toLowerCase();
+
+// Admin assign mechanic dialog
+const assignDialog = ref(false);
+const jobToAssign = ref<JobRequest | null>(null);
+const selectedMechanicId = ref<number | null>(null);
+const mechanicsLoading = ref(false);
+const mechanicOptions = ref<{ id: number; label: string }[]>([]);
+
 const headers = [
   { title: "Client", value: "username" },
   { title: "Description", value: "description" },
@@ -74,19 +110,69 @@ const headers = [
 
 
 
+const fetchMechanics = async () => {
+  mechanicsLoading.value = true;
+  try {
+    const res = await apiService.getProfilesByRole("MECHANIC");
+    const profiles = Array.isArray(res?.data) ? res.data : (res?.data ? [res.data] : []);
+    mechanicOptions.value = profiles
+      .filter((p: any) => p?.id != null)
+      .map((p: any) => ({
+        id: p.id,
+        label: `${p.firstName || ""} ${p.lastName || ""} (${p.username || p.email || "—"})`.trim() || `Mechanic #${p.id}`,
+      }));
+  } catch (err) {
+    console.error("Failed to fetch mechanics:", err);
+    mechanicOptions.value = [];
+  } finally {
+    mechanicsLoading.value = false;
+  }
+};
+
+const onAcceptClick = (job: JobRequest) => {
+  if (isAdmin()) {
+    jobToAssign.value = job;
+    selectedMechanicId.value = null;
+    assignDialog.value = true;
+    fetchMechanics();
+  } else {
+    updateJobStatus(job, JOB_STATUS.ACCEPTED);
+  }
+};
+
+const confirmAssign = async () => {
+  if (!jobToAssign.value || !selectedMechanicId.value) return;
+  await updateJobStatus(jobToAssign.value, JOB_STATUS.ACCEPTED, selectedMechanicId.value);
+  assignDialog.value = false;
+  jobToAssign.value = null;
+  selectedMechanicId.value = null;
+};
+
 const loadJobRequests = async () => {
   try {
     const res = await apiService.getAllRequestHistory();
-    jobRequests.value = res.data;
+    const allRequests = res?.data ?? [];
+
+    const profile = getSafeJson("userProfile", {});
+    const role = profile?.roles?.[0]?.toLowerCase?.() ?? "";
+
+    // Admin sees all; mechanic (and others) see only pending
+    if (role === "admin") {
+      jobRequests.value = allRequests;
+    } else {
+      jobRequests.value = allRequests.filter(
+        (r: JobRequest) => String(r?.status || "").toLowerCase() === "pending"
+      );
+    }
   } catch (err: any) {
     console.error("Failed to load job requests:", err);
   }
 };
-const updateJobStatus = async (job: JobRequest, status: string) => {
+const updateJobStatus = async (job: JobRequest, status: string, mechanicIdOverride?: number) => {
   try {
-
     const profile = getSafeJson("userProfile", {});
-    const payload = { ...job, status, mechanicId: profile?.id };
+    const mechanicId = mechanicIdOverride ?? profile?.id;
+    const payload = { ...job, status, mechanicId };
 
     await apiService.updateRequestMechanic(payload);
     job.status = status;

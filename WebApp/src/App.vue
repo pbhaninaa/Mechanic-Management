@@ -26,9 +26,9 @@
       </template>
     </v-snackbar>
 
-    <!-- Sidebar Navigation -->
+    <!-- Sidebar Navigation (never on Login/SignUp) -->
     <SidebarNav
-      v-if="isAuthenticated"
+      v-if="showSidebar"
       ref="sidebarNav"
     />
 
@@ -44,10 +44,16 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted, computed } from "vue";
+import { useRoute } from "vue-router";
 import SidebarNav from "./components/SidebarNav.vue";
 import { toast } from "./utils/toast";
 
+const route = useRoute();
 const isAuthenticated = ref(false);
+
+const showSidebar = computed(
+  () => isAuthenticated.value && !route.meta.requiresGuest
+);
 const toastSuccessVisible = ref(false);
 const toastErrorVisible = ref(false);
 const toastMessage = ref("");
@@ -66,7 +72,7 @@ const sidebarWidth = 256;
 // Responsive
 const isMobile = computed(() => windowWidth.value < 960);
 const mainClasses = computed(() => {
-  if (!isAuthenticated.value) return "main-unauth";
+  if (!showSidebar.value) return "main-unauth";
   return isMobile.value ? "main-mobile" : "main-with-sidebar";
 });
 

@@ -124,6 +124,7 @@ const navigationItems = [
   { title: 'Payments', icon: 'mdi-credit-card', to: '/payments', roles: ['client'] },
   { title: 'Help', icon: 'mdi-help', to: '/help-page', roles: ['client'] },
   { title: 'Job Requests', icon: 'mdi-briefcase', to: '/jobs', roles: ['mechanic'] },
+  { title: 'Manage Jobs', icon: 'mdi-wrench', to: '/manage-jobs', roles: ['mechanic', 'admin'] },
   { title: 'User Management', icon: 'mdi-account-multiple', to: '/users', roles: ['admin'] },
   {
     title: 'Manage Payments',

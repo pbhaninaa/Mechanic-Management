@@ -101,6 +101,10 @@ async deleteAllUsers() {
     return this.get(`${API_ENDPOINTS.PROFILE}/all`);
   }
 
+  async getProfilesByRole(role) {
+    return this.get(`${API_ENDPOINTS.PROFILE}/role/${role}`);
+  }
+
   async deleteUserByUsername(username) {
     return this.delete(`${API_ENDPOINTS.DELETE_ACCOUNT}/${username}`);
   }
@@ -125,6 +129,10 @@ async sendEmail(emailData) {
 
   async getUserRequestHistory(username) {
     return this.get(API_ENDPOINTS.REQUEST_HISTORY_BY_USER(username));
+  }
+
+  async getRequestHistoryByMechanicId(mechanicId) {
+    return this.get(API_ENDPOINTS.REQUEST_HISTORY_BY_MECHANIC(mechanicId));
   }
 
   async updateRequestHistoryByUsername(username, requestData) {

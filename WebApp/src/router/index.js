@@ -10,6 +10,7 @@ import Dashboard from "../views/Dashboards/Dashboard.vue";
 import RequestHistory from "../views/Client/RequestHistory.vue";
 import Payments from "../views/shared/Payments.vue";
 import JobRequests from "../views/Mechanic/MechanicRequests.vue";
+import ManageJobs from "../views/Mechanic/ManageJobs.vue";
 import Earnings from "../views/shared/Earnings.vue";
 import UserManagement from "../views/Usermanagement/UserManagement.vue";
 import { USER_ROLES } from "@/utils/constants";
@@ -34,6 +35,7 @@ const routes = [
   { path: "/history", name: "RequestHistory", component: RequestHistory, meta: { requiresAuth: true } },
   { path: "/payments", name: "Payments", component: Payments, meta: { requiresAuth: true } },
   { path: "/jobs", name: "JobRequests", component: JobRequests, meta: { requiresAuth: true } },
+  { path: "/manage-jobs", name: "ManageJobs", component: ManageJobs, meta: { requiresAuth: true } },
   { path: "/earnings", name: "Earnings", component: Earnings, meta: { requiresAuth: true } },
   { path: "/users", name: "UserManagement", component: UserManagement, meta: { requiresAuth: true } },
   {path: "/car-wash-bookings", name: "CarWashBookingsTable",component:CarWashBookingsTable,  meta: { requiresAuth: true } },
