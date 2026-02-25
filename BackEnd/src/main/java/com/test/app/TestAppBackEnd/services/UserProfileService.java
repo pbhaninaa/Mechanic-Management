@@ -2,8 +2,11 @@ package com.test.app.TestAppBackEnd.services;
 
 import com.test.app.TestAppBackEnd.constants.Role;
 import com.test.app.TestAppBackEnd.entities.UserProfile;
+import com.test.app.TestAppBackEnd.models.ApiResponse;
 import com.test.app.TestAppBackEnd.models.CommunicationRequest;
 import com.test.app.TestAppBackEnd.repositories.UserProfileRepository;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.scheduling.annotation.Async;
 
@@ -31,36 +34,37 @@ public class UserProfileService {
     }
 
     // ================= CREATE =================
-    public Optional<UserProfile> createProfileForUser(String username, UserProfile profile) {
-        if (repository.findByUsername(username).isPresent()) {
-            return Optional.empty(); // Profile already exists
+    public UserProfile createProfileForUser( UserProfile profile) {
+
+        if (repository.findByUsername(profile.getUsername()).isPresent()) {
+            throw new IllegalArgumentException("Username already exists");
         }
 
-        profile.setUsername(username);
+        if (repository.existsByEmail(profile.getEmail())) {
+            throw new IllegalArgumentException("Email already exists");
+        }
+
+        profile.setUsername(profile.getUsername());
         profile.setCreatedAt(LocalDateTime.now());
         profile.setUpdatedAt(LocalDateTime.now());
 
         UserProfile savedProfile = repository.save(profile);
 
-
-
-
-        // ================= SEND NOTIFICATION =================
-
+        // Send notification
         CommunicationRequest request = new CommunicationRequest();
-        request.setTo(savedProfile.getEmail()); // can also be phone number or device token
-        request.setSubject("Welcome to TestApp"); // mainly for email
-        request.setBody("Hi " + savedProfile.getFirstName() + ",\n\n" +
-                "Your profile has been successfully created.\n\n" +
-                "Thank you for joining our platform!");
+        request.setTo(savedProfile.getEmail());
+        request.setSubject("Welcome to TestApp");
+        request.setBody(
+                "Hi " + savedProfile.getFirstName() + ",\n\n" +
+                        "Your profile has been successfully created.\n\n" +
+                        "Thank you for joining our platform!"
+        );
         request.setType(CommunicationRequest.CommunicationType.EMAIL);
 
-        communicationService.send(request); // async send
+        communicationService.send(request);
 
-
-        return Optional.of(savedProfile);
+        return savedProfile;
     }
-
     // ================= READ =================
     public Optional<UserProfile> getProfileByUsername(String username) {
         return repository.findByUsername(username);

@@ -27,26 +27,16 @@ public class UserProfileController {
             @RequestBody UserProfile profile,
             Authentication authentication) {
 
-        String loggedInUsername = authentication.getName();
-        boolean isAdmin = userProfileService.isAdminByUsername(loggedInUsername);
+        try {
+            UserProfile saved = userProfileService.createProfileForUser( profile);
 
-        System.out.println("[CREATE] Logged-in user: " + loggedInUsername + ", IsAdmin: " + isAdmin);
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body(new ApiResponse<>("Profile created successfully", 201, saved));
 
-        // Only allow creating own profile or if admin
-        if (!loggedInUsername.equals(profile.getUsername()) && !isAdmin) {
-            System.out.println("[CREATE] Unauthorized attempt by " + loggedInUsername);
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(new ApiResponse<>("Unauthorized to create profile for this user", 403, null));
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(new ApiResponse<>(ex.getMessage(), 409, null));
         }
-
-        var response = userProfileService.createProfileForUser(profile.getUsername(), profile)
-                .map(savedProfile -> ResponseEntity.status(HttpStatus.CREATED)
-                        .body(new ApiResponse<>("Profile created successfully", 201, savedProfile)))
-                .orElse(ResponseEntity.status(HttpStatus.CONFLICT)
-                        .body(new ApiResponse<>("Profile already exists for this user", 409, null)));
-
-        System.out.println("[CREATE] Response ready for user: " + profile.getUsername());
-        return response;
     }
 
     // ================= GET OWN PROFILE =================
