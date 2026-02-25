@@ -115,18 +115,12 @@ public class UserProfileService {
         return repository.findByUsername(username)
                 .map(profile -> {
                     repository.delete(profile);
-
-
-                    CommunicationRequest request = new CommunicationRequest();
-                    request.setTo(profile.getEmail()); // can also be phone number or device token
-                    request.setSubject("Profile Deleted"); // mainly for email
-                    request.setBody("Hi " + profile.getFirstName() + ",\n\n" +
-                            "Your profile has been deleted from our system.");
-                    request.setType(CommunicationRequest.CommunicationType.EMAIL);
-                    request.setType(CommunicationRequest.CommunicationType.EMAIL);
                     return true;
-                }).orElse(false);
+                })
+                .orElse(false);
     }
+
+
 
 
     // ================= DEBUG =================

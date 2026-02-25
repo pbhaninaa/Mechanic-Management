@@ -35,6 +35,7 @@
           <InputField v-model="selectedUser.username" label="Username" required disabled />
           <InputField v-model="selectedUser.email" label="Email" type="email" required />
           <PhoneNumberInput v-model="selectedUser.phoneNumber" :initial-value="selectedUser.phoneNumber"
+            :initial-country-code="selectedUser.countryCode" @update:countryCode="selectedUser.countryCode = $event"
             @valid="isPhoneValid = $event" :disabled="loading" />
 
 
@@ -169,7 +170,8 @@ const loadUsers = async () => {
 const editUser = (user: any) => {
   selectedUser.value = {
     ...user,
-    phoneNumber: user.phoneNumber || ""
+    phoneNumber: user.phoneNumber || "",
+    countryCode: user.countryCode || "+27"
   };
   editDialog.value = true;
 };

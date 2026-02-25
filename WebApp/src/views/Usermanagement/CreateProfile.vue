@@ -6,7 +6,8 @@
       <InputField v-model="form.lastName" label="Last Name" type="text" :disabled="loading" required />
       <InputField v-model="form.username" label="Username" type="text" :disabled="true" required />
       <InputField v-model="form.email" label="Email" type="email" :disabled="loading || isEditMode" required />
-      <PhoneNumberInput v-model="form.phoneNumber":initial-value="form.phoneNumber" @valid="isPhoneValid = $event" :disabled="loading" />
+      <PhoneNumberInput v-model="form.phoneNumber" :initial-value="form.phoneNumber" :initial-country-code="form.countryCode"
+        @update:countryCode="form.countryCode = $event" @valid="isPhoneValid = $event" :disabled="loading" />
            
       <InputField v-model="form.address" label="Address" type="text"
         :disabled="loading || form.roles[0] === USER_ROLES.ADMIN" />

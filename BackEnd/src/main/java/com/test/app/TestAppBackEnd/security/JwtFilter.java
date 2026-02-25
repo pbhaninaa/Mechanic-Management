@@ -30,28 +30,21 @@ public class JwtFilter extends OncePerRequestFilter {
         this.userDetailsService = userDetailsService;
     }
 
-    /*
-     * Skip JWT validation for public endpoints
-     */
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String path = request.getServletPath();
-
         return path.equals("/api/auth/login")
                 || path.equals("/api/auth/register")
                 || path.startsWith("/public");
     }
 
     @Override
-    protected void doFilterInternal(
-            HttpServletRequest request,
-            HttpServletResponse response,
-            FilterChain filterChain
-    ) throws ServletException, IOException {
+    protected void doFilterInternal(HttpServletRequest request,
+                                    HttpServletResponse response,
+                                    FilterChain filterChain) throws ServletException, IOException {
 
         String authHeader = request.getHeader("Authorization");
 
-        // No token → continue (Spring Security will handle protected endpoints)
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;
@@ -60,62 +53,60 @@ public class JwtFilter extends OncePerRequestFilter {
         String token = authHeader.substring(7);
 
         try {
-            // Validate token first
             if (!jwtUtil.isTokenValid(token)) {
                 sendUnauthorized(response, "Invalid or expired token");
                 return;
             }
 
-            // Extract username
             String username = jwtUtil.extractUsername(token);
 
             if (username != null &&
                     SecurityContextHolder.getContext().getAuthentication() == null) {
 
-                var userDetails = userDetailsService.loadUserByUsername(username);
+                try {
+                    var userDetails = userDetailsService.loadUserByUsername(username);
 
-                UsernamePasswordAuthenticationToken auth =
-                        new UsernamePasswordAuthenticationToken(
-                                userDetails,
-                                null,
-                                userDetails.getAuthorities()
-                        );
+                    UsernamePasswordAuthenticationToken auth =
+                            new UsernamePasswordAuthenticationToken(
+                                    userDetails,
+                                    null,
+                                    userDetails.getAuthorities()
+                            );
 
-                SecurityContextHolder.getContext().setAuthentication(auth);
+                    SecurityContextHolder.getContext().setAuthentication(auth);
+                    logger.info("Authenticated user: {}", username);
 
-                logger.info("Authenticated user: {}", username);
+                } catch (org.springframework.security.core.userdetails.UsernameNotFoundException ex) {
+                    // User deleted themselves
+                    logger.warn("Token used for deleted/non-existing user: {}", username);
+                    SecurityContextHolder.clearContext();
+                    sendUnauthorized(response, "User account no longer exists");
+                    return;
+                }
             }
 
             filterChain.doFilter(request, response);
 
         } catch (io.jsonwebtoken.ExpiredJwtException e) {
-
             logger.warn("JWT token expired: {}", e.getMessage());
             SecurityContextHolder.clearContext();
             sendUnauthorized(response, "Token expired");
 
         } catch (Exception e) {
-
             logger.error("JWT validation error", e);
             SecurityContextHolder.clearContext();
             sendUnauthorized(response, "Invalid token");
         }
     }
 
-    /*
-     * JSON error response (Android friendly)
-     */
     private void sendUnauthorized(HttpServletResponse response, String message) throws IOException {
-
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         response.setContentType("application/json");
-
         Map<String, Object> body = Map.of(
                 "message", message,
                 "status", 401,
                 "success", false
         );
-
         new ObjectMapper().writeValue(response.getOutputStream(), body);
     }
 }

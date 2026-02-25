@@ -148,16 +148,12 @@ public class UserProfileController {
         String loggedInUsername = authentication.getName();
         boolean isAdmin = userProfileService.isAdminByUsername(loggedInUsername);
 
-        System.out.println("[DELETE] Logged-in user: " + loggedInUsername + ", Target: " + profile.getUsername() + ", IsAdmin: " + isAdmin);
-
         if (!loggedInUsername.equals(profile.getUsername()) && !isAdmin) {
-            System.out.println("[DELETE] Unauthorized attempt by " + loggedInUsername);
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(new ApiResponse<>("Unauthorized to delete this profile", 403, null));
         }
 
         boolean deleted = userProfileService.deleteProfile(profile.getUsername());
-        System.out.println("[DELETE] Response ready for user: " + profile.getUsername() + ", Deleted: " + deleted);
 
         if (deleted) {
             return ResponseEntity.ok(new ApiResponse<>("Profile deleted successfully", 200, null));
@@ -165,7 +161,6 @@ public class UserProfileController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(new ApiResponse<>("Profile does not exist for this user", 404, null));
         }
-
     }
 
 
