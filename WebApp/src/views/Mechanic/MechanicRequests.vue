@@ -63,7 +63,7 @@
 
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, computed, onMounted } from "vue";
 import PageContainer from "@/components/PageContainer.vue";
 import apiService from "@/api/apiService";
 import TooltipText from "@/components/TooltipText.vue";
@@ -97,14 +97,24 @@ const selectedMechanicId = ref<number | null>(null);
 const mechanicsLoading = ref(false);
 const mechanicOptions = ref<{ id: number; label: string }[]>([]);
 
-const headers = [
-  { title: "Client", value: "username" },
-  { title: "Description", value: "description" },
-  { title: "Date", value: "date" },
-  { title: "Location", value: "location" },
-  { title: "Status", value: "status" },
-  { title: "Actions", value: "actions", sortable: false },
-];
+const headers = computed(() => {
+  const base = [
+    { title: "Client", value: "username" },
+    { title: "Description", value: "description" },
+    { title: "Date", value: "date" },
+    { title: "Location", value: "location" },
+    { title: "Status", value: "status" },
+    { title: "Actions", value: "actions", sortable: false },
+  ];
+  if (isAdmin()) {
+    base.splice(1, 0, {
+      title: "Phone",
+      value: "phoneNumber",
+      formatter: (item: JobRequest) => item?.phoneNumber || "—",
+    });
+  }
+  return base;
+});
 
 
 

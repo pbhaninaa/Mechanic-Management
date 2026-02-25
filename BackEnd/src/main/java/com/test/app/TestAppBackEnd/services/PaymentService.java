@@ -59,6 +59,7 @@ public class PaymentService {
                 platformFee,
                 request.getMechanicId() != null ? "Car Mechanical Service" : "Car Wash Service"
         );
+        payment.setStatus("completed");
 
         Payment savedPayment = paymentRepository.save(payment);
 
@@ -99,6 +100,14 @@ public class PaymentService {
 
     public void deleteAllPayments() {
         paymentRepository.deleteAll();
+    }
+
+    // ================= UPDATE STATUS =================
+    public Payment updatePaymentStatus(Long paymentId, String newStatus) {
+        Payment payment = paymentRepository.findById(paymentId)
+                .orElseThrow(() -> new RuntimeException("Payment not found with ID: " + paymentId));
+        payment.setStatus(newStatus);
+        return paymentRepository.save(payment);
     }
 
     // ================= EMAIL NOTIFICATION =================

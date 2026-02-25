@@ -2,6 +2,7 @@ package com.test.app.TestAppBackEnd.services;
 
 import com.test.app.TestAppBackEnd.entities.MechanicRequest;
 import com.test.app.TestAppBackEnd.repositories.MechanicRequestRepository;
+import com.test.app.TestAppBackEnd.repositories.UserProfileRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.scheduling.annotation.Async;
 
@@ -12,11 +13,29 @@ import java.util.Optional;
 public class MechanicRequestService {
 
     private final MechanicRequestRepository repository;
+    private final UserProfileRepository userProfileRepository;
     private final EmailService emailService;
 
-    public MechanicRequestService(MechanicRequestRepository repository, EmailService emailService) {
+    public MechanicRequestService(MechanicRequestRepository repository,
+                                 UserProfileRepository userProfileRepository,
+                                 EmailService emailService) {
         this.repository = repository;
+        this.userProfileRepository = userProfileRepository;
         this.emailService = emailService;
+    }
+
+    private void enrichWithPhoneNumber(MechanicRequest request) {
+        if (request.getUsername() != null) {
+            String phone = userProfileRepository.findByUsername(request.getUsername())
+                    .map(p -> p.getPhoneNumber())
+                    .orElse(null);
+            request.setPhoneNumber(phone != null && !phone.isBlank() ? phone : null);
+        }
+    }
+
+    private List<MechanicRequest> enrichWithPhoneNumbers(List<MechanicRequest> requests) {
+        requests.forEach(this::enrichWithPhoneNumber);
+        return requests;
     }
 
     // ================= CREATE =================
@@ -26,19 +45,54 @@ public class MechanicRequestService {
 
     // ================= READ =================
     public List<MechanicRequest> getAll() {
-        return repository.findAll();
+        List<MechanicRequest> all = repository.findAll();
+        return enrichWithPhoneNumbers(all);
     }
 
     public Optional<MechanicRequest> getById(Long id) {
-        return repository.findById(id);
+        return repository.findById(id).map(r -> {
+            enrichWithPhoneNumber(r);
+            return r;
+        });
     }
 
     public List<MechanicRequest> getByUsername(String username) {
-        return repository.findByUsername(username);
+        return enrichWithPhoneNumbers(repository.findByUsername(username));
     }
 
     public List<MechanicRequest> getByMechanicId(Long mechanicId) {
-        return repository.findByMechanicId(mechanicId);
+        return enrichWithPhoneNumbers(repository.findByMechanicId(mechanicId));
+    }
+
+    // ================= SPECIAL QUERIES =================
+    public List<MechanicRequest> getAvailableJobsForMechanics() {
+        return enrichWithPhoneNumbers(repository.findByStatusAndMechanicIdIsNull("pending"));
+    }
+
+    public Optional<MechanicRequest> acceptJob(Long requestId, Long mechanicId) {
+        Optional<MechanicRequest> opt = repository.findById(requestId);
+        if (opt.isEmpty()) return Optional.empty();
+        MechanicRequest req = opt.get();
+        if (req.getMechanicId() != null) {
+            throw new IllegalStateException("Job is already assigned to another mechanic");
+        }
+        if (!"pending".equals(req.getStatus())) {
+            throw new IllegalStateException("Only pending jobs can be accepted");
+        }
+        req.setMechanicId(mechanicId);
+        req.setStatus("assigned");
+        return Optional.of(repository.save(req));
+    }
+
+    public Optional<MechanicRequest> completeJob(Long requestId, Long mechanicId) {
+        Optional<MechanicRequest> opt = repository.findById(requestId);
+        if (opt.isEmpty()) return Optional.empty();
+        MechanicRequest req = opt.get();
+        if (!mechanicId.equals(req.getMechanicId())) {
+            throw new IllegalStateException("Only the assigned mechanic can complete this job");
+        }
+        req.setStatus("completed");
+        return Optional.of(repository.save(req));
     }
 
     // ================= UPDATE =================
@@ -60,6 +114,9 @@ public class MechanicRequestService {
         existing.setStatus(updated.getStatus());
         existing.setUsername(updated.getUsername());
         existing.setMechanicId(updated.getMechanicId());
+        if (updated.getCategory() != null) existing.setCategory(updated.getCategory());
+        if (updated.getPriority() != null) existing.setPriority(updated.getPriority());
+        if (updated.getTitle() != null) existing.setTitle(updated.getTitle());
 
         MechanicRequest saved = repository.save(existing);
 
@@ -77,6 +134,12 @@ public class MechanicRequestService {
     }
 
     // ================= DELETE =================
+    public boolean deleteById(Long id) {
+        if (!repository.existsById(id)) return false;
+        repository.deleteById(id);
+        return true;
+    }
+
     public boolean deleteByUsername(String username) {
         List<MechanicRequest> requests = repository.findByUsername(username);
         if (requests.isEmpty()) return false;

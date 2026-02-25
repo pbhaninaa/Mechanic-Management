@@ -1,5 +1,6 @@
 package com.test.app.TestAppBackEnd.entities;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -32,7 +33,15 @@ public class MechanicRequest {
     private LocalDate date;
 
     @Column(nullable = false)
-    private String status = "pending"; // default status
+    private String status = "pending"; // pending, assigned, in_progress, completed, cancelled
+
+    private String category; // e.g. Battery Service, Tire Service, Engine Repair
+    private String priority = "medium"; // low, medium, high, emergency
+    private String title; // Brief service title
+
+    @Transient
+    @JsonInclude(JsonInclude.Include.ALWAYS)
+    private String phoneNumber; // Populated from UserProfile for display in tables
 
     // ===== Getters & Setters =====
     public Long getId() { return id; }
@@ -60,4 +69,16 @@ public class MechanicRequest {
     public void setStatus(String status) { this.status = status; }
     public Long getMechanicId() { return mechanicId; }
     public void setMechanicId(Long mechanicId) { this.mechanicId = mechanicId; }
+
+    public String getCategory() { return category; }
+    public void setCategory(String category) { this.category = category; }
+
+    public String getPriority() { return priority; }
+    public void setPriority(String priority) { this.priority = priority; }
+
+    public String getTitle() { return title; }
+    public void setTitle(String title) { this.title = title; }
+
+    public String getPhoneNumber() { return phoneNumber; }
+    public void setPhoneNumber(String phoneNumber) { this.phoneNumber = phoneNumber; }
 }

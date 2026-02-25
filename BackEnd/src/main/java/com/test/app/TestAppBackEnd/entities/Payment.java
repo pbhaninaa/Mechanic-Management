@@ -18,6 +18,7 @@ public class Payment {
     private Double platformFee;
     private LocalDateTime paidAt;
     private String jobDescription;
+    private String status = "pending"; // pending, completed, failed, refunded
 
     // Constructors
     public Payment() {}
@@ -58,4 +59,7 @@ public class Payment {
     public void setPaidAt(LocalDateTime paidAt) { this.paidAt = paidAt; }
     public String getJobDescription() { return jobDescription; }
     public void setJobDescription(String jobDescription) { this.jobDescription = jobDescription; }
+
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
 }

@@ -1,7 +1,7 @@
 export const CONFIG = {
-  // API Configuration
-  API_BASE_URL: 'https://api.mechanicapp.com/v1',
-  API_TIMEOUT: 10000,
+  // API Configuration - use your backend URL (e.g. http://YOUR_IP:8080/api for local dev)
+  API_BASE_URL: 'http://localhost:8080/api',
+  API_TIMEOUT: 15000,
   
   // App Configuration
   APP_NAME: 'MechanicApp',

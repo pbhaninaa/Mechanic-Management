@@ -22,7 +22,7 @@
     <!-- Pending Job Requests Table -->
     <v-card class="mt-6" outlined v-if="!loading && !error">
    
-<TableComponent title=" Pending Job Requests" :headers="tableHeaders" :items="pendingJobRequests" :search="search" item-key="id"
+<TableComponent title=" Pending Job Requests" :headers="tableHeaders" :items="pendingJobRequests" item-key="id"
        dense no-pagination :loading="loading">
 
         <template #item.actions="{ item }">
@@ -48,7 +48,7 @@ import { ref, onMounted, computed } from "vue";
 import PageContainer from "@/components/PageContainer.vue";
 import apiService from "@/api/apiService";
 import TooltipText from "@/components/TooltipText.vue";
-import { JOB_STATUS, COLORS } from "@/utils/constants";
+import { JOB_STATUS, COLORS, USER_ROLES } from "@/utils/constants";
 import TableComponent from "@/components/TableComponent.vue";
 import { getSafeJson } from "@/utils/storage";
 
@@ -73,15 +73,26 @@ const statsCards = computed(() => [
   { title: "Active Requests", value: activeRequests.value, color: COLORS.SOFT_PURPLE },
 ]);
 
-// Table headers
-const tableHeaders = [
-  { title: "Client Name", value: "username" },
-  { title: "Service", value: "description" },
-  { title: "Date", value: "date" },
-  { title: "Phone Number", value: "phoneNumber" },
-  { title: "Location", value: "location" },
-  { title: "Actions", value: "actions", sortable: false },
-];
+// Table headers - Phone only for Admin
+const profile = getSafeJson("userProfile", {});
+const isAdmin = (profile?.roles || []).includes(USER_ROLES.ADMIN);
+const tableHeaders = computed(() => {
+  const base = [
+    { title: "Client Name", value: "username" },
+    { title: "Service", value: "description" },
+    { title: "Date", value: "date" },
+    { title: "Location", value: "location" },
+    { title: "Actions", value: "actions", sortable: false },
+  ];
+  if (isAdmin) {
+    base.splice(3, 0, {
+      title: "Phone Number",
+      value: "phoneNumber",
+      formatter: (item) => item?.phoneNumber || "—",
+    });
+  }
+  return base;
+});
 
 // Computed stats
 const pendingJobs = computed(() =>

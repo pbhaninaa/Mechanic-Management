@@ -54,43 +54,74 @@ class ApiService {
 
   // ---------- Response/Error Handling ----------
   handleResponse(response) {
-    return response.data || response;
+    return response?.data ?? response;
   }
 
   handleError(error) {
-    const processedError = {
-      message: error.response?.data?.message || error.message || 'An unexpected error occurred',
-      status: error.response?.status,
-      data: error.response?.data,
-      originalError: error
-    };
-    console.error('API Error:', processedError);
-    return processedError;
+    const message = error.response?.data?.message || error.message || 'An unexpected error occurred';
+    const status = error.response?.status;
+    const apiError = new Error(message);
+    apiError.status = status;
+    apiError.responseData = error.response?.data;
+    apiError.originalError = error;
+    console.error('API Error:', { message, status, url: error.config?.url });
+    throw apiError;
   }
 
   // ---------- Authentication ----------
-  async login(credentials) {
+  async authenticateUser(credentials) {
     return this.post(API_ENDPOINTS.LOGIN, credentials);
   }
 
-  async signup(userData) {
+  /** Alias for authenticateUser - for backward compatibility */
+  async login(credentials) {
+    return this.authenticateUser(credentials);
+  }
+
+  async registerUser(userData) {
     return this.post(API_ENDPOINTS.SIGNUP, userData);
   }
 
-  async deleteAccount() {
+  /** Alias for registerUser - for backward compatibility */
+  async signup(userData) {
+    return this.registerUser(userData);
+  }
+
+  async deleteUserAccount() {
     return this.delete(API_ENDPOINTS.PROFILE);
   }
-async deleteAllUsers() {
+
+  /** Alias for deleteUserAccount */
+  async deleteAccount() {
+    return this.deleteUserAccount();
+  }
+
+  async deleteAllUsersAdmin() {
     return this.delete(API_ENDPOINTS.DELETE_ALL_USERS);
   }
 
+  /** Alias for deleteAllUsersAdmin */
+  async deleteAllUsers() {
+    return this.deleteAllUsersAdmin();
+  }
+
   // ---------- User Profile ----------
-  async getUserProfile() {
+  async fetchUserProfile() {
     return this.get(API_ENDPOINTS.PROFILE);
   }
 
-  async updateUserProfile(profileData) {
+  /** Alias for fetchUserProfile */
+  async getUserProfile() {
+    return this.fetchUserProfile();
+  }
+
+  async saveUserProfile(profileData) {
     return this.put(API_ENDPOINTS.PROFILE, profileData);
+  }
+
+  /** Alias for saveUserProfile */
+  async updateUserProfile(profileData) {
+    return this.saveUserProfile(profileData);
   }
 
   async createUserProfile(profileData) {
@@ -143,24 +174,54 @@ async sendEmail(emailData) {
     return this.delete(API_ENDPOINTS.REQUEST_HISTORY_BY_USER(username));
   }
 
-  // ---------- Request Mechanic ----------
-  async createRequestMechanic(data) {
+  // ---------- Mechanic Requests (Jobs) ----------
+  async createMechanicRequest(data) {
     return this.post(API_ENDPOINTS.REQUEST_MECHANIC, data);
   }
 
-  async updateRequestMechanic(data) {
+  /** Alias */
+  async createRequestMechanic(data) {
+    return this.createMechanicRequest(data);
+  }
+
+  async updateMechanicRequest(data) {
     return this.put(API_ENDPOINTS.REQUEST_MECHANIC, data);
   }
 
-  async getMechanicRequestsByUser(username) {
+  /** Alias */
+  async updateRequestMechanic(data) {
+    return this.updateMechanicRequest(data);
+  }
+
+  async fetchMechanicRequestsByCustomer(username) {
     return this.get(API_ENDPOINTS.REQUEST_MECHANIC_BY_USER(username));
   }
-  async getMechanicRequestsById(id) {
+
+  /** Alias */
+  async getMechanicRequestsByUser(username) {
+    return this.fetchMechanicRequestsByCustomer(username);
+  }
+
+  async fetchMechanicRequestById(id) {
     return this.get(API_ENDPOINTS.REQUEST_MECHANIC_BY_ID(id));
   }
 
-  async deleteMechanicRequest(username) {
+  /** Alias */
+  async getMechanicRequestsById(id) {
+    return this.fetchMechanicRequestById(id);
+  }
+
+  async fetchAvailableMechanicJobs() {
+    return this.get(`${API_ENDPOINTS.REQUEST_MECHANIC}/available`);
+  }
+
+  async deleteMechanicRequestsByCustomer(username) {
     return this.delete(API_ENDPOINTS.REQUEST_MECHANIC_BY_USER(username));
+  }
+
+  /** Alias */
+  async deleteMechanicRequest(username) {
+    return this.deleteMechanicRequestsByCustomer(username);
   }
 
   // ---------- Payments ----------

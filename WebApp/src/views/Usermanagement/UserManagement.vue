@@ -109,14 +109,26 @@ const users = ref([]);
 const loading = ref(false);
 const error = ref<string | null>(null);
 
-const headers = [
-  { title: 'Username', value: 'username' },
-  { title: 'Full Name', value: 'fullName' },
-  { title: 'Email', value: 'email' },
-  { title: 'Phone', value: 'phoneNumber' },
-  { title: 'Roles', value: 'roles', sortable: false },
-  { title: 'Actions', value: 'actions', sortable: false }
-];
+const loggedInUser = getSafeJson("userProfile", {});
+const isAdmin = computed(() => (loggedInUser?.roles || []).includes(USER_ROLES.ADMIN));
+
+const headers = computed(() => {
+  const base = [
+    { title: 'Username', value: 'username' },
+    { title: 'Full Name', value: 'fullName' },
+    { title: 'Email', value: 'email' },
+    { title: 'Roles', value: 'roles', sortable: false },
+    { title: 'Actions', value: 'actions', sortable: false }
+  ];
+  if (isAdmin.value) {
+    base.splice(3, 0, {
+      title: 'Phone',
+      value: 'phoneNumber',
+      formatter: (item) => item?.phoneNumber || "—"
+    });
+  }
+  return base;
+});
 
 // Edit dialog
 const editDialog = ref(false);
@@ -129,9 +141,6 @@ const userToDelete = ref<any>(null);
 // Delete all dialog
 const deleteAllDialog = ref(false);
 const deleteAllLoading = ref(false);
-
-const loggedInUser = getSafeJson('userProfile', {});
-const isAdmin = (loggedInUser.roles || []).includes(USER_ROLES.ADMIN);
 
 // Available roles
 const availableRoles = ['CLIENT', 'MECHANIC', 'ADMIN', 'CARWASH'];

@@ -90,6 +90,23 @@ public class PaymentController {
         return ResponseEntity.ok(response);
     }
 
+    // Update payment status
+    @PutMapping("/{paymentId}/status")
+    public ResponseEntity<ApiResponse<Payment>> updatePaymentStatus(
+            @PathVariable Long paymentId,
+            @RequestParam String status) {
+        try {
+            Payment payment = paymentService.updatePaymentStatus(paymentId, status);
+            return ResponseEntity.ok(new ApiResponse<>(
+                    "Payment status updated successfully",
+                    HttpStatus.OK.value(),
+                    payment));
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new ApiResponse<>(e.getMessage(), 404, null));
+        }
+    }
+
     // Delete all payments
     @DeleteMapping("/all")
     public ResponseEntity<ApiResponse<Void>> deleteAllPayments() {

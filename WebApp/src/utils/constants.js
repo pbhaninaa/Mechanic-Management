@@ -37,8 +37,8 @@ export const API_ENDPOINTS = {
   CREATE_CARWASH_BOOKING: '/carwash-bookings/create',
   UPDATE_CARWASH_BOOKING: (id) => `/carwash-bookings/update/${id}`,
   DELETE_CARWASH_BOOKING: (id) => `/carwash-bookings/delete/${id}`,
-  // New Email Endpoint
-  SEND_EMAIL: '/send-email'
+  // Communication - uses send-message (supports email type)
+  SEND_EMAIL: '/send-message'
 };
 
 // User Roles

@@ -5,7 +5,9 @@ import com.test.app.TestAppBackEnd.repositories.UserProfileRepository;
 import com.test.app.TestAppBackEnd.repositories.UserRepository;
 import com.test.app.TestAppBackEnd.models.LoginRequest;
 import com.test.app.TestAppBackEnd.models.LoginResponse;
+import com.test.app.TestAppBackEnd.models.LoginUserDto;
 import com.test.app.TestAppBackEnd.entities.User;
+import com.test.app.TestAppBackEnd.entities.UserProfile;
 import com.test.app.TestAppBackEnd.models.ApiResponse;
 
 import com.test.app.TestAppBackEnd.services.UserProfileService;
@@ -63,25 +65,34 @@ public class AuthController {
 
     // ================= LOGIN =================
     @PostMapping("/login")
-    public ResponseEntity<ApiResponse<LoginResponse>> login(@RequestBody LoginRequest request) {
-        System.out.println("Request:"+request.getUsername()+" "+request.getPassword());
+    public ResponseEntity<ApiResponse<LoginResponse>> authenticateUser(@RequestBody LoginRequest request) {
         try {
+            // Support both username and email - resolve to username for authentication
+            String loginIdentifier = request.getUsername();
+            if ((loginIdentifier == null || loginIdentifier.isBlank()) && request.getEmail() != null && !request.getEmail().isBlank()) {
+                loginIdentifier = userProfileRepository.findByEmail(request.getEmail())
+                        .map(UserProfile::getUsername)
+                        .orElseThrow(() -> new UsernameNotFoundException("No account found with email: " + request.getEmail()));
+            }
+            if (loginIdentifier == null || loginIdentifier.isBlank()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(new ApiResponse<>("Username or email is required", 400, null));
+            }
+
             Authentication auth = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
+                    new UsernamePasswordAuthenticationToken(loginIdentifier, request.getPassword())
             );
 
-            // Extract roles from authenticated user
             List<String> roles = auth.getAuthorities().stream()
                     .map(grantedAuthority -> grantedAuthority.getAuthority())
                     .toList();
 
-            // Generate token with roles
             String token = jwtUtil.generateToken(auth.getName(), roles);
+            Optional<UserProfile> profileOpt = userProfileRepository.findByUsername(auth.getName());
+            boolean hasProfile = profileOpt.isPresent();
+            LoginUserDto userDto = profileOpt.map(LoginUserDto::fromUserProfile).orElse(null);
 
-            // Check if user has a profile
-            boolean hasProfile = userProfileRepository.findByUsername(auth.getName()).isPresent();
-
-            LoginResponse loginResponse = new LoginResponse(token, token, hasProfile);
+            LoginResponse loginResponse = new LoginResponse(token, token, hasProfile, userDto);
 
             return ResponseEntity.ok(
                     new ApiResponse<>("Login successful", 200, loginResponse)

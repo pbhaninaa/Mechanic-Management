@@ -58,12 +58,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, computed, onMounted } from "vue";
 import PageContainer from "@/components/PageContainer.vue";
 import TooltipText from "@/components/TooltipText.vue";
 import { getStatusColor } from "@/utils/helper";
 import apiService from "@/api/apiService";
-import { JOB_STATUS } from "@/utils/constants";
+import { JOB_STATUS, USER_ROLES } from "@/utils/constants";
 import TableComponent from "@/components/TableComponent.vue";
 import { getSafeJson } from "@/utils/storage";
 
@@ -82,14 +82,25 @@ interface MechanicJob {
 const jobs = ref<MechanicJob[]>([]);
 const loading = ref(false);
 
-const headers = [
-  { title: "Client", value: "username" },
-  { title: "Description", value: "description" },
-  { title: "Date", value: "date" },
-  { title: "Location", value: "location" },
-  { title: "Status", value: "status" },
-  { title: "Actions", value: "actions", sortable: false },
-];
+const isAdmin = (loggedInUser?.roles || []).includes(USER_ROLES.ADMIN);
+const headers = computed(() => {
+  const base = [
+    { title: "Client", value: "username" },
+    { title: "Description", value: "description" },
+    { title: "Date", value: "date" },
+    { title: "Location", value: "location" },
+    { title: "Status", value: "status" },
+    { title: "Actions", value: "actions", sortable: false },
+  ];
+  if (isAdmin) {
+    base.splice(1, 0, {
+      title: "Phone",
+      value: "phoneNumber",
+      formatter: (item: MechanicJob) => item?.phoneNumber || "—",
+    });
+  }
+  return base;
+});
 
 const isStatus = (item: MechanicJob, status: string) =>
   String(item?.status || "").toLowerCase() === String(status || "").toLowerCase();
