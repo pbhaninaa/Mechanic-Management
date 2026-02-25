@@ -53,7 +53,7 @@ const headers = [
   ...(role === USER_ROLES.ADMIN
     ? [
         { title: "Amount Paid (User)", value: "amountPaidByUser" },
-        { title: "Commission", value: "platformFee" },
+        { title: "App Commission", value: "platformFee" },
         { title: "Provider Payout", value: "amount" },
       ]
     : [{ title: "Amount", value: "amount" }]),

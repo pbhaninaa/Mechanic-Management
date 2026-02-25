@@ -73,7 +73,6 @@ const summaryCards = ref([
   { title: "Clients", value: 0, icon: "mdi-account-group", color: "teal" },
   { title: "Mechanics", value: 0, icon: "mdi-wrench", color: "green" },
   { title: "Carwashes", value: 0, icon: "mdi-car-wash", color: "indigo" },
-  { title: "Jobs Completed", value: 0, icon: "mdi-clipboard-check", color: "purple" },
   { title: "Total Paid (Users)", value: "R 0", icon: "mdi-cash", color: "orange" },
   { title: "Commission", value: "R 0", icon: "mdi-bank", color: "teal" },
 ]);
@@ -114,7 +113,6 @@ const loadDashboardData = async () => {
       { title: "Clients", value: clients.value.length, icon: "mdi-account-group", color: "teal" },
       { title: "Mechanics", value: mechanics.value.length, icon: "mdi-wrench", color: "green" },
       { title: "Carwashes", value: carwashes.value.length, icon: "mdi-car-wash", color: "indigo" },
-      { title: "Jobs Completed", value: jobsCompleted.value, icon: "mdi-clipboard-check", color: "purple" },
       { title: "Total Paid (Users)", value: `R ${totalPaidByUsers.value.toLocaleString()}`, icon: "mdi-cash", color: "orange" },
       { title: "Commission", value: `R ${totalCommission.value.toLocaleString()}`, icon: "mdi-bank", color: "teal" },
     ];
