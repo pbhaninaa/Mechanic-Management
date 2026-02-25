@@ -26,25 +26,23 @@
 
     <!-- Charts -->
     <v-row dense class="mt-2" justify="space-between">
-      
-      <!-- User Distribution -->
+      <!-- Progress Chart -->
       <v-col cols="12" md="6">
         <div class="mt-6 pa-4">
-          <h3>User Distribution</h3>
+          <h3>System Progress</h3>
           <v-divider class="mb-4" />
           <canvas ref="progressPieChart" class="mini-chart"></canvas>
         </div>
       </v-col>
 
-      <!-- Revenue vs Target -->
+      <!-- Earnings Chart -->
       <v-col cols="12" md="6">
         <div class="mt-6 pa-4">
-          <h3>Revenue vs Target</h3>
+          <h3>Monthly Earnings</h3>
           <v-divider class="mb-4" />
           <canvas ref="earningsChart" class="mini-chart"></canvas>
         </div>
       </v-col>
-
     </v-row>
   </PageContainer>
 </template>
@@ -52,210 +50,182 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
 import PageContainer from "@/components/PageContainer.vue";
-import Chart, { Colors } from "chart.js/auto";
+import Chart from "chart.js/auto";
 import ChartDataLabels from "chartjs-plugin-datalabels";
 import apiService from "@/api/apiService";
-import { COLORS } from "@/utils/constants";
 
+// Register Chart.js plugin
 Chart.register(ChartDataLabels);
 
-/* -------------------- STATE -------------------- */
-
+// State
 const users = ref<any[]>([]);
 const clients = ref<any[]>([]);
-const adminUsers = ref<any[]>([]);
 const mechanics = ref<any[]>([]);
 const carwashes = ref<any[]>([]);
 const payments = ref<any[]>([]);
 const jobsCompleted = ref<number>(0);
 const revenue = ref<number>(0);
 
-const summaryCards = ref<any[]>([]);
+// Summary Cards
+const summaryCards = ref([
+  { title: "Total Users", value: 0, icon: "mdi-account", color: "blue" },
+  { title: "Clients", value: 0, icon: "mdi-account-group", color: "teal" },
+  { title: "Mechanics", value: 0, icon: "mdi-wrench", color: "green" },
+  { title: "Carwashes", value: 0, icon: "mdi-car-wash", color: "indigo" },
+  { title: "Jobs Completed", value: 0, icon: "mdi-clipboard-check", color: "purple" },
+  { title: "Revenue", value: "R 0", icon: "mdi-cash", color: "orange" },
+]);
 
-/* -------------------- CHART REFS -------------------- */
-
+// Chart Refs
 const progressPieChart = ref<HTMLCanvasElement | null>(null);
 const earningsChart = ref<HTMLCanvasElement | null>(null);
 
-let progressChartInstance: Chart | null = null;
-let earningsChartInstance: Chart | null = null;
-
-/* -------------------- LOAD DATA -------------------- */
-
+// Load Data
 const loadDashboardData = async () => {
   try {
+    // Users
     const resUsers = await apiService.getAllUsers();
     users.value = resUsers.data || [];
 
-    clients.value = users.value.filter((u:any) => u.roles.includes("CLIENT"));
-    mechanics.value = users.value.filter((u:any) => u.roles.includes("MECHANIC"));
-    carwashes.value = users.value.filter((u:any) => u.roles.includes("CARWASH"));
-    adminUsers.value = users.value.filter((u:any) => u.roles.includes("ADMIN"));
+    clients.value = users.value.filter((u: any) => u.roles.includes("CLIENT"));
+    mechanics.value = users.value.filter((u: any) => u.roles.includes("MECHANIC"));
+    carwashes.value = users.value.filter((u: any) => u.roles.includes("CARWASH"));
 
-    const resPayments = await apiService.getPaymentsByClients();
+    // Payments
+    const resPayments = await apiService.getAllPayments();
     payments.value = resPayments.data || [];
 
     jobsCompleted.value = payments.value.length;
-    revenue.value = payments.value.reduce((sum:number, p:any) => sum + (p.amount || 0), 0);
+    revenue.value = payments.value.reduce((sum, p) => sum + (p.amount || 0), 0);
 
+    // Update Summary Cards
     summaryCards.value = [
-      { title:"Admin Users", value: adminUsers.value.length, icon:"mdi-account-cog", color:COLORS.CARD_BLUE },
-      { title:"Clients", value: clients.value.length, icon:"mdi-account-group", color:COLORS.CARD_TEAL },
-      { title:"Mechanics", value: mechanics.value.length, icon:"mdi-wrench", color:COLORS.CARD_GREEN },
-      { title:"Carwashes", value: carwashes.value.length, icon:"mdi-car-wash", color:COLORS.CARD_INDIGO },
-      { title:"Jobs Completed", value: jobsCompleted.value, icon:"mdi-clipboard-check", color:COLORS.CARD_PURPLE },
-      { title:"Revenue", value:`R ${revenue.value.toLocaleString()}`, icon:"mdi-cash", color:COLORS.CARD_ORANGE }
+      { title: "Total Users", value: users.value.length, icon: "mdi-account", color: "blue" },
+      { title: "Clients", value: clients.value.length, icon: "mdi-account-group", color: "teal" },
+      { title: "Mechanics", value: mechanics.value.length, icon: "mdi-wrench", color: "green" },
+      { title: "Carwashes", value: carwashes.value.length, icon: "mdi-car-wash", color: "indigo" },
+      { title: "Jobs Completed", value: jobsCompleted.value, icon: "mdi-clipboard-check", color: "purple" },
+      { title: "Revenue", value: `R ${revenue.value.toLocaleString()}`, icon: "mdi-cash", color: "orange" },
     ];
-
   } catch (error) {
-    console.error("Dashboard load error", error);
+    console.error("Failed to load dashboard data:", error);
   }
 };
 
-/* -------------------- CENTER TEXT PLUGIN -------------------- */
-
-const centerTextPlugin = (param: any) => (  {
-  id: "centerText",
-  beforeDraw(chart: any) {
-    const { ctx } = chart;
-    const meta = chart.getDatasetMeta(0);
-
-    if (!meta || !meta.data || !meta.data.length) return;
-
-    const centerX = meta.data[0].x;
-    const centerY = meta.data[0].y;
-    const innerRadius = meta.data[0].innerRadius;
-
-    ctx.save();
-
-    /* Fill donut hole background */
-    ctx.beginPath();
-    ctx.fillStyle = param.includes("progressPieChart")? COLORS.SOFT_GREEN_DARK:COLORS.SOFT_PURPLE;
-    ctx.arc(centerX, centerY, innerRadius, 0, Math.PI * 2);
-    ctx.fill();
-
-    /* Draw text */
-    const text = param.includes("progressPieChart")? `Total Users: ${users.value.length}`:`Total Jobs: ${jobsCompleted.value}`;
-                 "";
-
-    ctx.fillStyle = COLORS.TEXT_BLACK;
-    ctx.font = "bold 13px Arial";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText(text, centerX, centerY);
-
-    ctx.restore();
-  }
-});
-
-
-
-
-/* -------------------- RENDER CHARTS -------------------- */
-
+// Charts
 const renderCharts = () => {
-
-  /* destroy existing charts */
-  if (progressChartInstance) progressChartInstance.destroy();
-  if (earningsChartInstance) earningsChartInstance.destroy();
-
-  /* USER DISTRIBUTION */
+  // Progress Pie Chart
   if (progressPieChart.value) {
-    progressChartInstance = new Chart(
-      progressPieChart.value,
-      {
-        type: "doughnut",
-        data: {
-          labels: ["Admin Users","Clients","Mechanics","Carwashes"],
-          datasets: [{
+    new Chart(progressPieChart.value.getContext("2d"), {
+      type: "doughnut",
+      data: {
+        labels: ["Clients", "Mechanics", "Carwashes", "Jobs"],
+        datasets: [
+          {
             data: [
-              adminUsers.value.length,
               clients.value.length,
               mechanics.value.length,
-              carwashes.value.length
+              carwashes.value.length,
+              jobsCompleted.value,
             ],
-            backgroundColor: [
-              COLORS.CHART_BLUE,
-              COLORS.CHART_TEAL,
-              COLORS.CHART_GREEN,
-              COLORS.CHART_INDIGO
-            ]
-          }]
-        },
-        options: {
-          responsive: true,
-          cutout: "45%",
-          plugins:{
-            legend:{ position:"bottom" },
-            datalabels:{
-              color: COLORS.TEXT_WHITE,
-              formatter:(value:any, ctx:any)=>{
-                const total = ctx.dataset.data.reduce((a:number,b:number)=>a+b,0);
-                return `${((value/total)*100).toFixed(1)}%`;
-              }
-            }
-          }
-        },
-        plugins:[ChartDataLabels, centerTextPlugin("progressPieChart")]
-      }
-    );
-  }
-
-  /* REVENUE vs TARGET */
- if (earningsChart.value) {
-
-  const TARGET = 1000;
-  const earned = revenue.value;
-  const remaining = Math.max(TARGET - earned, 0);
-
-  earningsChartInstance = new Chart(
-    earningsChart.value,
-    {
-      type: "pie", // keep pie if you want
-      data: {
-        labels: ["Earned", "Remaining"],
-        datasets: [{
-          data: [earned, remaining],
-          backgroundColor: [
-            COLORS.CARD_ORANGE,
-            COLORS.BORDER_LIGHT_GREY
-          ]
-        }]
+            backgroundColor: ["#2196f3", "#4caf50", "#9c27b0", "#ff9800"],
+          },
+        ],
       },
       options: {
         responsive: true,
-        cutout: "45%",
         plugins: {
           legend: { position: "bottom" },
-          tooltip: {
-            callbacks: {
-              label: (context: any) => {
-                const value = context.raw; // raw value of slice
-                return new Intl.NumberFormat("en-ZA", {
-                  style: "currency",
-                  currency: "ZAR"
-                }).format(value); // R 800.00
-              }
-            }
-          },
           datalabels: {
-            color: COLORS.TEXT_BLACK,
-            formatter: (value: number, ctx: any) => {
-              const total = ctx.dataset.data.reduce((a: number, b: number) => a + b, 0);
-              return `${((value / total) * 100).toFixed(1)}%`; // keep percentages on chart
-            }
-          }
-        }
+            color: "#fff",
+            formatter: (value, context) => {
+              const total = context.dataset.data.reduce((a: number, b: number) => a + b, 0);
+              return `${((value /Number( total)) * 100).toFixed(1)}%`;
+            },
+          },
+        },
       },
-      plugins: [ChartDataLabels, centerTextPlugin("earningsChart")] // keep center text plugin if needed
-    }
-  );
-}
+      plugins: [ChartDataLabels],
+    });
+  }
 
+  // Earnings Line Chart
+  if (earningsChart.value && payments.value.length > 0) {
+    const sortedPayments = [...payments.value].sort(
+      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+    );
+
+    const firstDate = new Date(sortedPayments[0].date);
+    const lastDate = new Date(sortedPayments[sortedPayments.length - 1].date);
+
+    // Build monthly buckets
+    const monthlyTotals: Record<string, number> = {};
+    const cursor = new Date(firstDate);
+
+    while (
+      cursor.getFullYear() < lastDate.getFullYear() ||
+      (cursor.getFullYear() === lastDate.getFullYear() && cursor.getMonth() <= lastDate.getMonth())
+    ) {
+      const key = `${cursor.getFullYear()}-${String(cursor.getMonth() + 1).padStart(2, "0")}`;
+      monthlyTotals[key] = 0;
+      cursor.setMonth(cursor.getMonth() + 1);
+    }
+
+    // Fill buckets with payments
+    payments.value.forEach((p: any) => {
+      const d = new Date(p.date);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      if (monthlyTotals[key] !== undefined) {
+        monthlyTotals[key] += p.amount || 0;
+      }
+    });
+
+    // Labels & Values
+    const labels = Object.keys(monthlyTotals).map(key => {
+      const [y, m] = key.split("-");
+      return new Date(Number(y), Number(m) - 1).toLocaleString("default", {
+        month: "short",
+        year: "numeric",
+      });
+    });
+
+    const values = Object.values(monthlyTotals);
+
+    new Chart(earningsChart.value.getContext("2d"), {
+      type: "line",
+      data: {
+        labels,
+        datasets: [
+          {
+            label: "Earnings (R)",
+            data: values,
+            borderColor: "rgba(54, 162, 235, 0.9)",
+            backgroundColor: "rgba(54, 162, 235, 0.2)",
+            tension: 0.3,
+            fill: true,
+            pointBackgroundColor: "rgba(54, 162, 235, 1)",
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { display: false },
+          datalabels: {
+            color: "#000",
+            anchor: "end",
+            align: "top",
+            formatter: (val: number) => `R ${val.toLocaleString()}`,
+          },
+        },
+        scales: { y: { beginAtZero: true } },
+      },
+      plugins: [ChartDataLabels],
+    });
+  }
 };
 
-/* -------------------- INIT -------------------- */
-
+// Init
 onMounted(async () => {
   await loadDashboardData();
   renderCharts();
@@ -263,11 +233,19 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-h3{
-  font-weight:600;
+h3 {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
 }
 
-.mini-chart{
-  max-height:260px;
+.chart-card {
+  max-height: 350px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.mini-chart {
+  max-height: 250px;
 }
 </style>

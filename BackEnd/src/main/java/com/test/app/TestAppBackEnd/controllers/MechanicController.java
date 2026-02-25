@@ -29,6 +29,11 @@ public class MechanicController {
         Optional<MechanicRequest> toUpdate = service.update(request);
         return ResponseEntity.ok(new ApiResponse<>("Mechanic request updated", 200, toUpdate));
     }
+    @GetMapping("/all")
+    public ResponseEntity<ApiResponse<List<MechanicRequest>>> getAll() {
+        List<MechanicRequest> requests = service.getAll();
+        return ResponseEntity.ok(new ApiResponse<>("Fetched all mechanic requests", 200, requests));
+    }
 
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<MechanicRequest>> getById(@PathVariable Long id) {

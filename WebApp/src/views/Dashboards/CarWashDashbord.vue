@@ -21,10 +21,10 @@
     </v-row>
 
     <!-- Charts Layout -->
-    <v-row >
+    <v-row dense class="mt-2">
       <!-- Progress Donut Chart -->
       <v-col cols="12" md="6">
-        <div class="mt-6 pa-4 ">
+        <div class="mt-6 pa-4 chart-card">
           <h3>Service Progress</h3>
           <v-divider class="mb-4" />
           <canvas ref="progressPieChart" class="mini-chart"></canvas>
@@ -33,7 +33,7 @@
 
       <!-- Monthly Earnings Line Chart -->
       <v-col cols="12" md="6">
-        <div class="mt-6 pa-4 ">
+        <div class="mt-6 pa-4 chart-card">
           <h3>Monthly Earnings</h3>
           <v-divider class="mb-4" />
           <canvas ref="earningsChart" class="mini-chart"></canvas>
@@ -49,7 +49,6 @@ import PageContainer from "@/components/PageContainer.vue";
 import Chart from "chart.js/auto";
 import ChartDataLabels from "chartjs-plugin-datalabels";
 import apiService from "@/api/apiService";
-import { COLORS, USER_ROLES } from "@/utils/constants";
 
 Chart.register(ChartDataLabels);
 
@@ -59,9 +58,9 @@ const earningsChart = ref<HTMLCanvasElement | null>(null);
 
 // Summary cards
 const summaryCards = ref([
-  { title: "Total Customers", value: 0, icon: "mdi-account", color:COLORS.CHART_BLUE },
-  { title: "Cars Washed", value: 0, icon: "mdi-car", color: COLORS.CHART_GREEN },
-  { title: "Revenue", value: "R 0", icon: "mdi-cash", color: COLORS.CHART_ORANGE },
+  { title: "Total Customers", value: 0, icon: "mdi-account", color: "blue" },
+  { title: "Cars Washed", value: 0, icon: "mdi-car", color: "green" },
+  { title: "Revenue", value: "R 0", icon: "mdi-cash", color: "orange" },
 ]);
 
 // Earnings per month
@@ -86,7 +85,7 @@ const renderCharts = () => {
         plugins: {
           legend: { position: "bottom" },
           datalabels: {
-            color: COLORS.TEXT_WHITE,
+            color: "#fff",
             formatter: (value, context) => {
               const total = context.dataset.data.reduce((a, b) => Number(a) + Number(b), 0);
               return total ? `${((Number(value) / Number(total)) * 100).toFixed(1)}%` : "0%";
@@ -107,11 +106,11 @@ const renderCharts = () => {
         datasets: [{
           label: "Earnings (R)",
           data: monthlyEarnings.value,
-          borderColor: COLORS.CHART_BLUE,
-          backgroundColor: COLORS.OVERLAY_BLUE,
+          borderColor: "rgba(54, 162, 235, 0.9)",
+          backgroundColor: "rgba(54, 162, 235, 0.2)",
           tension: 0.3,
           fill: true,
-          pointBackgroundColor: COLORS.CHART_BLUE,
+          pointBackgroundColor: "rgba(54, 162, 235, 1)",
         }],
       },
       options: {
@@ -127,23 +126,23 @@ const renderCharts = () => {
 const loadSummaryData = async () => {
   try {
     const usersRes = await apiService.getAllUsers();
-    const paymentsRes = await apiService.getPaymentsByClients();
+    const paymentsRes = await apiService.getAllPayments();
     const loggedInUser = JSON.parse(localStorage.getItem("userProfile") || "{}");
 
-    const clients = (usersRes.data || []).filter(u => u.roles.includes(USER_ROLES.CLIENT));
+    const clients = (usersRes.data || []).filter(u => u.roles.includes("CLIENT"));
     const carWashPayments = (paymentsRes.data || []).filter(p => p.carWashId == loggedInUser.id);
 
     // Update summary cards
     summaryCards.value = [
-      { title: "Total Customers", value: clients.length, icon: "mdi-account", color: COLORS.CHART_BLUE },
-      { title: "Cars Washed", value: carWashPayments.length, icon: "mdi-car", color: COLORS.CHART_GREEN },
-      { title: "Revenue", value: carWashPayments.reduce((sum, p) => sum + (p.amount || 0), 0), icon: "mdi-cash", color: COLORS.CHART_ORANGE },
+      { title: "Total Customers", value: clients.length, icon: "mdi-account", color: "blue" },
+      { title: "Cars Washed", value: carWashPayments.length, icon: "mdi-car", color: "green" },
+      { title: "Revenue", value: carWashPayments.reduce((sum, p) => sum + (p.amount || 0), 0), icon: "mdi-cash", color: "orange" },
     ];
 
     // Calculate monthly earnings for full year
     const monthTotals: number[] = Array(12).fill(0);
     carWashPayments.forEach(p => {
-      const month = new Date(p.paidAt).getMonth(); 
+      const month = new Date(p.paidAt).getMonth(); // 0=Jan, 11=Dec
       monthTotals[month] += p.amount || 0;
     });
     monthlyEarnings.value = monthTotals;

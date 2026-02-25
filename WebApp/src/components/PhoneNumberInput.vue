@@ -35,53 +35,30 @@
   </v-row>
 </template>
 
-<script setup lang="ts">
-import { ref, computed, watch, onMounted } from "vue";
+<script setup>
+import { ref, computed, watch } from "vue";
 import { countries } from "@/utils/helper";
 
-const props = defineProps({
-  modelValue: { type: String, default: "" },
-  disabled: { type: Boolean, default: false },
-  initialValue: { type: String, default: "" } // for edit mode
+defineProps({
+  modelValue: {
+    type: String,
+    default: ""
+  },
+  disabled: {
+    type: Boolean,
+    default: false
+  }
 });
 
 const emit = defineEmits(["update:modelValue", "valid"]);
 
 const selectedCountry = ref(countries[0]);
 const phone = ref("");
-const isTyping = ref(false);
+const isTyping = ref(false); // track if user is typing
 
-// Function to set country and phone from full number
-function setInitialPhone(value: string) {
-  if (!value) return;
-  const matchedCountry = countries.find(c => value.startsWith(c.code));
-  if (matchedCountry) {
-    selectedCountry.value = matchedCountry;
-    phone.value = value.slice(matchedCountry.code.length);
-
-    // Remove leading 0 for ZA
-    if (matchedCountry.iso === "ZA" && phone.value.startsWith("0")) {
-      phone.value = phone.value.slice(1);
-    }
-  }
-}
-
-// Run on mounted
-onMounted(() => {
-  setInitialPhone(props.initialValue);
-});
-
-// ✅ Watch for changes in initialValue (reactive update)
-watch(
-  () => props.initialValue,
-  (newVal) => {
-    setInitialPhone(newVal);
-  },
-  { immediate: true } // ensures it runs even if initialValue is already set
+const isValid = computed(
+  () => phone.value.length === selectedCountry.value.maxLength
 );
-
-// Computed validations
-const isValid = computed(() => phone.value.length === selectedCountry.value.maxLength);
 
 const hint = computed(() =>
   selectedCountry.value.iso === "ZA"
@@ -89,30 +66,35 @@ const hint = computed(() =>
     : `Enter ${selectedCountry.value.maxLength} digits`
 );
 
+// show hint only while typing and input is not valid
 const showHint = computed(() => isTyping.value && !isValid.value);
 
-// Input handler
 function onInput() {
+  // digits only
   phone.value = phone.value.replace(/\D/g, "");
+
+  // SA rule: remove leading zero
   if (selectedCountry.value.iso === "ZA" && phone.value.startsWith("0")) {
     phone.value = phone.value.slice(1);
   }
+
   emitValue();
 }
 
 function emitValue() {
-  const fullNumber = isValid.value ? `${selectedCountry.value.code}${phone.value}` : "";
+  const fullNumber = isValid.value
+    ? `${selectedCountry.value.code}${phone.value}`
+    : "";
+
   emit("update:modelValue", fullNumber);
   emit("valid", isValid.value);
 }
 
-// Reset phone if country changes
 watch(selectedCountry, () => {
   phone.value = "";
   emitValue();
 });
 </script>
-
 
 <style scoped>
 .input-field-container {
