@@ -60,8 +60,14 @@ const toastMessage = ref("");
 
 toast.subscribe(({ type, message }) => {
   toastMessage.value = message;
-  if (type === "success") toastSuccessVisible.value = true;
-  else toastErrorVisible.value = true;
+  // Ensure only one toast visible at a time — hide the other before showing
+  if (type === "success") {
+    toastErrorVisible.value = false;
+    toastSuccessVisible.value = true;
+  } else {
+    toastSuccessVisible.value = false;
+    toastErrorVisible.value = true;
+  }
 });
 const sidebarNav = ref(null);
 const windowWidth = ref(window.innerWidth);

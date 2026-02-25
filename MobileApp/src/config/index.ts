@@ -1,6 +1,7 @@
 export const CONFIG = {
-  // API Configuration - use your backend URL (e.g. http://YOUR_IP:8080/api for local dev)
-  API_BASE_URL: 'http://localhost:8080/api',
+  // API Configuration - use your computer's local IP when running on a physical device (same WiFi)
+  // Find your IP: ipconfig (Windows) or ifconfig (Mac/Linux). Example: http://192.168.1.5:8080/api
+  API_BASE_URL: 'http://172.20.10.11:8080/api',
   API_TIMEOUT: 15000,
   
   // App Configuration

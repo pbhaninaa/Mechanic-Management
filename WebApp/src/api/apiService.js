@@ -78,8 +78,8 @@ class ApiService {
     return this.authenticateUser(credentials);
   }
 
-  async registerUser(userData) {
-    return this.post(API_ENDPOINTS.SIGNUP, userData);
+  async registerUser(userData, config = {}) {
+    return this.post(API_ENDPOINTS.SIGNUP, userData, config);
   }
 
   /** Alias for registerUser - for backward compatibility */
@@ -124,8 +124,8 @@ class ApiService {
     return this.saveUserProfile(profileData);
   }
 
-  async createUserProfile(profileData) {
-    return this.post(API_ENDPOINTS.PROFILE, profileData);
+  async createUserProfile(profileData, config = {}) {
+    return this.post(API_ENDPOINTS.PROFILE, profileData, config);
   }
 
   async getAllUsers() {

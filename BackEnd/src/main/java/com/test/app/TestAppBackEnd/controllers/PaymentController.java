@@ -29,7 +29,11 @@ public class PaymentController {
         return ResponseEntity.ok(response);
     }
 
-    // Get all payments
+    // Get all payments (supports both GET /api/payments and GET /api/payments/getPayments)
+    @GetMapping({"", "/"})
+    public ResponseEntity<ApiResponse<List<Payment>>> getPaymentsRoot() {
+        return getAllPayments();
+    }
 
     @GetMapping("/getPayments")
     public ResponseEntity<ApiResponse<List<Payment>>> getAllPayments() {

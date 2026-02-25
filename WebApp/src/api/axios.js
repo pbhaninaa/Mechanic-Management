@@ -25,6 +25,7 @@ API.interceptors.request.use(
 // Response interceptor - Handle common errors and show backend messages
 API.interceptors.response.use(
   (response) => {
+    if (response.config?.skipGlobalToast) return response;
     const method = response.config?.method?.toUpperCase();
     const isMutation = ["POST", "PUT", "PATCH", "DELETE"].includes(method);
     const message = response.data?.message;
@@ -34,11 +35,13 @@ API.interceptors.response.use(
     return response;
   },
   (error) => {
-    const message =
-      error.response?.data?.message ||
-      error.message ||
-      "An unexpected error occurred";
-    toast.error(message);
+    if (!error.config?.skipGlobalToast) {
+      const message =
+        error.response?.data?.message ||
+        error.message ||
+        "An unexpected error occurred";
+      toast.error(message);
+    }
     if (error.response?.status === 401) {
       // Token expired or invalid — avoid redirect for login requests themselves
       const requestUrl = error.config?.url || "";

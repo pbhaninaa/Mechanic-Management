@@ -54,6 +54,34 @@
     </v-dialog>
 
 
+    <!-- Create User Dialog (User + Profile in one form) -->
+    <v-dialog v-model="createUserDialog" max-width="900px" persistent>
+      <v-card>
+        <v-card-title>Create User</v-card-title>
+        <v-card-text>
+          <p class="text-subtitle-2 mb-2 text-grey">Create user account and profile. Username and password are for login.</p>
+          <InputField v-model="createForm.username" label="Username" type="text" required :disabled="createLoading" />
+          <InputField v-model="createForm.password" label="Password" type="password" required :disabled="createLoading" />
+          <v-divider class="my-4" />
+          <InputField v-model="createForm.firstName" label="First Name" required :disabled="createLoading" />
+          <InputField v-model="createForm.lastName" label="Last Name" required :disabled="createLoading" />
+          <InputField v-model="createForm.email" label="Email" type="email" required :disabled="createLoading" />
+          <PhoneNumberInput v-model="createForm.phoneNumber" :initial-value="createForm.phoneNumber"
+            :initial-country-code="createForm.countryCode" @update:countryCode="createForm.countryCode = $event"
+            @valid="isCreatePhoneValid = $event" :disabled="createLoading" />
+          <InputField v-model="createForm.address" label="Address" type="text" :disabled="createLoading" />
+          <v-select v-model="createForm.roles" :items="availableRoles" label="Role" chips :multiple="false"
+            variant="outlined" required :disabled="createLoading" />
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <Button text label="Cancel" @click="closeCreateDialog" :disabled="createLoading" />
+          <Button color="primary" label="Save" :loading="createLoading" :disabled="!isCreateFormValid"
+            @click="saveCreateUser" />
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
     <!-- Delete Confirmation Dialog -->
     <v-dialog v-model="deleteDialog" max-width="400px">
       <v-card>
@@ -69,7 +97,7 @@
       </v-card>
     </v-dialog>
     <v-spacer />
-    <Button max-width="120px" color="primary" label="Add User" @click="createUser()" :disabled="loading" />
+    <Button max-width="120px" color="primary" label="Add User" @click="openCreateUserDialog()" :disabled="loading" />
     <Button max-width="120px" color="error" label="Delete All" class="ml-2" @click="confirmDeleteAll"
       :disabled="loading || users.length === 0" />
 
@@ -92,7 +120,6 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
 import PageContainer from '@/components/PageContainer.vue';
 import InputField from '@/components/InputField.vue';
 import Button from '@/components/Button.vue';
@@ -102,8 +129,7 @@ import { USER_ROLES } from '@/utils/constants';
 import { logoutUser } from '@/utils/helper';
 import TableComponent from '@/components/TableComponent.vue';
 import { getSafeJson } from "@/utils/storage";
-
-const router = useRouter();
+import { toast } from "@/utils/toast";
 
 const users = ref([]);
 const loading = ref(false);
@@ -142,6 +168,32 @@ const userToDelete = ref<any>(null);
 const deleteAllDialog = ref(false);
 const deleteAllLoading = ref(false);
 
+// Create User dialog
+const createUserDialog = ref(false);
+const createLoading = ref(false);
+const isCreatePhoneValid = ref(false);
+const createForm = ref({
+  username: '',
+  password: '',
+  firstName: '',
+  lastName: '',
+  email: '',
+  phoneNumber: '',
+  countryCode: '+27',
+  address: '',
+  roles: 'CLIENT',
+});
+
+const isCreateFormValid = computed(() => (
+  createForm.value.username?.trim() &&
+  createForm.value.password?.trim() &&
+  createForm.value.firstName?.trim() &&
+  createForm.value.lastName?.trim() &&
+  createForm.value.email?.trim() &&
+  isCreatePhoneValid.value &&
+  createForm.value.roles
+));
+
 // Available roles
 const availableRoles = ['CLIENT', 'MECHANIC', 'ADMIN', 'CARWASH'];
 
@@ -157,8 +209,97 @@ const isFormValid = computed(() => {
   );
 });
 
-const createUser = () => {
-  router.replace({ name: "CreateProfile" });
+const getDefaultCreateForm = () => ({
+  username: '',
+  password: '',
+  firstName: '',
+  lastName: '',
+  email: '',
+  phoneNumber: '',
+  countryCode: '+27',
+  address: '',
+  roles: 'CLIENT',
+});
+
+const openCreateUserDialog = () => {
+  createForm.value = getDefaultCreateForm();
+  isCreatePhoneValid.value = false;
+  createUserDialog.value = true;
+};
+
+const closeCreateDialog = () => {
+  if (!createLoading.value) {
+    createUserDialog.value = false;
+  }
+};
+
+const getErrorMessage = (err: any) =>
+  err?.response?.data?.message || err?.message || 'Unknown error';
+
+const runCreateProfile = async () => {
+  const rolesVal = createForm.value.roles;
+  const profileData = {
+    username: createForm.value.username.trim(),
+    firstName: createForm.value.firstName.trim(),
+    lastName: createForm.value.lastName.trim(),
+    email: createForm.value.email.trim(),
+    phoneNumber: createForm.value.phoneNumber,
+    countryCode: createForm.value.countryCode,
+    address: createForm.value.address?.trim() || '',
+    roles: Array.isArray(rolesVal) ? rolesVal : [rolesVal],
+  };
+  await apiService.createUserProfile(profileData, { skipGlobalToast: true });
+};
+
+const saveCreateUser = async () => {
+  if (!isCreateFormValid.value) return;
+  createLoading.value = true;
+  error.value = null;
+  const skipToast = { skipGlobalToast: true };
+  try {
+    // Step 1: Try create User (username + password)
+    try {
+      await apiService.registerUser(
+        {
+          username: createForm.value.username.trim(),
+          password: createForm.value.password,
+        },
+        skipToast
+      );
+    } catch (userErr: any) {
+      const status = userErr?.response?.status;
+      const msg = getErrorMessage(userErr);
+      if (status === 409 && msg?.toLowerCase().includes('username') && msg?.toLowerCase().includes('exist')) {
+        // User already exists — try adding profile only (user may have no profile)
+        try {
+          await runCreateProfile();
+          createUserDialog.value = false;
+          await loadUsers();
+          toast.success('Profile added for existing user account.');
+          return;
+        } catch (profileErr: any) {
+          toast.error(`Profile creation failed: ${getErrorMessage(profileErr)}`);
+          return;
+        }
+      }
+      toast.error(`User creation failed: ${msg}`);
+      return;
+    }
+    // Step 2: Create Profile (user was created successfully)
+    try {
+      await runCreateProfile();
+      createUserDialog.value = false;
+      await loadUsers();
+      toast.success('User account and profile created successfully.');
+    } catch (profileErr: any) {
+      const profileMsg = getErrorMessage(profileErr);
+      toast.error(
+        `User account created successfully, but profile creation failed: ${profileMsg}. The user can log in but has no profile yet.`
+      );
+    }
+  } finally {
+    createLoading.value = false;
+  }
 };
 
 // Load all users
