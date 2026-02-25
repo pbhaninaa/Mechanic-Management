@@ -28,7 +28,7 @@
           <v-alert v-if="locationError" type="warning" density="compact" class="mb-2">{{ locationError }}</v-alert>
           <InputField v-model="newBooking.location" label="Location" type="text"
             :disabled="loading || useCurrentLocation" :readonly="useCurrentLocation" required />
-          <InputField v-model="formattedPrice" label="Total Price (R)" type="text" :disabled="true" />
+          <InputField v-model="formattedPrice" label="Total Price" type="text" :disabled="true" />
           <v-menu v-model="menu" :close-on-content-click="false" transition="scale-transition" offset-y
             min-width="290px">
             <template #activator="{ props }">
@@ -55,6 +55,7 @@ import Button from "@/components/Button.vue";
 import apiService from "@/api/apiService";
 import { getCurrentLocationWithName } from "@/utils/helper";
 import { getSafeJson } from "@/utils/storage";
+import { useCurrency } from "@/composables/useCurrency";
 
 const loggedInUser = getSafeJson("userProfile", {});
 
@@ -129,8 +130,9 @@ watch(computedPrice, (newPrice) => {
   newBooking.value.servicePrice = newPrice.toFixed(2);
 });
 
-// For displaying in the input field
-const formattedPrice = computed(() => `R ${newBooking.value.servicePrice}`);
+const { formatCurrency } = useCurrency();
+const formattedPrice = computed(() => formatCurrency(computedPrice.value));
+
 const locationError = ref("");
 const fetchCurrentLocation = async () => {
   locationError.value = "";

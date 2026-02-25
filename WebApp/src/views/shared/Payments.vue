@@ -3,7 +3,7 @@
     <v-card-text>
 <TableComponent title="Payments" :headers="headers" :items="payments" :loading="false">
         <template #item.amount="{ item }">
-          R{{ item.amount }}
+          {{ currencySymbol }} {{ item.amount }}
         </template>
 
         <template #item.status="{ item }">
@@ -32,6 +32,7 @@ import PageContainer from "@/components/PageContainer.vue";
 import apiService from "@/api/apiService";
 import { JOB_STATUS } from "@/utils/constants";
 import { getStatusColor } from "@/utils/helper";
+import { useCurrency } from "@/composables/useCurrency";
 import TableComponent from "@/components/TableComponent.vue";
 import Test from "@/views/Test.vue";
 interface Payment {
@@ -44,6 +45,7 @@ interface Payment {
   jobId: number;
 }
 
+const { currencySymbol } = useCurrency();
 const payments = ref<Payment[]>([]);
 
 const headers = [

@@ -14,7 +14,7 @@
           {{ formatDate(item.date) }}
         </template>
         <template #item.price="{ item }">
-          ${{ item.servicePrice.toFixed(2) }}
+          {{ formatCurrency(item.servicePrice) }}
         </template>
         <template #item.status="{ item }">
           <v-chip :color="getStatusColor(item.status)" dark>
@@ -45,6 +45,7 @@ import PageContainer from "@/components/PageContainer.vue";
 import { format } from "date-fns";
 import apiService from "@/api/apiService";
 import { getStatusColor } from "@/utils/helper";
+import { useCurrency } from "@/composables/useCurrency";
 import { useRouter } from 'vue-router'
 import TableComponent from "@/components/TableComponent.vue";
 
@@ -76,6 +77,8 @@ const headers = [
   { title: "Status", value: "status" },
   { title: "Actions", value: "actions", sortable: false }
 ];
+
+const { formatCurrency } = useCurrency();
 
 // Reactive states
 const bookings = ref<Booking[]>([]);

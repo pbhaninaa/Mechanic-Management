@@ -62,6 +62,7 @@ import { JOB_STATUS, USER_ROLES } from "@/utils/constants";
 import TableComponent from "@/components/TableComponent.vue";
 import { getSafeJson } from "@/utils/storage";
 import { toast } from "@/utils/toast";
+import { useCurrency } from "@/composables/useCurrency";
 
 const loggedInUser = getSafeJson("userProfile", {});
 
@@ -81,9 +82,10 @@ const jobs = ref<MechanicJob[]>([]);
 const loading = ref(false);
 
 const isAdmin = (loggedInUser?.roles || []).includes(USER_ROLES.ADMIN);
+const { formatCurrency } = useCurrency();
 const formatPrice = (item: MechanicJob) =>
   item?.servicePrice != null && !isNaN(item.servicePrice)
-    ? `R ${Number(item.servicePrice).toFixed(2)}`
+    ? formatCurrency(item.servicePrice)
     : "—";
 
 const headers = computed(() => {

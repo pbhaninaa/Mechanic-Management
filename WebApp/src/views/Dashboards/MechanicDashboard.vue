@@ -46,6 +46,7 @@ import apiService from "@/api/apiService";
 import { JOB_STATUS, COLORS, USER_ROLES } from "@/utils/constants";
 import TableComponent from "@/components/TableComponent.vue";
 import { getSafeJson } from "@/utils/storage";
+import { useCurrency } from "@/composables/useCurrency";
 
 
 const loading = ref(false);
@@ -60,11 +61,13 @@ interface JobRequest {
   location: string;
   status: string;
 }
+const { formatCurrency } = useCurrency();
+
 // Stats cards data
 const statsCards = computed(() => [
   { title: "Pending Jobs", value: pendingJobs.value, color: COLORS.SOFT_ORANGE },
   { title: "Completed Jobs", value: completedJobs.value, color: COLORS.SOFT_GREEN_DARK },
-  { title: "Payments Pending", value: `R${pendingPayments.value}`, color: COLORS.SOFT_BLUE },
+  { title: "Payments Pending", value: formatCurrency(pendingPayments.value), color: COLORS.SOFT_BLUE },
   { title: "Active Requests", value: activeRequests.value, color: COLORS.SOFT_PURPLE },
 ]);
 

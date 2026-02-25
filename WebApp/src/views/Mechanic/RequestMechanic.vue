@@ -24,7 +24,7 @@
           label="Please specify (for Other)" :disabled="loading" outlined />
 
         <!-- Total Price (pre-defined, like Carwash) -->
-        <InputField :model-value="formattedPrice" label="Total Price (R)" type="text" disabled />
+        <InputField :model-value="formattedPrice" label="Total Price" type="text" disabled />
 
         <!-- Preferred Date -->
         <v-menu v-model="menu" :close-on-content-click="false" transition="scale-transition" offset-y variant="outlined"
@@ -60,6 +60,7 @@ import { JOB_STATUS } from "@/utils/constants";
 import { getCurrentLocationWithName } from "@/utils/helper";
 import DropdownField from "@/components/DropdownField.vue";
 import { getSafeJson } from "@/utils/storage";
+import { useCurrency } from "@/composables/useCurrency";
 
 // Router
 const router = useRouter();
@@ -126,7 +127,9 @@ const computedPrice = computed(() => {
   );
 });
 
-const formattedPrice = computed(() => `R ${computedPrice.value.toFixed(2)}`);
+
+const { formatCurrency } = useCurrency();
+const formattedPrice = computed(() => formatCurrency(computedPrice.value));
 
 // Keep servicePrice in sync for payload
 watch(computedPrice, (v) => {

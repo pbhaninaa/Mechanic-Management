@@ -87,6 +87,9 @@ public class UserProfileService {
                     existing.setFirstName(updatedProfile.getFirstName());
                     existing.setLastName(updatedProfile.getLastName());
                     existing.setPhoneNumber(updatedProfile.getPhoneNumber());
+                    if (updatedProfile.getCountryCode() != null) {
+                        existing.setCountryCode(updatedProfile.getCountryCode());
+                    }
                     existing.setAddress(updatedProfile.getAddress());
                     existing.setEmail(updatedProfile.getEmail());
 

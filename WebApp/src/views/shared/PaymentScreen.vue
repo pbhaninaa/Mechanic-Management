@@ -25,7 +25,7 @@
           </div>
           <div class="d-flex justify-space-between mb-2">
             <span>Amount:</span>
-            <strong>R {{ amount.toFixed(2) }}</strong>
+            <strong>{{ formatCurrency(amount) }}</strong>
           </div>
         </v-card>
 
@@ -59,6 +59,9 @@ import InputField from '@/components/InputField.vue';
 import Button from '@/components/Button.vue';
 import apiService from '@/api/apiService';
 import { JOB_STATUS } from '@/utils/constants';
+import { useCurrency } from '@/composables/useCurrency';
+
+const { formatCurrency } = useCurrency();
 
 // Router
 const route = useRoute();

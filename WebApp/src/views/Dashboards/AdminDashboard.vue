@@ -53,9 +53,12 @@ import PageContainer from "@/components/PageContainer.vue";
 import Chart from "chart.js/auto";
 import ChartDataLabels from "chartjs-plugin-datalabels";
 import apiService from "@/api/apiService";
+import { useCurrency } from "@/composables/useCurrency";
 
 // Register Chart.js plugin
 Chart.register(ChartDataLabels);
+
+const { formatCurrency, currencySymbol } = useCurrency();
 
 // State
 const users = ref<any[]>([]);
@@ -73,8 +76,8 @@ const summaryCards = ref([
   { title: "Clients", value: 0, icon: "mdi-account-group", color: "teal" },
   { title: "Mechanics", value: 0, icon: "mdi-wrench", color: "green" },
   { title: "Carwashes", value: 0, icon: "mdi-car-wash", color: "indigo" },
-  { title: "Total Paid (Users)", value: "R 0", icon: "mdi-cash", color: "orange" },
-  { title: "Commission", value: "R 0", icon: "mdi-bank", color: "teal" },
+  { title: "Total Paid (Users)", value: formatCurrency(0), icon: "mdi-cash", color: "orange" },
+  { title: "Commission", value: formatCurrency(0), icon: "mdi-bank", color: "teal" },
 ]);
 
 // Chart Refs
@@ -113,8 +116,8 @@ const loadDashboardData = async () => {
       { title: "Clients", value: clients.value.length, icon: "mdi-account-group", color: "teal" },
       { title: "Mechanics", value: mechanics.value.length, icon: "mdi-wrench", color: "green" },
       { title: "Carwashes", value: carwashes.value.length, icon: "mdi-car-wash", color: "indigo" },
-      { title: "Total Paid (Users)", value: `R ${totalPaidByUsers.value.toLocaleString()}`, icon: "mdi-cash", color: "orange" },
-      { title: "Commission", value: `R ${totalCommission.value.toLocaleString()}`, icon: "mdi-bank", color: "teal" },
+      { title: "Total Paid (Users)", value: formatCurrency(totalPaidByUsers.value), icon: "mdi-cash", color: "orange" },
+      { title: "Commission", value: formatCurrency(totalCommission.value), icon: "mdi-bank", color: "teal" },
     ];
   } catch (error) {
     console.error("Failed to load dashboard data:", error);
@@ -207,7 +210,7 @@ const renderCharts = () => {
         labels,
         datasets: [
           {
-            label: "Total Paid by Users (R)",
+            label: `Total Paid by Users (${currencySymbol})`,
             data: values,
             borderColor: "rgba(54, 162, 235, 0.9)",
             backgroundColor: "rgba(54, 162, 235, 0.2)",
@@ -225,7 +228,7 @@ const renderCharts = () => {
             color: "#000",
             anchor: "end",
             align: "top",
-            formatter: (val: number) => `R ${val.toLocaleString()}`,
+            formatter: (val: number) => formatCurrency(val),
           },
         },
         scales: { y: { beginAtZero: true } },

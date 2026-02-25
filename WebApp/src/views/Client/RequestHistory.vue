@@ -40,6 +40,7 @@ import { useRouter } from 'vue-router';
 import { getStatusColor } from "../../utils/helper";
 import TableComponent from "@/components/TableComponent.vue";
 import { getSafeJson } from "@/utils/storage";
+import { useCurrency } from "@/composables/useCurrency";
 const router = useRouter();
 // TypeScript interface matching backend entity
 interface RequestHistory {
@@ -53,8 +54,9 @@ interface RequestHistory {
   mechanicId?: number;
 }
 
+const { formatCurrency } = useCurrency();
 const formatPrice = (price?: number) =>
-  price != null && !isNaN(price) ? `R ${Number(price).toFixed(2)}` : "—";
+  price != null && !isNaN(price) ? formatCurrency(price) : "—";
 
 // Pay when accepted (admin assign) or assigned (mechanic accept)
 const canPay = (item: RequestHistory) => {

@@ -6,13 +6,13 @@
         :loading="loading">
 
         <template #item.amount="{ item }">
-          R {{ item.amount }}
+          {{ currencySymbol }} {{ item.amount }}
         </template>
         <template #item.amountPaidByUser="{ item }">
-          R {{ item.amountPaidByUser }}
+          {{ currencySymbol }} {{ item.amountPaidByUser }}
         </template>
         <template #item.platformFee="{ item }">
-          R {{ item.platformFee }}
+          {{ currencySymbol }} {{ item.platformFee }}
         </template>
 
         <template #item.paidAt="{ item }">
@@ -39,9 +39,12 @@ import PageContainer from "@/components/PageContainer.vue";
 import apiService from "@/api/apiService";
 import { getSafeJson } from "@/utils/storage";
 import { format } from "date-fns";
+import { useCurrency } from "@/composables/useCurrency";
 import { getStatusColor } from "@/utils/helper";
 import { USER_ROLES } from "@/utils/constants";
 import TableComponent from "@/components/TableComponent.vue";
+
+const { currencySymbol } = useCurrency();
 
 // Logged in user
 const loggedInUser = getSafeJson("userProfile", {}) || {};

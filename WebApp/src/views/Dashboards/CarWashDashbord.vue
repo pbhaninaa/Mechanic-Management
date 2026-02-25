@@ -50,8 +50,11 @@ import Chart from "chart.js/auto";
 import ChartDataLabels from "chartjs-plugin-datalabels";
 import apiService from "@/api/apiService";
 import { getSafeJson } from "@/utils/storage";
+import { useCurrency } from "@/composables/useCurrency";
 
 Chart.register(ChartDataLabels);
+
+const { formatCurrency, currencySymbol } = useCurrency();
 
 // Chart refs
 const progressPieChart = ref<HTMLCanvasElement | null>(null);
@@ -61,7 +64,7 @@ const earningsChart = ref<HTMLCanvasElement | null>(null);
 const summaryCards = ref([
   { title: "Total Customers", value: 0, icon: "mdi-account", color: "blue" },
   { title: "Cars Washed", value: 0, icon: "mdi-car", color: "green" },
-  { title: "Revenue", value: "R 0", icon: "mdi-cash", color: "orange" },
+  { title: "Revenue", value: formatCurrency(0), icon: "mdi-cash", color: "orange" },
 ]);
 
 // Earnings per month
@@ -105,7 +108,7 @@ const renderCharts = () => {
       data: {
         labels: monthLabels,
         datasets: [{
-          label: "Earnings (R)",
+          label: `Earnings (${currencySymbol})`,
           data: monthlyEarnings.value,
           borderColor: "rgba(54, 162, 235, 0.9)",
           backgroundColor: "rgba(54, 162, 235, 0.2)",
@@ -137,7 +140,7 @@ const loadSummaryData = async () => {
     summaryCards.value = [
       { title: "Total Customers", value: clients.length, icon: "mdi-account", color: "blue" },
       { title: "Cars Washed", value: carWashPayments.length, icon: "mdi-car", color: "green" },
-      { title: "Revenue", value: carWashPayments.reduce((sum, p) => sum + (p.amount || 0), 0), icon: "mdi-cash", color: "orange" },
+      { title: "Revenue", value: formatCurrency(carWashPayments.reduce((sum, p) => sum + (p.amount || 0), 0)), icon: "mdi-cash", color: "orange" },
     ];
 
     // Calculate monthly earnings for full year

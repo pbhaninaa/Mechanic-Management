@@ -66,6 +66,7 @@ import { JOB_STATUS } from "@/utils/constants";
 import { getStatusColor } from "@/utils/helper";
 import TableComponent from "@/components/TableComponent.vue";
 import { getSafeJson } from "@/utils/storage";
+import { useCurrency } from "@/composables/useCurrency";
 interface JobRequest {
   id: number;
   username: string;
@@ -93,9 +94,10 @@ const selectedMechanicId = ref<number | null>(null);
 const mechanicsLoading = ref(false);
 const mechanicOptions = ref<{ id: number; label: string }[]>([]);
 
+const { formatCurrency } = useCurrency();
 const formatPrice = (item: JobRequest) =>
   item?.servicePrice != null && !isNaN(item.servicePrice)
-    ? `R ${Number(item.servicePrice).toFixed(2)}`
+    ? formatCurrency(item.servicePrice)
     : "—";
 
 const headers = computed(() => {

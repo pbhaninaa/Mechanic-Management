@@ -51,6 +51,7 @@ import Chart from "chart.js/auto";
 import apiService from "@/api/apiService";
 import { JOB_STATUS } from "@/utils/constants";
 import { getSafeJson } from "@/utils/storage";
+import { useCurrency } from "@/composables/useCurrency";
 
 const summaryCards = ref([]);
 const jobRequests = ref([]);
@@ -101,8 +102,7 @@ const loadJobRequests = async () => {
   }
 };
 
-// Format currency
-const formatCurrency = (amount) => `R ${amount.toLocaleString()}`;
+const { formatCurrency } = useCurrency();
 
 // Update summary cards + charts
 watchEffect(() => {
