@@ -12,21 +12,25 @@
   :items="items"
   :items-per-page="itemsPerPage"
   :loading="loading"
-  class="elevation-1"
+  class="elevation-1 table-truncate"
 >
   <template v-slot:item="{ item }">
     <tr>
       <td
         v-for="header in headers"
         :key="header.value"
+        class="table-cell"
       >
         <!-- Check if a slot exists for this column -->
         <slot
           :name="`item.${header.value}`"
           :item="item"
         >
-          <!-- fallback to formatter or raw value -->
-          {{ header.formatter ? header.formatter(item) : item?.[header.value] ?? "-" }}
+          <!-- fallback: truncate long text, show full on hover -->
+          <TooltipText
+            :text="getCellText(item, header)"
+            :max-length="50"
+          />
         </slot>
       </td>
     </tr>
@@ -46,6 +50,7 @@
 <script setup lang="ts">
 import { toRefs } from "vue";
 import NoDataMessage from "@/components/NoDataMessage.vue";
+import TooltipText from "@/components/TooltipText.vue";
 
 interface TableHeader {
   title: string;
@@ -53,6 +58,11 @@ interface TableHeader {
   sortable?: boolean;
   formatter?: (item: any) => string;
 }
+
+const getCellText = (item: any, header: TableHeader) => {
+  const val = header.formatter ? header.formatter(item) : item?.[header.value] ?? "-";
+  return val != null ? String(val) : "-";
+};
 
 const props = withDefaults(
   defineProps<{
@@ -73,3 +83,11 @@ const props = withDefaults(
 const { title, headers, items, loading, itemsPerPage, noDataMessage } =
   toRefs(props);
 </script>
+
+<style scoped>
+.table-cell {
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+</style>

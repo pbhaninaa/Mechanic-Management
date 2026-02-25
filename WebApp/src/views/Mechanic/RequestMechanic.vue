@@ -14,14 +14,17 @@
           placeholder="Please be as specific as possible ie. 123 Main St, City" :extra-rules="[rules.required]"
           :disabled="loading || request.forSelf" :readonly="request.forSelf" required />
 
-        <!-- Service Description Dropdown -->
-        <DropdownField v-model="request.description" :items="jobOptions" label="Service Description"
-          placeholder="Select Service Description" :rules="[rules.required]" :disabled="loading" variant="outlined" />
-
+        <!-- Service Description - multi-select (like Carwash: wipers, brake pads, engine, etc.) -->
+        <DropdownField v-model="request.serviceTypes" :items="jobOptions" label="Select Services"
+          placeholder="Select one or more services" multiple chips required :disabled="loading"
+          variant="outlined" :prepopulate-first="false" />
 
         <!-- Custom explanation if "Other" is selected -->
-        <InputField v-if="request.description === 'Other'" v-model="request.customDescription" label="Please specify"
-          :rules="[rules.required]" :disabled="loading" outlined />
+        <InputField v-if="request.serviceTypes?.includes('Other')" v-model="request.customDescription"
+          label="Please specify (for Other)" :disabled="loading" outlined />
+
+        <!-- Total Price (pre-defined, like Carwash) -->
+        <InputField :model-value="formattedPrice" label="Total Price (R)" type="text" disabled />
 
         <!-- Preferred Date -->
         <v-menu v-model="menu" :close-on-content-click="false" transition="scale-transition" offset-y variant="outlined"
@@ -61,10 +64,11 @@ import { getSafeJson } from "@/utils/storage";
 // Router
 const router = useRouter();
 const route = useRoute();
-// Form state
+// Mechanic service options with mock prices (multi-select like Carwash)
 const jobOptions = [
   "Fix car engine",
   "Replace brake pads",
+  "Replace wipers",
   "Change oil",
   "Battery replacement",
   "Tire replacement",
@@ -73,14 +77,28 @@ const jobOptions = [
   "Other",
 ];
 
+// Mock price map - R per service
+const mechanicServicePrices: Record<string, number> = {
+  "Fix car engine": 850,
+  "Replace brake pads": 650,
+  "Replace wipers": 180,
+  "Change oil": 350,
+  "Battery replacement": 550,
+  "Tire replacement": 480,
+  "AC repair": 720,
+  "Suspension repair": 890,
+  "Other": 500,
+};
+
 const request = ref({
   forSelf: true,
-  description: jobOptions[0],
+  serviceTypes: [] as string[],
   customDescription: "",
   location: "",
   latitude: null,
   longitude: null,
   date: "",
+  servicePrice: 0,
 });
 
 // Refs & messages
@@ -98,9 +116,27 @@ const rules = {
   required: (value: string) => !!value || "This field is required",
 };
 
+// Computed price from selected services (sum like Carwash)
+const computedPrice = computed(() => {
+  const types = request.value.serviceTypes || [];
+  if (types.length === 0) return 0;
+  return types.reduce(
+    (total, service) => total + (mechanicServicePrices[service] ?? mechanicServicePrices["Other"]),
+    0
+  );
+});
+
+const formattedPrice = computed(() => `R ${computedPrice.value.toFixed(2)}`);
+
+// Keep servicePrice in sync for payload
+watch(computedPrice, (v) => {
+  request.value.servicePrice = v;
+}, { immediate: true });
+
 const isFormValid = computed(
   () =>
-    (request.value.description || request.value.customDescription) &&
+    (request.value.serviceTypes?.length ?? 0) > 0 &&
+    (!request.value.serviceTypes?.includes("Other") || !!request.value.customDescription?.trim()) &&
     request.value.location &&
     request.value.date
 );
@@ -151,17 +187,23 @@ const submitRequest = async () => {
   message.value = "";
 
   try {
+    // Build description: "Service A, Service B, Other: custom text"
+    const services = request.value.serviceTypes || [];
+    const parts = services.filter((s) => s !== "Other");
+    if (request.value.serviceTypes?.includes("Other") && request.value.customDescription?.trim()) {
+      parts.push(`Other: ${request.value.customDescription.trim()}`);
+    }
+    const description = parts.length > 0 ? parts.join(", ") : request.value.customDescription || "Other";
+
     const payload = {
       username,
-      description:
-        request.value.description === "Other"
-          ? request.value.customDescription
-          : request.value.description,
+      description,
       location: request.value.location,
       latitude: request.value.latitude,
       longitude: request.value.longitude,
       date: request.value.date,
       status: JOB_STATUS.PENDING,
+      servicePrice: computedPrice.value,
     };
 
     await apiService.createRequestMechanic(payload);
@@ -171,7 +213,7 @@ const submitRequest = async () => {
     }, 1000);
     request.value = {
       forSelf: true,
-      description: "",
+      serviceTypes: [],
       customDescription: "",
       location: "",
       latitude: null,

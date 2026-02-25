@@ -16,9 +16,6 @@
         <template #item.price="{ item }">
           ${{ item.servicePrice.toFixed(2) }}
         </template>
-        <template #item.location="{ item }">
-          {{ truncateLocation(item.location) }}
-        </template>
         <template #item.status="{ item }">
           <v-chip :color="getStatusColor(item.status)" dark>
             {{ item.status }}
@@ -101,13 +98,6 @@ const fetchBookings = async () => {
   } finally {
     loading.value = false;
   }
-};
-const truncateLocation = (location: string) => {
-  const parts = location.split(",");
-  if (parts.length > 3) {
-    return parts.slice(0, 3).join(",") + ", ...";
-  }
-  return location;
 };
 // Format date for table
 const formatDate = (dateStr: string) => format(new Date(dateStr), "dd MMM yyyy");

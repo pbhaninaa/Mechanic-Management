@@ -97,6 +97,9 @@ public class MechanicRequestService {
 
     // ================= UPDATE =================
     public Optional<MechanicRequest> update(MechanicRequest updated) {
+        if (updated == null || updated.getId() == null) {
+            throw new IllegalArgumentException("Job id is required for update");
+        }
         Optional<MechanicRequest> requests = repository.findById(updated.getId());
         if (requests.isEmpty()) return Optional.empty();
 
@@ -117,6 +120,7 @@ public class MechanicRequestService {
         if (updated.getCategory() != null) existing.setCategory(updated.getCategory());
         if (updated.getPriority() != null) existing.setPriority(updated.getPriority());
         if (updated.getTitle() != null) existing.setTitle(updated.getTitle());
+        if (updated.getServicePrice() != null) existing.setServicePrice(updated.getServicePrice());
 
         MechanicRequest saved = repository.save(existing);
 

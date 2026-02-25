@@ -3,10 +3,6 @@
     <v-card-text>
       <TableComponent title="Car Wash Bookings" :headers="headers" :items="bookings" 
         :items-per-page="5" :loading="loading">
-        <template #item.location="{ item }">
-          <TooltipText :text="item.location" :maxLength="50" />
-        </template>
-
         <!-- Service Types as comma-separated string -->
         <template #item.serviceTypes="{ item }">
           {{ item.serviceTypes.join(", ") }}
@@ -76,7 +72,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
 import PageContainer from "@/components/PageContainer.vue";
-import TooltipText from "@/components/TooltipText.vue";
 import apiService from "@/api/apiService";
 import { getStatusColor } from "@/utils/helper";
 import { JOB_STATUS } from "@/utils/constants";

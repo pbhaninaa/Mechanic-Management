@@ -20,7 +20,7 @@
         <!-- Actions: Update Status -->
         <template #item.actions="{ item }">
           <!-- Start / In progress button -->
-          <v-tooltip text="Mark as In Progress" location="top">
+          <v-tooltip text="Start wash (client has paid)" location="top">
             <template #activator="{ props }">
               <v-btn v-bind="props" small color="green" variant="text" class="mr-1"
                 @click="updateStatus(item, JOB_STATUS.IN_PROGRESS)" :disabled="item.status !== JOB_STATUS.PAID">
@@ -29,8 +29,7 @@
             </template>
           </v-tooltip>
 
-          <!-- Complete button -->
-          <v-tooltip  text="Mark as Completed" location="top">
+          <v-tooltip text="Finish wash - you have done the work" location="top">
             <template #activator="{ props }">
               <v-btn v-bind="props" small color="blue" variant="text" class="mr-1"
                 @click="updateStatus(item, JOB_STATUS.COMPLETED)" :disabled="item.status !== JOB_STATUS.IN_PROGRESS">
@@ -92,14 +91,18 @@ const headers = [
 // ...imports and interfaces stay the same
 
 const updateStatus = async (job: WashJob, newStatus: string) => {
+  const jobId = job?.id;
+  if (!jobId) {
+    updateError.value = "Cannot update: booking has no ID. Please refresh the page.";
+    return;
+  }
   updateError.value = "";
   try {
     loading.value = true;
     const previousStatus = job.status;
     job.status = newStatus;
 
-    // Call backend to persist the status change
-    await apiService.updateCarWashBooking(job.id, job);
+    await apiService.updateCarWashBooking(jobId, job);
 
     // ✅ Update locally only after success
     job.status = newStatus;

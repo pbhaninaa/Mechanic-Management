@@ -39,6 +39,8 @@ public class MechanicRequest {
     private String priority = "medium"; // low, medium, high, emergency
     private String title; // Brief service title
 
+    private Double servicePrice; // Pre-defined price for the selected service(s)
+
     @Transient
     @JsonInclude(JsonInclude.Include.ALWAYS)
     private String phoneNumber; // Populated from UserProfile for display in tables
@@ -78,6 +80,9 @@ public class MechanicRequest {
 
     public String getTitle() { return title; }
     public void setTitle(String title) { this.title = title; }
+
+    public Double getServicePrice() { return servicePrice; }
+    public void setServicePrice(Double servicePrice) { this.servicePrice = servicePrice; }
 
     public String getPhoneNumber() { return phoneNumber; }
     public void setPhoneNumber(String phoneNumber) { this.phoneNumber = phoneNumber; }

@@ -5,10 +5,6 @@
       <div v-else-if="historyError" class="error">{{ historyError }}</div>
       <div v-else>
         <TableComponent title="My Request History" :headers="headers" :items="requests"  :items-per-page="5" :loading="historyLoading">
-          <template #item.location="{ item }">
-            {{ truncateLocation(item.location) }}
-          </template>
-
           <template #item.status="{ item }">
             <v-chip :color="getStatusColor(item.status)" dark>
               {{ item.status }}
@@ -16,7 +12,7 @@
           </template>
 
            <template #item.actions="{ item }">
-          <v-btn small color="green" :disabled="item.status.toLowerCase() !== 'accepted'" @click="payForRequest(item)">
+          <v-btn small color="green" :disabled="!canPay(item)" @click="payForRequest(item)">
             Pay
           </v-btn>
           <v-btn v-if="false" small color="blue" :disabled="item.status.toLowerCase() !== 'accepted'"
@@ -53,7 +49,18 @@ interface RequestHistory {
   location: string;
   date: string;
   status: string;
+  servicePrice?: number;
+  mechanicId?: number;
 }
+
+const formatPrice = (price?: number) =>
+  price != null && !isNaN(price) ? `R ${Number(price).toFixed(2)}` : "—";
+
+// Pay when accepted (admin assign) or assigned (mechanic accept)
+const canPay = (item: RequestHistory) => {
+  const s = (item?.status || "").toLowerCase();
+  return s === "accepted" || s === "assigned";
+};
 
 // State
 const requests = ref<RequestHistory[]>([]);
@@ -63,6 +70,7 @@ const historyError = ref<string | null>(null);
 // Table headers
 const headers = [
   { title: "Description", value: "description" },
+  { title: "Price", value: "price", formatter: (item: RequestHistory) => formatPrice(item.servicePrice) },
   { title: "Location", value: "location" },
   { title: "Date", value: "date" },
   { title: "Status", value: "status" },
@@ -95,36 +103,19 @@ const goToDirections = (booking: any) => {
 
   });
 };
-const truncateLocation = (location: string) => {
-  const parts = location.split(",");
-  if (parts.length > 3) {
-    return parts.slice(0, 3).join(",") + ", ...";
-  }
-  return location;
-};
-// Pay for an accepted request
-const payForRequest = async (request) => {
-  const amountStr = prompt("Enter payment amount:");
-  if (!amountStr) return;
-
-  const amount = parseFloat(amountStr);
-  if (isNaN(amount) || amount <= 0) {
-    alert("Invalid amount");
-    return;
-  }
-  
- router.push({
-    name: 'PaymentScreen',   
+// Pay for an accepted request (same flow as Carwash - use pre-defined servicePrice)
+const payForRequest = (request: RequestHistory) => {
+  const amount = request.servicePrice ?? 0;
+  router.push({
+    name: "PaymentScreen",
     query: {
       bookingId: request.id,
       amount: amount,
-      jobDes:request.description,
-      clientUsername: getSafeJson('userProfile', {})?.username || '',
-      mechanicId:request.mechanicId
-    }
+      jobDes: request.description,
+      clientUsername: getSafeJson("userProfile", {})?.username || "",
+      mechanicId: request.mechanicId ?? "",
+    },
   });
-
- 
 };
 
 // On component mount

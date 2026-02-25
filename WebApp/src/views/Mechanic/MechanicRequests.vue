@@ -3,10 +3,6 @@
     <v-alert v-if="jobStatusError" type="error" dismissible class="mb-4" @click:close="jobStatusError = ''">{{ jobStatusError }}</v-alert>
     <v-card-text>
       <TableComponent title="Job Requests" :headers="headers" :items="jobRequests" :loading="false">
-        <template #item.location="{ item }">
-          <TooltipText :text="item.location" :maxLength="80" />
-        </template>
-
         <template #item.status="{ item }">
           <v-chip :color="getStatusColor(item.status)" dark>
             {{ item.status }}
@@ -66,7 +62,6 @@
 import { ref, computed, onMounted } from "vue";
 import PageContainer from "@/components/PageContainer.vue";
 import apiService from "@/api/apiService";
-import TooltipText from "@/components/TooltipText.vue";
 import { JOB_STATUS } from "@/utils/constants";
 import { getStatusColor } from "@/utils/helper";
 import TableComponent from "@/components/TableComponent.vue";
@@ -79,6 +74,7 @@ interface JobRequest {
   location: string;
   status: string;
   mechanicId: number;
+  servicePrice?: number;
 }
 
 const jobRequests = ref<JobRequest[]>([]);
@@ -97,10 +93,16 @@ const selectedMechanicId = ref<number | null>(null);
 const mechanicsLoading = ref(false);
 const mechanicOptions = ref<{ id: number; label: string }[]>([]);
 
+const formatPrice = (item: JobRequest) =>
+  item?.servicePrice != null && !isNaN(item.servicePrice)
+    ? `R ${Number(item.servicePrice).toFixed(2)}`
+    : "—";
+
 const headers = computed(() => {
   const base = [
     { title: "Client", value: "username" },
     { title: "Description", value: "description" },
+    { title: "Price", value: "price", formatter: formatPrice },
     { title: "Date", value: "date" },
     { title: "Location", value: "location" },
     { title: "Status", value: "status" },

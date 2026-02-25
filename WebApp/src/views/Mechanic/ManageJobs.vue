@@ -8,10 +8,6 @@
         :items-per-page="5"
         :loading="loading"
       >
-        <template #item.location="{ item }">
-          <TooltipText :text="item.location" :maxLength="80" />
-        </template>
-
         <template #item.status="{ item }">
           <v-chip :color="getStatusColor(item.status)" dark>
             {{ item.status }}
@@ -20,7 +16,7 @@
 
         <!-- Actions: Start / Complete -->
         <template #item.actions="{ item }">
-          <v-tooltip text="Mark as In Progress" location="top">
+          <v-tooltip text="Start work (client has paid)" location="top">
             <template #activator="{ props }">
               <v-btn
                 v-bind="props"
@@ -36,7 +32,7 @@
             </template>
           </v-tooltip>
 
-          <v-tooltip text="Mark as Completed" location="top">
+          <v-tooltip text="Finish job - you have done the work" location="top">
             <template #activator="{ props }">
               <v-btn
                 v-bind="props"
@@ -60,33 +56,41 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue";
 import PageContainer from "@/components/PageContainer.vue";
-import TooltipText from "@/components/TooltipText.vue";
 import { getStatusColor } from "@/utils/helper";
 import apiService from "@/api/apiService";
 import { JOB_STATUS, USER_ROLES } from "@/utils/constants";
 import TableComponent from "@/components/TableComponent.vue";
 import { getSafeJson } from "@/utils/storage";
+import { toast } from "@/utils/toast";
 
 const loggedInUser = getSafeJson("userProfile", {});
 
 interface MechanicJob {
-  id: number;
+  id?: number;
+  requestId?: number;
   username: string;
   description: string;
   date: string;
   location: string;
   status: string;
   mechanicId: number | null;
+  servicePrice?: number;
 }
 
 const jobs = ref<MechanicJob[]>([]);
 const loading = ref(false);
 
 const isAdmin = (loggedInUser?.roles || []).includes(USER_ROLES.ADMIN);
+const formatPrice = (item: MechanicJob) =>
+  item?.servicePrice != null && !isNaN(item.servicePrice)
+    ? `R ${Number(item.servicePrice).toFixed(2)}`
+    : "—";
+
 const headers = computed(() => {
   const base = [
     { title: "Client", value: "username" },
     { title: "Description", value: "description" },
+    { title: "Price", value: "price", formatter: formatPrice },
     { title: "Date", value: "date" },
     { title: "Location", value: "location" },
     { title: "Status", value: "status" },
@@ -112,12 +116,22 @@ const canStart = (item: MechanicJob) => isStatus(item, JOB_STATUS.PAID);
 const canComplete = (item: MechanicJob) => isStatus(item, JOB_STATUS.IN_PROGRESS);
 
 const updateStatus = async (job: MechanicJob, newStatus: string) => {
+  const jobId = job?.id ?? job?.requestId;
+  if (!jobId) {
+    toast.error("Cannot update: job has no ID. Please refresh the page.");
+    return;
+  }
   try {
     loading.value = true;
     const previousStatus = job.status;
     const role = (loggedInUser?.roles?.[0] ?? "").toString().toLowerCase();
     const mechanicId = role === "admin" ? job.mechanicId : (loggedInUser?.id ?? job.mechanicId);
-    const payload = { ...job, status: newStatus, mechanicId };
+    const payload = {
+      ...job,
+      id: Number(jobId),
+      status: newStatus,
+      mechanicId: mechanicId ?? job.mechanicId,
+    };
 
     await apiService.updateRequestMechanic(payload);
 

@@ -31,10 +31,6 @@
             <v-btn color="red" small class="ml-2" @click="updateJobStatus(item, 'decline')">Decline</v-btn>
           </div>
         </template>
-
-        <template #item.location="{ item }">
-          <TooltipText :text="item.location" :maxLength="80" />
-        </template>
       </TableComponent>
      
 
@@ -47,7 +43,6 @@
 import { ref, onMounted, computed } from "vue";
 import PageContainer from "@/components/PageContainer.vue";
 import apiService from "@/api/apiService";
-import TooltipText from "@/components/TooltipText.vue";
 import { JOB_STATUS, COLORS, USER_ROLES } from "@/utils/constants";
 import TableComponent from "@/components/TableComponent.vue";
 import { getSafeJson } from "@/utils/storage";
