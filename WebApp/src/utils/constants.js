@@ -38,7 +38,9 @@ export const API_ENDPOINTS = {
   UPDATE_CARWASH_BOOKING: (id) => `/carwash-bookings/update/${id}`,
   DELETE_CARWASH_BOOKING: (id) => `/carwash-bookings/delete/${id}`,
   // Communication - uses send-message (supports email type)
-  SEND_EMAIL: '/send-message'
+  SEND_EMAIL: '/send-message',
+  // Dev - reset db (admin only, keep logged-in user)
+  DEV_RESET_DB: '/users/reset-db'
 };
 
 // User Roles

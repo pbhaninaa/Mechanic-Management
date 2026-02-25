@@ -1,8 +1,8 @@
 <template>
   <v-navigation-drawer v-model="drawer" :rail="rail" permanent @click.stop="rail = false" class="sidebar-nav"
     :style="sidebarStyle">
-    <!-- Brand Section -->
-    <div class="brand-section">
+    <!-- Brand Section - click 5x to reset db (dev) -->
+    <div class="brand-section" @click="onBrandClick">
       <v-list-item :title="rail ? '' : appTitle" :subtitle="rail ? '' : loggedInUser.firstName" class="brand-item">
         <template v-slot:append>
           <v-btn variant="text" icon="mdi-chevron-left" @click.stop="rail = !rail" class="rail-toggle" />
@@ -78,8 +78,28 @@ const windowWidth = ref(window.innerWidth)
 
 // User info
 import { getSafeJson } from "@/utils/storage";
+import { toast } from "@/utils/toast";
 const loggedInUser = ref(getSafeJson("userProfile", {}) || {})
 const userRole = ref(localStorage.getItem('role') || '')
+
+// Dev: 5 clicks on brand triggers db reset (admin only)
+const brandClickCount = ref(0)
+const brandClickTimer = ref(null)
+const onBrandClick = async () => {
+  if (userRole.value !== 'admin') return
+  brandClickCount.value++
+  clearTimeout(brandClickTimer.value)
+  brandClickTimer.value = setTimeout(() => { brandClickCount.value = 0 }, 2000)
+  if (brandClickCount.value >= 5) {
+    brandClickCount.value = 0
+    try {
+      await apiService.resetDb()
+      window.dispatchEvent(new Event('authChanged'))
+    } catch (err) {
+      toast.error(err?.message || 'Failed to reset database')
+    }
+  }
+}
 
 // Check if role is valid
 const isRoleValid = computed(() => !!userRole.value && userRole.value !== '')

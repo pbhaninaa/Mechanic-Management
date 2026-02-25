@@ -10,6 +10,7 @@ import com.test.app.TestAppBackEnd.entities.User;
 import com.test.app.TestAppBackEnd.entities.UserProfile;
 import com.test.app.TestAppBackEnd.models.ApiResponse;
 
+import com.test.app.TestAppBackEnd.services.DevDataService;
 import com.test.app.TestAppBackEnd.services.UserProfileService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
@@ -35,18 +36,21 @@ public class AuthController {
     private UserProfileService userProfileService;
     private final JwtUtil jwtUtil;
     private final PasswordEncoder passwordEncoder;
+    private final DevDataService devDataService;
 
     public AuthController(UserRepository userRepository,
                           UserProfileRepository userProfileRepository,
                           AuthenticationManager authenticationManager, UserProfileService userProfileService,
                           JwtUtil jwtUtil,
-                          PasswordEncoder passwordEncoder) {
+                          PasswordEncoder passwordEncoder,
+                          DevDataService devDataService) {
         this.userRepository = userRepository;
         this.userProfileRepository = userProfileRepository;
         this.authenticationManager = authenticationManager;
         this.userProfileService = userProfileService;
         this.jwtUtil = jwtUtil;
         this.passwordEncoder = passwordEncoder;
+        this.devDataService = devDataService;
     }
 
     // ===== Helper method to get JWT from Authorization header =====
@@ -219,9 +223,28 @@ public class AuthController {
         userRepository.delete(existingUser.get());
         return ResponseEntity.ok(new ApiResponse<>("User deleted successfully", 200, null));
     }
+    // ================= DEV: RESET DB (ADMIN ONLY) =================
+    @DeleteMapping("/reset-db")
+    public ResponseEntity<ApiResponse<String>> resetDatabase(Authentication auth) {
+        if (auth == null || auth.getName() == null || auth.getName().isBlank()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(new ApiResponse<>("Authentication required", 401, null));
+        }
+        if (!userProfileService.isAdminByUsername(auth.getName())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(new ApiResponse<>("Admin access required", 403, null));
+        }
+        String currentUsername = auth.getName();
+        devDataService.resetDatabaseExceptCurrentUser(currentUsername);
+        return ResponseEntity.ok(new ApiResponse<>(
+                "Database reset successfully. Kept user: " + currentUsername,
+                HttpStatus.OK.value(),
+                currentUsername
+        ));
+    }
+
     // ================= DELETE ALL USERS =================
     @DeleteMapping("/all")
-
     public ResponseEntity<ApiResponse<Void>> deleteAllUsers(
             Authentication authentication) {
 

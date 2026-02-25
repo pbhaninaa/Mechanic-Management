@@ -100,6 +100,11 @@ class ApiService {
     return this.delete(API_ENDPOINTS.DELETE_ALL_USERS);
   }
 
+  /** Dev: Reset database, keep logged-in user */
+  async resetDb() {
+    return this.delete(API_ENDPOINTS.DEV_RESET_DB);
+  }
+
   /** Alias for deleteAllUsersAdmin */
   async deleteAllUsers() {
     return this.deleteAllUsersAdmin();
