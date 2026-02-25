@@ -62,15 +62,6 @@ import { getSafeJson } from "@/utils/storage";
 const router = useRouter();
 const route = useRoute();
 // Form state
-const request = ref({
-  forSelf: true,
-  description: "",
-  customDescription: "",
-  location: "",
-  latitude: null,
-  longitude: null,
-  date: "",
-});
 const jobOptions = [
   "Fix car engine",
   "Replace brake pads",
@@ -81,6 +72,16 @@ const jobOptions = [
   "Suspension repair",
   "Other",
 ];
+
+const request = ref({
+  forSelf: true,
+  description: jobOptions[0],
+  customDescription: "",
+  location: "",
+  latitude: null,
+  longitude: null,
+  date: "",
+});
 
 // Refs & messages
 const form = ref(null);

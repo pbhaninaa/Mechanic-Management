@@ -44,9 +44,10 @@ import { ref, computed, watch } from 'vue'
 import { COLORS } from '@/utils/constants'
 
 const props = defineProps({
-  modelValue: { type: [String, Number, Array], default: "" },
+  modelValue: { type: [String, Number, Array], default: undefined },
   label: { type: String, required: true },
   items: { type: Array, default: () => [] },
+  prepopulateFirst: { type: Boolean, default: true },
   multiple: { type: Boolean, default: false },
   required: { type: Boolean, default: false },
   disabled: { type: Boolean, default: false },
@@ -69,9 +70,30 @@ const props = defineProps({
 
 const emit = defineEmits(['update:modelValue', 'input'])
 
-const internalValue = ref(props.modelValue || "")
+const getInitialValue = () => {
+  if (props.modelValue !== undefined && props.modelValue !== null && props.modelValue !== '') {
+    return props.modelValue
+  }
+  if (props.prepopulateFirst && props.items?.length > 0 && !props.multiple) {
+    return props.items[0]
+  }
+  return props.multiple ? [] : ''
+}
 
-watch(() => props.modelValue, val => internalValue.value = val || "", { immediate: true })
+const internalValue = ref(getInitialValue())
+
+watch(() => props.modelValue, val => {
+  if (val !== undefined && val !== null && val !== '') {
+    internalValue.value = val
+  }
+}, { immediate: true })
+
+watch(() => props.items, () => {
+  if (props.prepopulateFirst && !props.multiple && props.items?.length > 0 && (internalValue.value === '' || internalValue.value === null || internalValue.value === undefined)) {
+    internalValue.value = props.items[0]
+    emit('update:modelValue', props.items[0])
+  }
+}, { immediate: true })
 
 const computedPlaceholder = computed(() => props.placeholder || `Select ${props.label}`)
 

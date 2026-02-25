@@ -78,19 +78,6 @@ const menu = ref(false);
 const today = new Date().toISOString().split("T")[0];
 const useCurrentLocation = ref(true);
 
-const newBooking = ref<Booking>({
-  clientUsername: loggedInUser.username || "",
-  carPlate: "",
-  carType: "",
-  carDescription: "",
-  serviceTypes: [],
-  servicePrice: "0",
-  date: "",
-  location: "",
-  status: "pending",
-});
-
-// Car Types & Services
 const carTypes = [
   "Sedan", "SUV", "Hatchback", "Bakkie", "Van", "Truck", "Luxury",
   "Coupe", "Convertible", "Crossover", "Minivan", "Pickup", "Station Wagon",
@@ -102,6 +89,18 @@ const serviceTypes = [
   "Valet Service", "Waxing", "Polish", "Detailing", "Leather Treatment", "Glass Treatment",
   "Headlight Restoration"
 ];
+
+const newBooking = ref<Booking>({
+  clientUsername: loggedInUser.username || "",
+  carPlate: "",
+  carType: carTypes[0],
+  carDescription: "",
+  serviceTypes: [serviceTypes[0]],
+  servicePrice: "0",
+  date: "",
+  location: "",
+  status: "pending",
+});
 
 // Price Map
 const basePrice = {

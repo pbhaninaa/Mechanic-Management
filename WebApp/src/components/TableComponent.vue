@@ -44,11 +44,11 @@
 </template>
 
 <script setup lang="ts">
-import { withDefaults, defineProps, toRefs } from "vue";
+import { toRefs } from "vue";
 import NoDataMessage from "@/components/NoDataMessage.vue";
 
 interface TableHeader {
-  text: string;  
+  title: string;
   value: string;
   sortable?: boolean;
   formatter?: (item: any) => string;

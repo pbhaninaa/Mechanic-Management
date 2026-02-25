@@ -58,7 +58,7 @@ const form = ref({
   countryCode: localStorage.getItem("phoneCountryCode") || "+27",
   phoneNumber: "",
   address: "",
-  roles: [] // always an array
+  roles: [USER_ROLES.CLIENT] // prepopulate with first role
 });
 const selectedCountry = computed(() =>
   countries.find(c => c.code === form.value.countryCode)
