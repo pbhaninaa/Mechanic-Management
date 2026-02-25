@@ -4,7 +4,6 @@ import com.test.app.TestAppBackEnd.entities.MechanicRequest;
 import com.test.app.TestAppBackEnd.repositories.MechanicRequestRepository;
 import com.test.app.TestAppBackEnd.repositories.UserProfileRepository;
 import org.springframework.stereotype.Service;
-import org.springframework.scheduling.annotation.Async;
 
 import java.util.List;
 import java.util.Optional;
@@ -15,13 +14,16 @@ public class MechanicRequestService {
     private final MechanicRequestRepository repository;
     private final UserProfileRepository userProfileRepository;
     private final EmailService emailService;
+    private final ClientNotificationService notificationService;
 
     public MechanicRequestService(MechanicRequestRepository repository,
                                  UserProfileRepository userProfileRepository,
-                                 EmailService emailService) {
+                                 EmailService emailService,
+                                 ClientNotificationService notificationService) {
         this.repository = repository;
         this.userProfileRepository = userProfileRepository;
         this.emailService = emailService;
+        this.notificationService = notificationService;
     }
 
     private void enrichWithPhoneNumber(MechanicRequest request) {
@@ -36,6 +38,15 @@ public class MechanicRequestService {
     private List<MechanicRequest> enrichWithPhoneNumbers(List<MechanicRequest> requests) {
         requests.forEach(this::enrichWithPhoneNumber);
         return requests;
+    }
+
+    /** Resolve client email from username for notifications */
+    private String getClientEmail(String username) {
+        if (username == null || username.isBlank()) return null;
+        return userProfileRepository.findByUsername(username)
+                .map(p -> p.getEmail())
+                .filter(e -> e != null && !e.isBlank())
+                .orElse(username.contains("@") ? username : null);
     }
 
     // ================= CREATE =================
@@ -81,7 +92,9 @@ public class MechanicRequestService {
         }
         req.setMechanicId(mechanicId);
         req.setStatus("assigned");
-        return Optional.of(repository.save(req));
+        MechanicRequest saved = repository.save(req);
+        notifyClientRequestAccepted(saved);
+        return Optional.of(saved);
     }
 
     public Optional<MechanicRequest> completeJob(Long requestId, Long mechanicId) {
@@ -92,7 +105,19 @@ public class MechanicRequestService {
             throw new IllegalStateException("Only the assigned mechanic can complete this job");
         }
         req.setStatus("completed");
-        return Optional.of(repository.save(req));
+        MechanicRequest saved = repository.save(req);
+        notifyClientServiceCompleted(saved);
+        return Optional.of(saved);
+    }
+
+    private void notifyClientRequestAccepted(MechanicRequest request) {
+        notificationService.notifyRequestAccepted(
+                request.getUsername(), request.getId(), "Mechanic Request");
+    }
+
+    private void notifyClientServiceCompleted(MechanicRequest request) {
+        notificationService.notifyServiceCompleted(
+                request.getUsername(), request.getId(), "mechanic service");
     }
 
     // ================= UPDATE =================
@@ -124,14 +149,23 @@ public class MechanicRequestService {
 
         MechanicRequest saved = repository.save(existing);
 
-        // Send email if status changed and actor is not the owner
-        if (statusChanged ) {
-            String subject = "Mechanic Request Status Updated";
-            String body = "Hi " + existing.getUsername() + ",\n\n" +
-                    "Your mechanic request (ID: " + existing.getId() + ") status has been changed to: " +
-                    existing.getStatus() + ".\n\nThank you!";
-
-            emailService.sendEmailNotification(existing.getUsername(), subject, body);
+        // Send actionable notifications when status changes
+        if (statusChanged) {
+            String newStatus = existing.getStatus();
+            if ("accepted".equalsIgnoreCase(newStatus) || "assigned".equalsIgnoreCase(newStatus)) {
+                notifyClientRequestAccepted(existing);
+            } else if ("completed".equalsIgnoreCase(newStatus)) {
+                notifyClientServiceCompleted(existing);
+            } else {
+                String subject = "Mechanic Request Status Updated";
+                String body = "Hi " + existing.getUsername() + ",\n\n" +
+                        "Your mechanic request (ID: " + existing.getId() + ") status has been changed to: " +
+                        newStatus + ".\n\nThank you!";
+                String to = getClientEmail(existing.getUsername());
+                if (to != null) {
+                    emailService.sendEmailNotification(to, subject, body);
+                }
+            }
         }
 
         return Optional.of(saved);

@@ -2,9 +2,8 @@ package com.test.app.TestAppBackEnd.services;
 
 import com.test.app.TestAppBackEnd.entities.CarWashBooking;
 import com.test.app.TestAppBackEnd.repositories.CarWashBookingRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.test.app.TestAppBackEnd.repositories.UserProfileRepository;
 import org.springframework.stereotype.Service;
-import org.springframework.scheduling.annotation.Async;
 
 import java.util.List;
 import java.util.Optional;
@@ -12,11 +11,28 @@ import java.util.Optional;
 @Service
 public class CarWashBookingService {
 
-    @Autowired
-    private CarWashBookingRepository repository;
+    private final CarWashBookingRepository repository;
+    private final EmailService emailService;
+    private final UserProfileRepository userProfileRepository;
+    private final ClientNotificationService notificationService;
 
-    @Autowired
-    private EmailService emailService;
+    public CarWashBookingService(CarWashBookingRepository repository,
+                                 EmailService emailService,
+                                 UserProfileRepository userProfileRepository,
+                                 ClientNotificationService notificationService) {
+        this.repository = repository;
+        this.emailService = emailService;
+        this.userProfileRepository = userProfileRepository;
+        this.notificationService = notificationService;
+    }
+
+    private String getClientEmail(String username) {
+        if (username == null || username.isBlank()) return null;
+        return userProfileRepository.findByUsername(username)
+                .map(p -> p.getEmail())
+                .filter(e -> e != null && !e.isBlank())
+                .orElse(username.contains("@") ? username : null);
+    }
 
     // ================= CREATE =================
     public CarWashBooking createBooking(CarWashBooking booking) {
@@ -55,15 +71,25 @@ public class CarWashBookingService {
 
             CarWashBooking savedBooking = repository.save(booking);
 
-            // Send email only if status changed and actor is not the client
-            if (statusChanged ) {
-                String subject = "Booking Status Updated";
-                String body = "Hi " + booking.getClientUsername() + ",\n\n" +
-                        "Your booking (ID: " + booking.getId() + ") status has been changed to: " +
-                        booking.getStatus() +   ".\n\n" +
-                        "Thank you!";
-
-               emailService. sendEmailNotification(booking.getClientUsername(), subject, body);
+            // Send actionable notifications when status changes
+            if (statusChanged) {
+                String newStatus = booking.getStatus();
+                if ("accepted".equalsIgnoreCase(newStatus)) {
+                    notificationService.notifyRequestAccepted(
+                            booking.getClientUsername(), booking.getId(), "Car Wash Booking");
+                } else if ("completed".equalsIgnoreCase(newStatus)) {
+                    notificationService.notifyServiceCompleted(
+                            booking.getClientUsername(), booking.getId(), "car wash service");
+                } else {
+                    String to = getClientEmail(booking.getClientUsername());
+                    if (to != null) {
+                        String subject = "Booking Status Updated";
+                        String body = "Hi " + booking.getClientUsername() + ",\n\n" +
+                                "Your booking (ID: " + booking.getId() + ") status has been changed to: " +
+                                newStatus + ".\n\nThank you!";
+                        emailService.sendEmailNotification(to, subject, body);
+                    }
+                }
             }
 
             return savedBooking;
@@ -74,7 +100,4 @@ public class CarWashBookingService {
     public void deleteBooking(Long id) {
         repository.deleteById(id);
     }
-
-    // ================= EMAIL HELPER =================
-
 }
