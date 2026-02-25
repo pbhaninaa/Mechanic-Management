@@ -34,9 +34,9 @@
   },
   "devDependencies": {
     "@types/chart.js": "^2.9.41",
-    "@vitejs/plugin-basic-ssl": "^2.1.4",
     "@vitejs/plugin-vue": "^6.0.1",
     "vite": "^7.0.6",
+    "vite-plugin-mkcert": "^1.17.10",
     "vite-plugin-vue-devtools": "^8.0.0"
   }
 }
