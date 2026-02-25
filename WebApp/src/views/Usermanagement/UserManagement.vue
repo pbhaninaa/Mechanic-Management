@@ -100,6 +100,8 @@ import PhoneNumberInput from '@/components/PhoneNumberInput.vue';
 import { USER_ROLES } from '@/utils/constants';
 import { logoutUser } from '@/utils/helper';
 import TableComponent from '@/components/TableComponent.vue';
+import { getSafeJson } from "@/utils/storage";
+
 const router = useRouter();
 
 const users = ref([]);
@@ -127,7 +129,7 @@ const userToDelete = ref<any>(null);
 const deleteAllDialog = ref(false);
 const deleteAllLoading = ref(false);
 
-const loggedInUser = JSON.parse(localStorage.getItem('userProfile') || '{}');
+const loggedInUser = getSafeJson('userProfile', {});
 const isAdmin = (loggedInUser.roles || []).includes(USER_ROLES.ADMIN);
 
 // Available roles

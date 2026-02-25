@@ -1,5 +1,8 @@
 <template>
   <PageContainer>
+    <v-alert v-if="updateError" type="error" dismissible class="mb-4" @click:close="updateError = ''">
+      {{ updateError }}
+    </v-alert>
     <v-card-text>
       <TableComponent title="Manage Washes" :headers="headers" :items="washes"  :items-per-page="5" :loading="loading">
         <!-- Status with colored chips -->
@@ -51,7 +54,9 @@ import { JOB_STATUS } from "@/utils/constants";
 import TableComponent from "@/components/TableComponent.vue";
 
 
-const loggedInUser = JSON.parse(localStorage.getItem("userProfile") || "{}");
+import { getSafeJson } from "@/utils/storage";
+
+const loggedInUser = getSafeJson("userProfile", {});
 
 interface WashJob {
   id: number;
@@ -70,6 +75,7 @@ interface WashJob {
 
 const washes = ref<WashJob[]>([]);
 const loading = ref(false);
+const updateError = ref("");
 
 const headers = [
   { title: "Client", value: "clientUsername" },
@@ -86,37 +92,38 @@ const headers = [
 // ...imports and interfaces stay the same
 
 const updateStatus = async (job: WashJob, newStatus: string) => {
+  updateError.value = "";
   try {
     loading.value = true;
-    job.status = newStatus
+    const previousStatus = job.status;
+    job.status = newStatus;
 
-    // 🔁 Call backend to persist the status change
+    // Call backend to persist the status change
     await apiService.updateCarWashBooking(job.id, job);
 
     // ✅ Update locally only after success
     job.status = newStatus;
   } catch (error) {
     console.error(`Failed to update booking status for job ${job.id}`, error);
-    // TODO: Add user feedback via toast/snackbar if desired
+    job.status = previousStatus;
+    updateError.value = `Failed to update status. Please try again.`;
   } finally {
     loading.value = false;
   }
 };
 
 
-// Fetch only bookings accepted by current car wash user
+// Fetch all bookings and filter to those assigned to this car wash operator
 const fetchWashes = async () => {
   loading.value = true;
   try {
-    const res = await apiService.getCarWashBookingsByClient(loggedInUser.username);
-    const allBookings = Array.isArray(res.data) ? res.data : [];
+    const res = await apiService.getAllCarWashBookings();
+    const allBookings = Array.isArray(res?.data) ? res.data : [];
 
-    const userId = String(loggedInUser.id);
+    const userId = String(loggedInUser?.id || "");
 
     washes.value = allBookings.filter(
-      booking =>
-        // booking.status === JOB_STATUS.PAID &&
-        String(booking.carWashId) === userId
+      (booking) => String(booking?.carWashId ?? "") === userId
     );
   } catch (err) {
     console.error("Failed to fetch bookings:", err);

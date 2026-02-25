@@ -60,6 +60,7 @@ import apiService from "@/api/apiService";
 import { getStatusColor } from "@/utils/helper";
 import { JOB_STATUS } from "@/utils/constants";
 import TableComponent from "@/components/TableComponent.vue";
+import { getSafeJson } from "@/utils/storage";
 
 interface Booking {
   id: number;
@@ -123,8 +124,7 @@ const fetchBookings = async () => {
   }
 };
 
-
-const loggedInUser = JSON.parse(localStorage.getItem("userProfile"))
+const loggedInUser = getSafeJson("userProfile", {})
 const updateStatus = async (booking: Booking, status: string) => {
   const previousStatus = booking.status;
   booking.status = status;

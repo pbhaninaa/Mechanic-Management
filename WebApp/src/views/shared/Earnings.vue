@@ -37,13 +37,14 @@
 import { ref, onMounted, watch } from "vue";
 import PageContainer from "@/components/PageContainer.vue";
 import apiService from "@/api/apiService";
+import { getSafeJson } from "@/utils/storage";
 import { format } from "date-fns";
 import { getStatusColor } from "@/utils/helper";
 import { USER_ROLES } from "@/utils/constants";
 import TableComponent from "@/components/TableComponent.vue";
 
 // Logged in user
-const loggedInUser = JSON.parse(localStorage.getItem("userProfile") || "{}");
+const loggedInUser = getSafeJson("userProfile", {}) || {};
 const role = loggedInUser.roles?.[0];
 // Table headers
 const headers = [

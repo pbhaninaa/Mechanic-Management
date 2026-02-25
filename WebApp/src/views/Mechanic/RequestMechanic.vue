@@ -56,6 +56,7 @@ import { useRoute, useRouter } from "vue-router";
 import { JOB_STATUS } from "@/utils/constants";
 import { getCurrentLocationWithName } from "@/utils/helper";
 import DropdownField from "@/components/DropdownField.vue";
+import { getSafeJson } from "@/utils/storage";
 
 // Router
 const router = useRouter();
@@ -104,7 +105,7 @@ const isFormValid = computed(
 );
 
 // Get current user from local storage
-const username = JSON.parse(localStorage.getItem("profile") || "{}").username;
+const username = getSafeJson("profile", {})?.username || getSafeJson("userProfile", {})?.username;
 
 const fetchCurrentLocation = async () => {
   const result = await getCurrentLocationWithName();

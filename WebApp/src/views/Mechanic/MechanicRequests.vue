@@ -1,5 +1,6 @@
 <template>
   <PageContainer>
+    <v-alert v-if="jobStatusError" type="error" dismissible class="mb-4" @click:close="jobStatusError = ''">{{ jobStatusError }}</v-alert>
     <v-card-text>
       <TableComponent title="Job Requests" :headers="headers" :items="jobRequests" :loading="false">
         <template #item.location="{ item }">
@@ -46,6 +47,7 @@ import TooltipText from "@/components/TooltipText.vue";
 import { JOB_STATUS } from "@/utils/constants";
 import { getStatusColor } from "@/utils/helper";
 import TableComponent from "@/components/TableComponent.vue";
+import { getSafeJson } from "@/utils/storage";
 interface JobRequest {
   id: number;
   username: string;
@@ -57,6 +59,7 @@ interface JobRequest {
 }
 
 const jobRequests = ref<JobRequest[]>([]);
+const jobStatusError = ref("");
 
 const headers = [
   { title: "Client", value: "username" },
@@ -82,12 +85,14 @@ const loadJobRequests = async () => {
 const updateJobStatus = async (job: JobRequest, status: string) => {
   try {
 
-    const payload = { ...job, status, mechanicId: JSON.parse(localStorage.getItem("userProfile")).id };
+    const profile = getSafeJson("userProfile", {});
+    const payload = { ...job, status, mechanicId: profile?.id };
 
     await apiService.updateRequestMechanic(payload);
     job.status = status;
   } catch (err: any) {
     console.error("Failed to update job status:", err);
+    jobStatusError.value = err?.message || "Failed to update status. Please try again.";
   }
 };
 

@@ -43,6 +43,7 @@ import { JOB_STATUS } from "@/utils/constants";
 import { useRouter } from 'vue-router';
 import { getStatusColor } from "../../utils/helper";
 import TableComponent from "@/components/TableComponent.vue";
+import { getSafeJson } from "@/utils/storage";
 const router = useRouter();
 // TypeScript interface matching backend entity
 interface RequestHistory {
@@ -72,7 +73,8 @@ const headers = [
 
 // Fetch request history for current user
 const loadRequests = async () => {
-  const username = JSON.parse(localStorage.getItem("profile") || "{}").username;
+  const profile = getSafeJson("userProfile", {}) || getSafeJson("profile", {});
+  const username = profile?.username;
   historyLoading.value = true;
   historyError.value = null;
 
@@ -117,7 +119,7 @@ const payForRequest = async (request) => {
       bookingId: request.id,
       amount: amount,
       jobDes:request.description,
-      clientUsername: JSON.parse(localStorage.getItem('userProfile') || '{}').username || '',
+      clientUsername: getSafeJson('userProfile', {})?.username || '',
       mechanicId:request.mechanicId
     }
   });

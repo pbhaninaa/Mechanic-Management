@@ -1,5 +1,8 @@
 <template>
   <PageContainer>
+    <v-alert v-if="locationError || routeError" type="warning" density="compact" class="mb-2" dismissible>
+      {{ locationError || routeError }}
+    </v-alert>
     <!-- Reload Button -->
     <div class="flex justify-end mb-2">
       <button
@@ -35,6 +38,8 @@ const map = ref<L.Map | null>(null);
 const routeLayer = ref<L.GeoJSON | null>(null);
 const userMarker = ref<L.Marker | null>(null);
 const destinationMarker = ref<L.Marker | null>(null);
+const routeError = ref("");
+const locationError = ref("");
 let watchId: number | null = null;
 
 // Draw route using OSRM API
@@ -59,6 +64,7 @@ const drawRoute = async (from: { lat: number; lng: number }, to: { lat: number; 
     map.value.fitBounds(L.geoJSON(routeGeoJSON).getBounds(), { padding: [50, 50] });
   } catch (error) {
     console.error("Routing error:", error);
+    routeError.value = "Could not load route. Map will show location only.";
   }
 };
 
@@ -84,7 +90,12 @@ const initMap = (currentLocation: { lat: number; lng: number }) => {
 
 // Reload current location
 const reloadLocation = () => {
-  if (!navigator.geolocation) return;
+  routeError.value = "";
+  locationError.value = "";
+  if (!navigator.geolocation) {
+    locationError.value = "Geolocation is not supported by your browser.";
+    return;
+  }
 
   navigator.geolocation.getCurrentPosition(
     async (position) => {
@@ -92,7 +103,9 @@ const reloadLocation = () => {
       await nextTick(); // ensure map div exists
       initMap(currentLocation);
     },
-    (err) => console.error(err),
+    (err) => {
+      locationError.value = err?.message || "Could not get your location. Check permissions or enter address manually.";
+    },
     { enableHighAccuracy: true }
   );
 };

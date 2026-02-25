@@ -5,6 +5,10 @@
       <v-card-text>
         <p class="mb-4">Complete your payment for the service below:</p>
 
+        <v-alert type="info" density="compact" class="mb-4">
+          Payment confirms your booking. For Card, Bank Transfer, and Mobile Money, details are for record-keeping only—no actual charge is processed. Complete payment to confirm your service.
+        </v-alert>
+
         <!-- Payment Summary -->
         <v-card outlined class="pa-4 mb-4">
           <div class="d-flex justify-space-between mb-2">
@@ -41,7 +45,7 @@
       </v-card-text>
 
       <v-card-actions class="d-flex justify-center">
-        <Button label="Pay Now" color="primary" :loading="loading" :disabled="!isFormValid" @click="processPayment" />
+        <Button label="Confirm Payment" color="primary" :loading="loading" :disabled="!isFormValid || loading" @click="processPayment" />
       </v-card-actions>
     </v-card>
 
@@ -54,8 +58,8 @@
     </v-snackbar>
 
     <!-- Error Snackbar -->
-    <v-snackbar v-model="paymentError" timeout="4000" color="red">
-      Payment failed. Try again.
+    <v-snackbar v-model="paymentError" timeout="5000" color="red">
+      {{ errorMessage || "Payment failed. Try again." }}
       <template #action="{ attrs }">
         <v-btn text v-bind="attrs" @click="paymentError = false">Close</v-btn>
       </template>
@@ -95,24 +99,22 @@ const cardHolder = ref('');
 const loading = ref(false);
 const paymentSuccess = ref(false);
 const paymentError = ref(false);
+const errorMessage = ref("");
 
-// Form validation
+// Form validation (card details optional—payment is confirmation only)
 const isFormValid = computed(() => {
   if (!bookingId || !amount || !clientUsername || !paymentMethod.value) return false;
-  if (paymentMethod.value === 'Card') {
-    return !!(cardNumber.value && expiry.value && cvv.value && cardHolder.value);
-  }
   return true;
 });
 
-// Process payment
+// Process payment (double-submit protected via loading state)
 const processPayment = async () => {
+  if (loading.value) return;
   loading.value = true;
   paymentError.value = false;
   paymentSuccess.value = false;
 
   try {
-    // Build the payment payload
     const paymentPayload: any = {
       jobId: Number(bookingId),
       amount: amount,
@@ -121,37 +123,27 @@ const processPayment = async () => {
 
     let job: any = null;
 
-    // Fetch job details based on type
     if (jobDes.toLowerCase() !== "car wash service") {
       paymentPayload.mechanicId = mechanicId;
-      job = await apiService.getMechanicRequestsById(bookingId);
+      const mechanicRes = await apiService.getMechanicRequestsById(bookingId);
+      job = mechanicRes?.data ?? mechanicRes;
     } else {
       paymentPayload.carWashId = carWashId;
-      job = await apiService.getCarWashBookingById(bookingId);
+      const carWashRes = await apiService.getCarWashBookingById(bookingId);
+      job = carWashRes?.data ?? carWashRes;
     }
 
-    console.log("Payment payload being sent:", paymentPayload);
-
-    // Send payment request
     const res = await apiService.createPayment(paymentPayload);
-    console.log("Payment response:", res);
-    job = job.data
-    // Check for success using the correct property
-    if (res && res.statusCode === 200) {
-      // Payment succeeded — update job status
-      alert(JSON.stringify(job))
-      job.status = JOB_STATUS.PAID;
-      if (jobDes.toLowerCase() == "car wash service") {
-            alert(JSON.stringify(job))
 
+    if (res && res.statusCode === 200) {
+      job.status = JOB_STATUS.PAID;
+      if (jobDes.toLowerCase() === "car wash service") {
         await apiService.updateCarWashBooking(job.id, job);
       } else {
         await apiService.updateRequestMechanic(job);
       }
 
       paymentSuccess.value = true;
-
-      alert("Payment successful!");
 
       router.push({
         name: "Payments",
@@ -160,11 +152,10 @@ const processPayment = async () => {
     } else {
       throw new Error(res?.message || "Payment was not successful");
     }
-
   } catch (err: any) {
-    console.error("Payment failed:", err.response || err.message || err);
+    const msg = err?.message || err?.response?.data?.message || "Payment failed. Please try again.";
     paymentError.value = true;
-    alert(err.message || "Payment failed. Please try again.");
+    errorMessage.value = msg;
   } finally {
     loading.value = false;
   }

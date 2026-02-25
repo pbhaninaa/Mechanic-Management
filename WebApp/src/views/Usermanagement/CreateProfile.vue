@@ -39,13 +39,14 @@ import PageContainer from "@/components/PageContainer.vue";
 import { USER_ROLES } from "@/utils/constants";
 import PhoneNumberInput from "@/components/PhoneNumberInput.vue";
 import { countries } from "@/utils/helper";
+import { getSafeJson } from "@/utils/storage";
 
 const route = useRoute();
 
 const propsProfile = ref(
   route.query.profile
-    ? JSON.parse(route.query.profile)
-    : JSON.parse(localStorage.getItem("profile") || "{}")
+    ? (() => { try { return JSON.parse(route.query.profile); } catch { return {}; } })()
+    : getSafeJson("profile", {})
 );
 const roles = [USER_ROLES.CLIENT, USER_ROLES.MECHANIC, USER_ROLES.CAR_WASH, USER_ROLES.ADMIN];
 const isEditMode = computed(() => !!propsProfile.value?.firstName || !!propsProfile.value?.lastName);
@@ -77,7 +78,7 @@ const message = ref("");
 const messageType = ref("success");
 
 // Current logged-in user
-const currentUser = ref(JSON.parse(localStorage.getItem("userProfile") || "{}"));
+const currentUser = ref(getSafeJson("userProfile", {}));
 
 // Determine if the logged-in user can edit roles
 const canEditRole = computed(() => {

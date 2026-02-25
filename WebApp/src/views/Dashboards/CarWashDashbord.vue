@@ -49,6 +49,7 @@ import PageContainer from "@/components/PageContainer.vue";
 import Chart from "chart.js/auto";
 import ChartDataLabels from "chartjs-plugin-datalabels";
 import apiService from "@/api/apiService";
+import { getSafeJson } from "@/utils/storage";
 
 Chart.register(ChartDataLabels);
 
@@ -127,7 +128,7 @@ const loadSummaryData = async () => {
   try {
     const usersRes = await apiService.getAllUsers();
     const paymentsRes = await apiService.getAllPayments();
-    const loggedInUser = JSON.parse(localStorage.getItem("userProfile") || "{}");
+    const loggedInUser = getSafeJson("userProfile", {});
 
     const clients = (usersRes.data || []).filter(u => u.roles.includes("CLIENT"));
     const carWashPayments = (paymentsRes.data || []).filter(p => p.carWashId == loggedInUser.id);

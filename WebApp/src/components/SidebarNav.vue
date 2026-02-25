@@ -77,7 +77,8 @@ const mobileOverlay = ref(false)
 const windowWidth = ref(window.innerWidth)
 
 // User info
-const loggedInUser = ref(JSON.parse(localStorage.getItem('userProfile') || '{}'))
+import { getSafeJson } from "@/utils/storage";
+const loggedInUser = ref(getSafeJson("userProfile", {}) || {})
 const userRole = ref(localStorage.getItem('role') || '')
 
 // Check if role is valid

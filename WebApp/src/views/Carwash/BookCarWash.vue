@@ -1,5 +1,6 @@
 <template>
   <PageContainer>
+    <v-alert v-if="bookingError" type="error" dismissible class="mb-4" @click:close="bookingError = ''">{{ bookingError }}</v-alert>
     <v-card>
       <v-card-title>Car Wash Booking</v-card-title>
       <v-card-text>
@@ -24,6 +25,7 @@
             <v-radio label="Use My Current Location" :value="true" />
             <v-radio label="Enter Location Manually" :value="false" />
           </v-radio-group>
+          <v-alert v-if="locationError" type="warning" density="compact" class="mb-2">{{ locationError }}</v-alert>
           <InputField v-model="newBooking.location" label="Location" type="text"
             :disabled="loading || useCurrentLocation" :readonly="useCurrentLocation" required />
           <InputField v-model="formattedPrice" label="Total Price (R)" type="text" :disabled="true" />
@@ -52,10 +54,9 @@ import DropdownField from "@/components/DropdownField.vue";
 import Button from "@/components/Button.vue";
 import apiService from "@/api/apiService";
 import { getCurrentLocationWithName } from "@/utils/helper";
+import { getSafeJson } from "@/utils/storage";
 
-
-// Get logged in user
-const loggedInUser = JSON.parse(localStorage.getItem("userProfile") || "{}");
+const loggedInUser = getSafeJson("userProfile", {});
 
 interface Booking {
   clientUsername: string;
@@ -131,11 +132,13 @@ watch(computedPrice, (newPrice) => {
 
 // For displaying in the input field
 const formattedPrice = computed(() => `R ${newBooking.value.servicePrice}`);
+const locationError = ref("");
 const fetchCurrentLocation = async () => {
+  locationError.value = "";
   const result = await getCurrentLocationWithName();
 
   if (!result.success) {
-    alert(result.message || "Failed to get location");
+    locationError.value = result.message || "Failed to get location. Enter address manually.";
     useCurrentLocation.value = false;
     return;
   }
@@ -161,18 +164,17 @@ const isFormComplete = computed(() =>
   !!newBooking.value.location
 );
 
+const bookingError = ref("");
 const submitBooking = async () => {
-  if (!isFormComplete.value) return;
+  if (!isFormComplete.value || loading.value) return;
+  bookingError.value = "";
   loading.value = true;
   try {
-    const response = await apiService.createCarWashBooking(newBooking.value);
-
-    console.log("Booking saved:", response);
-
+    await apiService.createCarWashBooking(newBooking.value);
     router.push({ name: "MyWashes" });
   } catch (error) {
-    console.error("Booking failed:", error);
-    alert("Booking failed: " + error.message);
+    const msg = error?.message || "Booking failed. Please try again.";
+    bookingError.value = msg;
   } finally {
     loading.value = false;
   }

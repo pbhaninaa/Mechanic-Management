@@ -50,6 +50,7 @@ import apiService from "@/api/apiService";
 import TooltipText from "@/components/TooltipText.vue";
 import { JOB_STATUS, COLORS } from "@/utils/constants";
 import TableComponent from "@/components/TableComponent.vue";
+import { getSafeJson } from "@/utils/storage";
 
 
 const loading = ref(false);
@@ -98,7 +99,8 @@ const pendingJobRequests = computed(() =>
 );
 const updateJobStatus = async (job: JobRequest, status: string) => {
   try {
-    const payload = { ...job, status, mechanicId:JSON.parse(localStorage.getItem("userProfile")).id };
+    const profile = getSafeJson("userProfile", {});
+    const payload = { ...job, status, mechanicId: profile?.id };
   
     await apiService.updateRequestMechanic(payload);
     job.status = status;

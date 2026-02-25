@@ -86,7 +86,8 @@ const loading = ref(false);
 const router = useRouter();
 
 // Get logged-in username from localStorage
-const loggedInUser = JSON.parse(localStorage.getItem("userProfile") || "{}");
+import { getSafeJson } from "@/utils/storage";
+const loggedInUser = getSafeJson("userProfile", {});
 
 // Fetch client bookings
 const fetchBookings = async () => {
@@ -120,7 +121,7 @@ const payForRequest = async (request) => {
     query: {
       bookingId: request.id,
       amount: request.servicePrice,
-      clientUsername: JSON.parse(localStorage.getItem("userProfile") || "{}").username || "",
+      clientUsername: getSafeJson("userProfile", {})?.username || "",
       carWashId: request.carWashId,
       jobDes: "Car wash service"
     }

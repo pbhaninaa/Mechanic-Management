@@ -50,6 +50,7 @@ import PageContainer from "@/components/PageContainer.vue";
 import Chart from "chart.js/auto";
 import apiService from "@/api/apiService";
 import { JOB_STATUS } from "@/utils/constants";
+import { getSafeJson } from "@/utils/storage";
 
 const summaryCards = ref([]);
 const jobRequests = ref([]);
@@ -68,7 +69,7 @@ const loadJobRequests = async () => {
   error.value = null;
 
   try {
-    const profile = JSON.parse(localStorage.getItem("profile") || "{}");
+    const profile = getSafeJson("userProfile", {}) || getSafeJson("profile", {});
     const username = profile.username || "";
 
     const results = await Promise.allSettled([

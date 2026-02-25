@@ -1,7 +1,7 @@
 // API Configuration
 export const API_CONFIG = {
   BASE_URL: import.meta.env.VITE_API_URL,
-  TIMEOUT: 10000
+  TIMEOUT: 30000 // 30s for slow connections
 };
 
 // API Endpoints

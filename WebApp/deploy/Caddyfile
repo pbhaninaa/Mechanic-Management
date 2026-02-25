@@ -1,0 +1,13 @@
+# Caddy HTTPS reverse proxy for MechConnect WebApp (production)
+# Caddy automatically obtains and renews TLS certs. Run: caddy run
+# Replace yourdomain.com with your actual domain
+
+yourdomain.com {
+    root * /var/www/mechconnect/dist
+    file_server
+    try_files {path} /index.html
+
+    handle /api/* {
+        reverse_proxy localhost:8080
+    }
+}

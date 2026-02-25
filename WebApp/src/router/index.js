@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from "vue-router";
 import { ref } from "vue";
+import { getSafeJson } from "@/utils/storage";
 
 import Login from "../views/Usermanagement/Login.vue";
 import SignUp from "../views/Usermanagement/SignUp.vue";
@@ -71,32 +72,21 @@ router.beforeEach(async (to, from, next) => {
 
   // If user is authenticated and not going to login/signup, check profile
   if (token && !to.meta.requiresGuest && to.name !== 'CreateProfile') {
-    try {
-      // Check if user has a complete profile
-      const storedProfile = localStorage.getItem('userProfile');
-      
-      if (!storedProfile) {
-        // No profile at all, redirect to create profile
-        next({ name: "CreateProfile" });
-        return;
-      }
+    const profile = getSafeJson('userProfile', null);
 
-      const profile = JSON.parse(storedProfile);
-      const requiredFields = ['firstName', 'lastName', 'email', 'roles'];
-      const hasCompleteProfile = requiredFields.every(field => {
-        const value = profile[field];
-        return value !== null && value !== undefined && value !== '' && 
-               (Array.isArray(value) ? value.length > 0 : true);
-      });
+    if (!profile) {
+      next({ name: "CreateProfile" });
+      return;
+    }
 
-      if (!hasCompleteProfile) {
-        // Profile incomplete, redirect to create profile
-        next({ name: "CreateProfile" });
-        return;
-      }
-    } catch (error) {
-      console.error('Profile check error:', error);
-      // If there's an error checking profile, redirect to create profile
+    const requiredFields = ['firstName', 'lastName', 'email', 'roles'];
+    const hasCompleteProfile = requiredFields.every(field => {
+      const value = profile[field];
+      return value !== null && value !== undefined && value !== '' &&
+             (Array.isArray(value) ? value.length > 0 : true);
+    });
+
+    if (!hasCompleteProfile) {
       next({ name: "CreateProfile" });
       return;
     }
