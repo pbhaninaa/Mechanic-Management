@@ -84,17 +84,35 @@ const userRole = ref(localStorage.getItem('role') || '')
 // Check if role is valid
 const isRoleValid = computed(() => !!userRole.value && userRole.value !== '')
 
-// Fetch user profile
-onMounted(async () => {
+const loadProfile = async () => {
   try {
     const res = await apiService.getUserProfile()
     localStorage.setItem('userProfile', JSON.stringify(res.data || {}))
     loggedInUser.value = res.data || {}
     userRole.value = res.data?.roles?.[0]?.toLowerCase() || ''
+    return { ok: true }
   } catch (error) {
+    const status = error.status || error.response?.status
+    const message = error.data?.message || error.response?.data?.message || error.message
+    if (status === 404 && message?.includes?.('Profile does not exist')) {
+      router.push('/create-profile')
+      return { ok: false, needsProfile: true }
+    }
     console.error('Failed to load user profile:', error)
+    return { ok: false }
   }
-})
+}
+
+const onAuthChanged = () => {
+  if (!localStorage.getItem('token')) return
+  const stored = getSafeJson('userProfile', {})
+  if (stored?.firstName) {
+    loggedInUser.value = stored
+    userRole.value = stored?.roles?.[0]?.toLowerCase() || ''
+    return
+  }
+  loadProfile()
+}
 
 // Background images per role
 const roleBackgrounds = {
@@ -171,38 +189,16 @@ const handleNavClick = () => { if (isMobile.value) closeMobileNav() }
 const openMobileNav = () => { if (isMobile.value) { drawer.value = true; mobileOverlay.value = true } }
 const closeMobileNav = () => { drawer.value = false; mobileOverlay.value = false }
 
-onMounted(async () => {
-  try {
-    const res = await apiService.getUserProfile()
-
-    localStorage.setItem('userProfile', JSON.stringify(res.data || {}))
-    loggedInUser.value = res.data || {}
-    userRole.value = res.data?.roles?.[0]?.toLowerCase() || ''
-
-    router.push('/dashboard')
-
-  } catch (error) {
-    console.log(error)
-
-    const status =
-      error.status ||
-      error.response?.status
-
-    const message =
-      error.data?.message ||
-      error.response?.data?.message ||
-      error.message
-
-    if (status === 404 && message?.includes('Profile does not exist')) {
-      router.push('/create-profile')
-      return
-    }
-
-    console.error('Failed to load user profile:', error)
-  }
+onMounted(() => {
+  loadProfile()
+  window.addEventListener('resize', handleResize)
+  window.addEventListener('authChanged', onAuthChanged)
 })
 
-onUnmounted(() => { window.removeEventListener('resize', handleResize) })
+onUnmounted(() => {
+  window.removeEventListener('resize', handleResize)
+  window.removeEventListener('authChanged', onAuthChanged)
+})
 
 defineExpose({ openMobileNav, closeMobileNav })
 </script>

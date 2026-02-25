@@ -33,6 +33,7 @@
 <script setup>
 import { ref, onMounted, computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
+import { emitAuthChanged } from "@/utils/helper";
 import InputField from "@/components/InputField.vue";
 import Button from "@/components/Button.vue";
 import apiService from "@/api/apiService";
@@ -43,6 +44,7 @@ import { countries } from "@/utils/helper";
 import { getSafeJson } from "@/utils/storage";
 
 const route = useRoute();
+const router = useRouter();
 
 const propsProfile = ref(
   route.query.profile
@@ -154,9 +156,11 @@ const saveProfile = async () => {
       : await apiService.createUserProfile(form.value);
 
     localStorage.setItem("userProfile", JSON.stringify(res.data));
-    // Success toast shown by global axios interceptor
-
-    setTimeout(() => window.location.reload(), 200);
+    if (res.data?.roles?.[0]) {
+      localStorage.setItem("role", res.data.roles[0].toLowerCase());
+    }
+    emitAuthChanged();
+    router.push("/dashboard");
   } catch (err) {
     // Error toast shown by global axios interceptor
   } finally {

@@ -59,7 +59,7 @@
 
 <script setup lang="ts">
 import { ref } from "vue";
-import { loginUser, goToSignup } from "@/utils/helper";
+import { loginUser, goToSignup, emitAuthChanged } from "@/utils/helper";
 import { useRouter } from 'vue-router';
 import InputField from "@/components/InputField.vue";
 import Button from "@/components/Button.vue";
@@ -74,11 +74,8 @@ const handleLogin = async () => {
   const result = await loginUser(username.value, password.value);
 
   if (result.success) {
-    // Success toast shown by global axios interceptor
-    setTimeout(() => {
-      window.location.reload(); // Refresh to load user-specific data
-      router.push('/dashboard');
-    }, 3000);
+    emitAuthChanged();
+    router.push('/dashboard');
   }
   // Error toast shown by global axios interceptor
 

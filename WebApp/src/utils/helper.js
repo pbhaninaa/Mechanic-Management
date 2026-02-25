@@ -5,27 +5,57 @@ import { JOB_STATUS } from "./constants";
 
 export const isAuthenticated = ref(!!localStorage.getItem("token"));
 
+/** Notify app that auth state changed (login/logout/profile save) — avoids full page reload */
+export const emitAuthChanged = () => {
+  window.dispatchEvent(new CustomEvent("authChanged"));
+};
+
+const mapUserTypeToRole = (userType) => {
+  if (!userType) return "CLIENT";
+  const map = { customer: "CLIENT", mechanic: "MECHANIC", admin: "ADMIN", carwash: "CARWASH" };
+  return map[userType.toLowerCase()] || userType.toUpperCase();
+};
 
 export const loginUser = async (username, password) => {
   try {
     const res = await apiService.login({ username, password });
-    if (res?.data?.accessToken) {
-      localStorage.setItem("token", res.data.accessToken);
+    const data = res?.data ?? res;
+    if (!data?.accessToken) throw new Error("Invalid response format");
 
-      isAuthenticated.value = true;
+    localStorage.setItem("token", data.accessToken);
+    isAuthenticated.value = true;
 
-      // Clear any existing profile data for fresh login
-      localStorage.removeItem("userProfile");
-      localStorage.removeItem("profile");
-      localStorage.removeItem("role");
-      
-      const defaultProfile = { username };
-      localStorage.setItem("profile", JSON.stringify(defaultProfile));
+    localStorage.removeItem("userProfile");
+    localStorage.removeItem("profile");
+    localStorage.removeItem("role");
 
-      return { success: true, message: "Login successful!" };
+    if (data.hasProfile && data.user) {
+      try {
+        const profileRes = await apiService.getUserProfile();
+        const profile = profileRes?.data ?? profileRes;
+        if (profile) {
+          localStorage.setItem("userProfile", JSON.stringify(profile));
+          const role = profile?.roles?.[0];
+          localStorage.setItem("role", role ? role.toLowerCase() : "client");
+        }
+      } catch {
+        const u = data.user;
+        const userProfile = {
+          username: u.username || username,
+          firstName: u.name?.split(" ")[0] || "",
+          lastName: u.name?.split(" ").slice(1).join(" ") || "",
+          email: u.email || "",
+          phoneNumber: u.phone || "",
+          roles: [mapUserTypeToRole(u.userType)]
+        };
+        localStorage.setItem("userProfile", JSON.stringify(userProfile));
+        localStorage.setItem("role", (userProfile.roles[0] || "client").toLowerCase());
+      }
     } else {
-      throw new Error("Invalid response format");
+      localStorage.setItem("profile", JSON.stringify({ username }));
     }
+
+    return { success: true, message: "Login successful!" };
   } catch (err) {
     console.error("Login error:", err);
     return { success: false, message: err.message || "Login failed" };
@@ -33,7 +63,7 @@ export const loginUser = async (username, password) => {
 };
 
 /**
- * Logout User
+ * Logout User — SPA navigation (no full reload)
  */
 export const logoutUser = () => {
   localStorage.removeItem("token");
@@ -44,10 +74,9 @@ export const logoutUser = () => {
   localStorage.removeItem("isAdmin");
   localStorage.removeItem("isClient");
 
-  window.location.reload();
   isAuthenticated.value = false;
+  emitAuthChanged();
   router.push("/login");
-
 };
 
 export const goToSignup = () => {

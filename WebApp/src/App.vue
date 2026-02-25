@@ -85,10 +85,6 @@ const mainClasses = computed(() => {
 // Check authentication
 const checkAuth = () => {
   const token = localStorage.getItem("token");
-  const userProfile = localStorage.getItem("userProfile");
-  
-  // User is authenticated if they have a token (profile may not exist yet)
-  // The router will handle redirecting to CreateProfile if needed
   isAuthenticated.value = !!token;
 };
 
@@ -102,15 +98,14 @@ onMounted(() => {
   handleResize();
   window.addEventListener("storage", checkAuth);
   window.addEventListener("resize", handleResize);
-  
-  // Listen for custom events when profile is updated
-  window.addEventListener("profileUpdated", checkAuth);
+  // Listen for auth changes (login, logout, profile save) — avoids full reload
+  window.addEventListener("authChanged", checkAuth);
 });
 
 onUnmounted(() => {
   window.removeEventListener("storage", checkAuth);
   window.removeEventListener("resize", handleResize);
-  window.removeEventListener("profileUpdated", checkAuth);
+  window.removeEventListener("authChanged", checkAuth);
 });
 </script>
 

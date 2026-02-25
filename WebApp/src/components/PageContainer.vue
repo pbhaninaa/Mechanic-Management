@@ -1,21 +1,14 @@
 <template>
-  <v-container class="page-container" fluid :class="{ 'unauth-centered': !isAuthenticated }">
-    <v-card class="pa-6  page-card">
-      <slot style="background-color: yellow;"></slot>
+  <v-container class="page-container" fluid>
+    <v-card class="pa-6 page-card">
+      <slot></slot>
     </v-card>
   </v-container>
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
-const isAuthenticated = ref(false);
-const checkAuth = () => {
-  isAuthenticated.value = !!localStorage.getItem("token");
-};
-onMounted(() => {
-  checkAuth();
-  window.addEventListener("storage", checkAuth);
-});
+// All views using PageContainer require auth (router guard); no need for auth checks here.
+// Removed to avoid layout flicker on every route change.
 </script>
 
 <style scoped>
@@ -23,13 +16,6 @@ onMounted(() => {
   margin-right: 18%;
   width: 80%;
   height: 100%;
-}
-
-.unauth-centered {
-  align-items: center; 
-  justify-content: center;
-  margin: 0;
-  width: 100%;
 }
 
 .page-card {
