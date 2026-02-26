@@ -97,7 +97,7 @@ public class MechanicRequestService {
         return Optional.of(saved);
     }
 
-    public Optional<MechanicRequest> completeJob(Long requestId, Long mechanicId) {
+    public Optional<MechanicRequest> completeJob(Long requestId, Long mechanicId, String loggedInUsername) {
         Optional<MechanicRequest> opt = repository.findById(requestId);
         if (opt.isEmpty()) return Optional.empty();
         MechanicRequest req = opt.get();
@@ -106,22 +106,22 @@ public class MechanicRequestService {
         }
         req.setStatus("completed");
         MechanicRequest saved = repository.save(req);
-        notifyClientServiceCompleted(saved);
+        notifyClientServiceCompleted(saved, loggedInUsername);
         return Optional.of(saved);
     }
 
     private void notifyClientRequestAccepted(MechanicRequest request) {
         notificationService.notifyRequestAccepted(
-                request.getUsername(), request.getId(), "Mechanic Request");
+                request.getUsername(), "https://172.19.80.1:3000/history", "Mechanic Request");
     }
 
-    private void notifyClientServiceCompleted(MechanicRequest request) {
+    private void notifyClientServiceCompleted(MechanicRequest request, String loggedInUsername) {
         notificationService.notifyServiceCompleted(
-                request.getUsername(), request.getId(), "mechanic service");
+                request.getUsername(), loggedInUsername, "mechanic service");
     }
 
     // ================= UPDATE =================
-    public Optional<MechanicRequest> update(MechanicRequest updated) {
+    public Optional<MechanicRequest> update(MechanicRequest updated, String loggedInUsername) {
         if (updated == null || updated.getId() == null) {
             throw new IllegalArgumentException("Job id is required for update");
         }
@@ -130,8 +130,6 @@ public class MechanicRequestService {
 
         MechanicRequest existing = requests.get();
 
-        // Check if status changed
-        boolean statusChanged = !existing.getStatus().equals(updated.getStatus());
 
         // Update all fields
         existing.setDescription(updated.getDescription());
@@ -150,23 +148,23 @@ public class MechanicRequestService {
         MechanicRequest saved = repository.save(existing);
 
         // Send actionable notifications when status changes
-        if (statusChanged) {
+
             String newStatus = existing.getStatus();
             if ("accepted".equalsIgnoreCase(newStatus) || "assigned".equalsIgnoreCase(newStatus)) {
                 notifyClientRequestAccepted(existing);
             } else if ("completed".equalsIgnoreCase(newStatus)) {
-                notifyClientServiceCompleted(existing);
+                notifyClientServiceCompleted(existing, loggedInUsername);
             } else {
                 String subject = "Mechanic Request Status Updated";
                 String body = "Hi " + existing.getUsername() + ",\n\n" +
-                        "Your mechanic request (ID: " + existing.getId() + ") status has been changed to: " +
+                        "Your (" + existing.getDescription() + " ) request status has been changed to: " +
                         newStatus + ".\n\nThank you!";
                 String to = getClientEmail(existing.getUsername());
                 if (to != null) {
                     emailService.sendEmailNotification(to, subject, body);
                 }
             }
-        }
+
 
         return Optional.of(saved);
     }

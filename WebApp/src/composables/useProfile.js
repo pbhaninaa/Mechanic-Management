@@ -11,14 +11,23 @@ export function useProfile() {
   // Check if user has a complete profile
   const hasCompleteProfile = computed(() => {
     if (!profile.value) return false
-    
-    // Check if profile has required fields
+
+    // Base required fields
     const requiredFields = ['firstName', 'lastName', 'email', 'roles']
-    return requiredFields.every(field => {
+    const baseOk = requiredFields.every(field => {
       const value = profile.value[field]
-      return value !== null && value !== undefined && value !== '' && 
+      return value !== null && value !== undefined && value !== '' &&
              (Array.isArray(value) ? value.length > 0 : true)
     })
+    if (!baseOk) return false
+
+    // MECHANIC and CAR_WASH need address for collection directions
+    const role = profile.value.roles?.[0]
+    if (role === 'MECHANIC' || role === 'CARWASH') {
+      const addr = profile.value.address
+      return !!addr && typeof addr === 'string' && addr.trim().length > 0
+    }
+    return true
   })
 
   // Check if user has any profile at all
@@ -39,9 +48,9 @@ export function useProfile() {
         return profile.value
       }
 
-      // Fallback to API
+      // Fallback to API — ApiResponse wraps profile in .data
       const response = await apiService.getUserProfile()
-      profile.value = response.data || response
+      profile.value = response?.data ?? response
       localStorage.setItem('userProfile', JSON.stringify(profile.value))
       return profile.value
     } catch (err) {
@@ -61,11 +70,11 @@ export function useProfile() {
     localStorage.removeItem('role')
   }
 
-  // Refresh profile from API
+  // Refresh profile from API — ApiResponse wraps profile in .data
   const refreshProfile = async () => {
     try {
       const response = await apiService.getUserProfile()
-      profile.value = response.data || response
+      profile.value = response?.data ?? response
       localStorage.setItem('userProfile', JSON.stringify(profile.value))
       
       // Also store role in localStorage for immediate access

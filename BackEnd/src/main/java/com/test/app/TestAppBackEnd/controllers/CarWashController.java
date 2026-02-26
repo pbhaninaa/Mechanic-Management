@@ -6,6 +6,7 @@ import com.test.app.TestAppBackEnd.services.CarWashBookingService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -49,8 +50,10 @@ public class CarWashController {
     @PutMapping("/update/{id}")
     public ResponseEntity<ApiResponse<CarWashBooking>> updateBooking(
             @PathVariable Long id,
-            @RequestBody CarWashBooking booking) {
-        CarWashBooking updated = bookingService.updateBooking(id, booking);
+            @RequestBody CarWashBooking booking,
+            Authentication auth) {
+        String loggedInUsername = auth != null ? auth.getName() : null;
+        CarWashBooking updated = bookingService.updateBooking(id, booking, loggedInUsername);
         return ResponseEntity.ok(new ApiResponse<>("Booking updated successfully", HttpStatus.OK.value(), updated));
     }
 

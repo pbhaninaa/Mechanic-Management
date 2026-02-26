@@ -76,7 +76,8 @@ const loading = ref(false);
 const formValid = ref(false);
 const isEditMode = ref(false);
 const menu = ref(false);
-const today = new Date().toISOString().split("T")[0];
+// MUST be string like 2026-02-26
+const today = new Date().toISOString().split('T')[0]
 const useCurrentLocation = ref(true);
 
 const carTypes = [

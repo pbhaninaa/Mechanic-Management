@@ -33,7 +33,8 @@
             <v-text-field v-model="request.date" label="Preferred Date" readonly v-bind="props" outlined
               :rules="[rules.required]" :disabled="loading" required />
           </template>
-          <v-date-picker v-model="request.date" :min="today" color="primary" @update:model-value="menu = false" />
+
+          <v-date-picker v-model="request.date" :min="today" color="primary"  @update:model-value="menu = false" />
         </v-menu>
 
         <!-- Submit Button -->
@@ -110,7 +111,8 @@ const messageType = ref<"success" | "error">("success");
 
 // Date picker
 const menu = ref(false);
-const today = new Date().toISOString().split("T")[0];
+// MUST be string like 2026-02-26
+const today = new Date().toISOString().split('T')[0]
 
 // Validation
 const rules = {

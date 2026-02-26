@@ -9,8 +9,19 @@
       <PhoneNumberInput v-model="form.phoneNumber" :initial-value="form.phoneNumber" :initial-country-code="form.countryCode"
         @update:countryCode="form.countryCode = $event" @valid="isPhoneValid = $event" :disabled="loading" />
            
-      <InputField v-model="form.address" label="Address" type="text"
-        :disabled="loading || form.roles[0] === USER_ROLES.ADMIN" />
+      <div v-if="form.roles[0] !== USER_ROLES.ADMIN" class="address-field-wrapper">
+        <v-radio-group v-model="useCurrentLocation" row>
+          <v-radio label="Use My Current Location" :value="true" />
+          <v-radio label="Enter Address Manually" :value="false" />
+        </v-radio-group>
+        <v-alert v-if="locationError" type="warning" density="compact" class="mb-2">{{ locationError }}</v-alert>
+        <InputField v-model="form.address" label="Address" type="text"
+          :disabled="loading || useCurrentLocation"
+          :readonly="useCurrentLocation"
+          :hint="addressHint" :persistent-hint="!!addressHint" />
+      </div>
+      <InputField v-else v-model="form.address" label="Address" type="text"
+        :disabled="true" />
       <v-select v-model="form.roles" :items="roles" label="Role" chips :multiple="false"
         :disabled="loading || !canEditRole" required variant="outlined" />
       <Button :label="isEditMode ? 'Update' : 'Save'" color="primary" :disabled="
@@ -20,7 +31,8 @@
         !form.username ||
         !form.email ||
         !form.phoneNumber ||
-        !isPhoneValid
+        !isPhoneValid ||
+        !isAddressValid
       "
       :loading="loading" @click="saveProfile" />
       <v-alert v-if="message" :type="messageType" class="mt-3" closable @click:close="message = ''">
@@ -31,7 +43,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from "vue";
+import { ref, onMounted, computed, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { emitAuthChanged } from "@/utils/helper";
 import InputField from "@/components/InputField.vue";
@@ -42,6 +54,7 @@ import { USER_ROLES } from "@/utils/constants";
 import PhoneNumberInput from "@/components/PhoneNumberInput.vue";
 import { countries } from "@/utils/helper";
 import { getSafeJson } from "@/utils/storage";
+import { getCurrentLocationWithName } from "@/utils/helper";
 
 const route = useRoute();
 const router = useRouter();
@@ -53,6 +66,23 @@ const propsProfile = ref(
 );
 const roles = [USER_ROLES.CLIENT, USER_ROLES.MECHANIC, USER_ROLES.CAR_WASH, USER_ROLES.ADMIN];
 const isEditMode = computed(() => !!propsProfile.value?.firstName || !!propsProfile.value?.lastName);
+
+// Address required for MECHANIC and CAR_WASH (used for collection directions in completion emails)
+const addressHint = computed(() => {
+  const role = form.value?.roles?.[0];
+  if (role === USER_ROLES.MECHANIC || role === USER_ROLES.CAR_WASH) {
+    return "Your workshop/car wash address — clients will receive directions here when services are completed";
+  }
+  return "";
+});
+
+const isAddressValid = computed(() => {
+  const role = form.value?.roles?.[0];
+  if (role === USER_ROLES.MECHANIC || role === USER_ROLES.CAR_WASH) {
+    return !!form.value?.address?.trim();
+  }
+  return true;
+});
 const form = ref({
   firstName: "",
   lastName: "",
@@ -79,6 +109,29 @@ const isPhoneValid = ref(false);
 const loading = ref(false);
 const message = ref("");
 const messageType = ref("success");
+const useCurrentLocation = ref(true);
+const locationError = ref("");
+
+const fetchCurrentLocation = async () => {
+  locationError.value = "";
+  const result = await getCurrentLocationWithName();
+
+  if (!result.success) {
+    locationError.value = result.message || "Failed to get location. Enter address manually.";
+    useCurrentLocation.value = false;
+    return;
+  }
+
+  form.value.address = result.locationName;
+};
+
+watch(useCurrentLocation, async (val) => {
+  if (val) {
+    await fetchCurrentLocation();
+  } else {
+    form.value.address = "";
+  }
+});
 
 // Current logged-in user
 const currentUser = ref(getSafeJson("userProfile", {}));
@@ -94,30 +147,40 @@ const canEditRole = computed(() => {
 
 
 // Fill form if editing
-onMounted(() => {
-  if (!propsProfile.value) return;
+onMounted(async () => {
+  if (propsProfile.value) {
+    const profile = propsProfile.value;
 
-  const profile = propsProfile.value;
+    let phone = profile.phoneNumber || "";
+    const countryCode = profile.countryCode || "+27";
 
-  let phone = profile.phoneNumber || "";
-  const countryCode = profile.countryCode || "+27";
+    // Strip country code if backend stored full number
+    if (phone.startsWith(countryCode)) {
+      phone = phone.slice(countryCode.length);
+    }
 
-  // Strip country code if backend stored full number
-  if (phone.startsWith(countryCode)) {
-    phone = phone.slice(countryCode.length);
+    form.value = {
+      ...form.value,
+      ...profile,
+      phoneNumber: phone,
+      countryCode,
+      roles: profile.roles ? [...profile.roles] : []
+    };
+
+    // When editing with existing address, use manual entry
+    if (profile.address?.trim()) {
+      useCurrentLocation.value = false;
+    }
+
+    // Mark phone as valid immediately if it matches length
+    const digitsOnly = phone.replace(/\D/g, "");
+    isPhoneValid.value = digitsOnly.length === requiredPhoneLength.value;
   }
 
-  form.value = {
-    ...form.value,
-    ...profile,
-    phoneNumber: phone,
-    countryCode,
-    roles: profile.roles ? [...profile.roles] : []
-  };
-
-  // Mark phone as valid immediately if it matches length
-  const digitsOnly = phone.replace(/\D/g, "");
-  isPhoneValid.value = digitsOnly.length === requiredPhoneLength.value;
+  // When address block is shown and "Use current location" selected, fetch
+  if (form.value.roles?.[0] !== USER_ROLES.ADMIN && useCurrentLocation.value) {
+    await fetchCurrentLocation();
+  }
 });
 
 
@@ -155,9 +218,11 @@ const saveProfile = async () => {
       ? await apiService.updateUserProfile(form.value)
       : await apiService.createUserProfile(form.value);
 
-    localStorage.setItem("userProfile", JSON.stringify(res.data));
-    if (res.data?.roles?.[0]) {
-      localStorage.setItem("role", res.data.roles[0].toLowerCase());
+    // ApiResponse wraps data in .data; support both structures
+    const profileData = res?.data ?? res;
+    localStorage.setItem("userProfile", JSON.stringify(profileData));
+    if (profileData?.roles?.[0]) {
+      localStorage.setItem("role", profileData.roles[0].toLowerCase());
     }
     emitAuthChanged();
     router.push("/dashboard");

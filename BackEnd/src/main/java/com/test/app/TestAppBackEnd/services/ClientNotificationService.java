@@ -1,8 +1,12 @@
 package com.test.app.TestAppBackEnd.services;
 
+import com.test.app.TestAppBackEnd.entities.UserProfile;
 import com.test.app.TestAppBackEnd.repositories.UserProfileRepository;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 
 @Service
 public class ClientNotificationService {
@@ -11,7 +15,7 @@ public class ClientNotificationService {
     private final UserProfileRepository userProfileRepository;
 
     public ClientNotificationService(EmailService emailService,
-                                    UserProfileRepository userProfileRepository) {
+                                     UserProfileRepository userProfileRepository) {
         this.emailService = emailService;
         this.userProfileRepository = userProfileRepository;
     }
@@ -24,27 +28,52 @@ public class ClientNotificationService {
                 .orElse(username.contains("@") ? username : null);
     }
 
+    private static final String BUSINESS_ADDRESS = "123 Main Street, Cape Town, South Africa";
+
     @Async
-    public void notifyRequestAccepted(String username, long jobId, String serviceType) {
+    public void notifyRequestAccepted(String username, String paymentLink , String serviceType) {
         String to = getClientEmail(username);
         if (to == null) return;
+
         String subject = "Your " + serviceType + " Request Has Been Accepted";
+
         String body = "Hi " + username + ",\n\n" +
-                "Good news! Your request (ID: " + jobId + ") has been accepted.\n\n" +
-                "Please complete your payment to confirm the service. You can do this from your Request History in the app.\n\n" +
-                "Thank you!";
+                "Good news! Your " + serviceType + " request has been accepted.\n\n" +
+                "To confirm your booking, please complete your payment using the link below:\n\n" +
+                paymentLink + "\n\n" +
+                "You can also access payment from your Request History in the app.\n\n" +
+                "Thank you for choosing our service!";
+
         emailService.sendEmailNotification(to, subject, body);
     }
 
     @Async
-    public void notifyServiceCompleted(String username, long jobId, String serviceType) {
-        String to = getClientEmail(username);
+    public void notifyServiceCompleted(String clientUsername, String loggedInUsername,  String serviceType) {
+        String to = getClientEmail(clientUsername);
         if (to == null) return;
+
+        // Get the logged-in user's (mechanic/staff) profile address as the collection point
+        String collectionAddress = BUSINESS_ADDRESS;
+        if (loggedInUsername != null && !loggedInUsername.isBlank()) {
+            UserProfile loggedInProfile = userProfileRepository.findByUsername(loggedInUsername).orElse(null);
+            if (loggedInProfile != null && loggedInProfile.getAddress() != null && !loggedInProfile.getAddress().isBlank()) {
+                collectionAddress = loggedInProfile.getAddress();
+            }
+        }
+
+        String encodedDestination = URLEncoder.encode(collectionAddress, StandardCharsets.UTF_8);
+        String directionsLink = "https://www.google.com/maps/dir/?api=1&destination=" + encodedDestination;
+
         String subject = "Your Car Is Ready for Collection";
-        String body = "Hi " + username + ",\n\n" +
-                "Your " + serviceType + " (ID: " + jobId + ") has been completed.\n\n" +
-                "You can now come and collect your car. Thank you for choosing our service!\n\n" +
-                "Thank you!";
+
+        String body = "Hi " + clientUsername + ",\n\n" +
+                "Your " + serviceType + " has been successfully completed.\n\n" +
+                "You can now come and collect your car at your convenience.\n\n" +
+                "Get directions to our location here:\n" +
+                directionsLink + "\n\n" +
+                "If you have any questions, feel free to contact us.\n\n" +
+                "Thank you for choosing our service!";
+
         emailService.sendEmailNotification(to, subject, body);
     }
 }

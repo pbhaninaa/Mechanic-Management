@@ -33,8 +33,9 @@ public class MechanicController {
 
     /** Update an existing mechanic request */
     @PutMapping
-    public ResponseEntity<ApiResponse<MechanicRequest>> updateMechanicRequest(@RequestBody MechanicRequest request) {
-        return service.update(request)
+    public ResponseEntity<ApiResponse<MechanicRequest>> updateMechanicRequest(@RequestBody MechanicRequest request, Authentication auth) {
+        String loggedInUsername = auth != null ? auth.getName() : null;
+        return service.update(request, loggedInUsername)
                 .map(r -> ResponseEntity.ok(new ApiResponse<>("Mechanic request updated successfully", 200, r)))
                 .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND)
                         .body(new ApiResponse<>("Mechanic request not found", 404, null)));
@@ -98,14 +99,15 @@ public class MechanicController {
 
     /** Mechanic marks a job as completed */
     @PostMapping("/{id}/complete")
-    public ResponseEntity<ApiResponse<MechanicRequest>> completeJob(@PathVariable Long id, @RequestBody Map<String, Long> body) {
+    public ResponseEntity<ApiResponse<MechanicRequest>> completeJob(@PathVariable Long id, @RequestBody Map<String, Long> body, Authentication auth) {
         Long mechanicId = body != null && body.containsKey("mechanicId") ? body.get("mechanicId") : null;
         if (mechanicId == null) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(new ApiResponse<>("mechanicId is required", 400, null));
         }
+        String loggedInUsername = auth != null ? auth.getName() : null;
         try {
-            return service.completeJob(id, mechanicId)
+            return service.completeJob(id, mechanicId, loggedInUsername)
                     .map(r -> ResponseEntity.ok(new ApiResponse<>("Job completed successfully", 200, r)))
                     .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND)
                             .body(new ApiResponse<>("Job not found", 404, null)));

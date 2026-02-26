@@ -53,10 +53,9 @@ public class CarWashBookingService {
     }
 
     // ================= UPDATE =================
-    public CarWashBooking updateBooking(Long id, CarWashBooking updatedBooking) {
+    public CarWashBooking updateBooking(Long id, CarWashBooking updatedBooking, String loggedInUsername) {
         return repository.findById(id).map(booking -> {
             // Check if status is changing
-            boolean statusChanged = !booking.getStatus().equals(updatedBooking.getStatus());
 
             // Update all booking fields
             booking.setCarPlate(updatedBooking.getCarPlate());
@@ -72,25 +71,25 @@ public class CarWashBookingService {
             CarWashBooking savedBooking = repository.save(booking);
 
             // Send actionable notifications when status changes
-            if (statusChanged) {
+
                 String newStatus = booking.getStatus();
                 if ("accepted".equalsIgnoreCase(newStatus)) {
                     notificationService.notifyRequestAccepted(
-                            booking.getClientUsername(), booking.getId(), "Car Wash Booking");
+                            booking.getClientUsername(), "https://172.19.80.1:3000/my-washes", "Car Wash Booking");
                 } else if ("completed".equalsIgnoreCase(newStatus)) {
                     notificationService.notifyServiceCompleted(
-                            booking.getClientUsername(), booking.getId(), "car wash service");
+                            booking.getClientUsername(), loggedInUsername, "car wash service");
                 } else {
                     String to = getClientEmail(booking.getClientUsername());
                     if (to != null) {
                         String subject = "Booking Status Updated";
                         String body = "Hi " + booking.getClientUsername() + ",\n\n" +
-                                "Your booking (ID: " + booking.getId() + ") status has been changed to: " +
+                                "Your (" + booking.getServiceTypes() + ") booking status has been changed to: " +
                                 newStatus + ".\n\nThank you!";
                         emailService.sendEmailNotification(to, subject, body);
                     }
                 }
-            }
+
 
             return savedBooking;
         }).orElseThrow(() -> new RuntimeException("Booking not found with id " + id));

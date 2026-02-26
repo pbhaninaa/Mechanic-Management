@@ -1,0 +1,46 @@
+[
+    {
+        "merged": "com.example.android_mech_app-mergeDebugResources-34:/layout/item_user.xml",
+        "source": "com.example.android_mech_app-main-37:/layout/item_user.xml"
+    },
+    {
+        "merged": "com.example.android_mech_app-mergeDebugResources-34:/layout/activity_admin.xml",
+        "source": "com.example.android_mech_app-main-37:/layout/activity_admin.xml"
+    },
+    {
+        "merged": "com.example.android_mech_app-mergeDebugResources-34:/layout/activity_mechanic.xml",
+        "source": "com.example.android_mech_app-main-37:/layout/activity_mechanic.xml"
+    },
+    {
+        "merged": "com.example.android_mech_app-mergeDebugResources-34:/layout/earnings_item.xml",
+        "source": "com.example.android_mech_app-main-37:/layout/earnings_item.xml"
+    },
+    {
+        "merged": "com.example.android_mech_app-mergeDebugResources-34:/layout/activity_car_wash.xml",
+        "source": "com.example.android_mech_app-main-37:/layout/activity_car_wash.xml"
+    },
+    {
+        "merged": "com.example.android_mech_app-mergeDebugResources-34:/layout/item_faq.xml",
+        "source": "com.example.android_mech_app-main-37:/layout/item_faq.xml"
+    },
+    {
+        "merged": "com.example.android_mech_app-mergeDebugResources-34:/layout/drawer_header.xml",
+        "source": "com.example.android_mech_app-main-37:/layout/drawer_header.xml"
+    },
+    {
+        "merged": "com.example.android_mech_app-mergeDebugResources-34:/layout/item_job_request.xml",
+        "source": "com.example.android_mech_app-main-37:/layout/item_job_request.xml"
+    },
+    {
+        "merged": "com.example.android_mech_app-mergeDebugResources-34:/layout/activity_client.xml",
+        "source": "com.example.android_mech_app-main-37:/layout/activity_client.xml"
+    },
+    {
+        "merged": "com.example.android_mech_app-mergeDebugResources-34:/layout/item_manage_wash.xml",
+        "source": "com.example.android_mech_app-main-37:/layout/item_manage_wash.xml"
+    },
+    {
+        "merged": "com.example.android_mech_app-mergeDebugResources-34:/layout/activity_main.xml",
+        "source": "com.example.android_mech_app-main-37:/layout/activity_main.xml"
+    }
+]
