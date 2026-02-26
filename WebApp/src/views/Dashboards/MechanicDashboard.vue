@@ -67,7 +67,7 @@ const { formatCurrency } = useCurrency();
 const statsCards = computed(() => [
   { title: "Pending Jobs", value: pendingJobs.value, color: COLORS.SOFT_ORANGE },
   { title: "Completed Jobs", value: completedJobs.value, color: COLORS.SOFT_GREEN_DARK },
-  { title: "Payments Pending", value: formatCurrency(pendingPayments.value), color: COLORS.SOFT_BLUE },
+  { title: "Payments ", value: formatCurrency(pendingPayments.value), color: COLORS.SOFT_BLUE },
   { title: "Active Requests", value: activeRequests.value, color: COLORS.SOFT_PURPLE },
 ]);
 
