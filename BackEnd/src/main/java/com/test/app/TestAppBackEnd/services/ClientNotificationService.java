@@ -48,11 +48,11 @@ public class ClientNotificationService {
     }
 
     @Async
-    public void notifyServiceCompleted(String clientUsername, String loggedInUsername,  String serviceType) {
+    public void notifyServiceCompleted(String clientUsername, String loggedInUsername, String serviceType) {
         String to = getClientEmail(clientUsername);
         if (to == null) return;
 
-        // Get the logged-in user's (mechanic/staff) profile address as the collection point
+        // Determine the collection address (staff's address if available)
         String collectionAddress = BUSINESS_ADDRESS;
         if (loggedInUsername != null && !loggedInUsername.isBlank()) {
             UserProfile loggedInProfile = userProfileRepository.findByUsername(loggedInUsername).orElse(null);
@@ -61,16 +61,24 @@ public class ClientNotificationService {
             }
         }
 
-        String encodedDestination = URLEncoder.encode(collectionAddress, StandardCharsets.UTF_8);
-        String directionsLink = "https://www.google.com/maps/dir/?api=1&destination=" + encodedDestination;
+        // Encode for URLs
+        String encodedAddress = URLEncoder.encode(collectionAddress, StandardCharsets.UTF_8);
 
+        // Waze link
+        String wazeLink = "https://waze.com/ul?q=" + encodedAddress + "&navigate=yes";
+
+        // Google Maps fallback link
+        String googleLink = "https://www.google.com/maps/dir/?api=1&destination=" + encodedAddress;
+
+        // HTML email version with clickable buttons (more user-friendly)
         String subject = "Your Car Is Ready for Collection";
 
         String body = "Hi " + clientUsername + ",\n\n" +
                 "Your " + serviceType + " has been successfully completed.\n\n" +
                 "You can now come and collect your car at your convenience.\n\n" +
-                "Get directions to our location here:\n" +
-                directionsLink + "\n\n" +
+                "Get directions using one of the options below:\n\n" +
+                "Waze: " + wazeLink + "\n" +
+                "Google Maps: " + googleLink + "\n\n" +
                 "If you have any questions, feel free to contact us.\n\n" +
                 "Thank you for choosing our service!";
 
