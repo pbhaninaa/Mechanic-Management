@@ -152,7 +152,7 @@ const renderCharts = () => {
             color: "#fff",
             formatter: (value, context) => {
               const total = context.dataset.data.reduce((a: number, b: number) => a + b, 0);
-              return `${((value /Number( total)) * 100).toFixed(1)}%`;
+              return total ? `${((value / Number(total)) * 100).toFixed(1)}%` : "0%";
             },
           },
         },
@@ -161,77 +161,66 @@ const renderCharts = () => {
     });
   }
 
-  // Earnings Line Chart - shows total amount paid by users per month
-  if (earningsChart.value && payments.value.length > 0) {
+  // Earnings Line Chart - all 12 months, Revenue + Commission
+  if (earningsChart.value) {
     const getPaymentDate = (p: any) => new Date(p.paidAt || p.date || 0);
-    const sortedPayments = [...payments.value].sort(
-      (a, b) => getPaymentDate(a).getTime() - getPaymentDate(b).getTime()
-    );
+    const now = new Date();
+    const year = now.getFullYear();
 
-    const firstDate = getPaymentDate(sortedPayments[0]);
-    const lastDate = getPaymentDate(sortedPayments[sortedPayments.length - 1]);
+    const monthlyRevenue: number[] = Array(12).fill(0);
+    const monthlyCommission: number[] = Array(12).fill(0);
 
-    // Build monthly buckets
-    const monthlyTotals: Record<string, number> = {};
-    const cursor = new Date(firstDate);
-
-    while (
-      cursor.getFullYear() < lastDate.getFullYear() ||
-      (cursor.getFullYear() === lastDate.getFullYear() && cursor.getMonth() <= lastDate.getMonth())
-    ) {
-      const key = `${cursor.getFullYear()}-${String(cursor.getMonth() + 1).padStart(2, "0")}`;
-      monthlyTotals[key] = 0;
-      cursor.setMonth(cursor.getMonth() + 1);
-    }
-
-    // Fill buckets with total paid by users (amount + commission)
     payments.value.forEach((p: any) => {
       const d = getPaymentDate(p);
-      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-      if (monthlyTotals[key] !== undefined) {
-        monthlyTotals[key] += (p.amount || 0) + (p.platformFee || 0);
+      if (d.getFullYear() === year) {
+        const month = d.getMonth();
+        monthlyRevenue[month] += p.amount || 0;
+        monthlyCommission[month] += p.platformFee || 0;
       }
     });
 
-    // Labels & Values
-    const labels = Object.keys(monthlyTotals).map(key => {
-      const [y, m] = key.split("-");
-      return new Date(Number(y), Number(m) - 1).toLocaleString("default", {
-        month: "short",
-        year: "numeric",
-      });
-    });
-
-    const values = Object.values(monthlyTotals);
+    const monthLabels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
     new Chart(earningsChart.value.getContext("2d"), {
       type: "line",
       data: {
-        labels,
+        labels: monthLabels,
         datasets: [
           {
-            label: `Total Paid by Users (${currencySymbol})`,
-            data: values,
+            label: "Revenue",
+            data: monthlyRevenue,
             borderColor: "rgba(54, 162, 235, 0.9)",
             backgroundColor: "rgba(54, 162, 235, 0.2)",
             tension: 0.3,
             fill: true,
             pointBackgroundColor: "rgba(54, 162, 235, 1)",
           },
+          {
+            label: "Commission",
+            data: monthlyCommission,
+            borderColor: "rgba(76, 175, 80, 0.9)",
+            backgroundColor: "rgba(76, 175, 80, 0.2)",
+            tension: 0.3,
+            fill: true,
+            pointBackgroundColor: "rgba(76, 175, 80, 1)",
+          },
         ],
       },
       options: {
         responsive: true,
         plugins: {
-          legend: { display: false },
+          legend: { position: "top" },
           datalabels: {
-            color: "#000",
+            color: "#333",
             anchor: "end",
             align: "top",
-            formatter: (val: number) => formatCurrency(val),
+            formatter: (val: number) => (val > 0 ? formatCurrency(val) : ""),
           },
         },
-        scales: { y: { beginAtZero: true } },
+        scales: {
+          y: { beginAtZero: true },
+          x: { grid: { display: false } },
+        },
       },
       plugins: [ChartDataLabels],
     });

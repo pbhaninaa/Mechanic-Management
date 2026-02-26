@@ -68,10 +68,22 @@ public class CarWashBookingService {
         return repository.findById(id);
     }
 
+    private static final int MAX_INCOMPLETE_JOBS = 5;
+
     // ================= UPDATE =================
     public CarWashBooking updateBooking(String id, CarWashBooking updatedBooking, String loggedInUsername) {
         return repository.findById(id).map(booking -> {
-            // Check if status is changing
+            // Block acceptance if car wash already has 5 incomplete jobs (only when newly accepting, not when updating own booking)
+            String newCarWashId = updatedBooking.getCarWashId();
+            boolean isNewAcceptance = "accepted".equalsIgnoreCase(updatedBooking.getStatus())
+                    && newCarWashId != null && !newCarWashId.isBlank()
+                    && (booking.getCarWashId() == null || !booking.getCarWashId().equals(newCarWashId));
+            if (isNewAcceptance) {
+                long incompleteCount = repository.countIncompleteByCarWashId(newCarWashId);
+                if (incompleteCount >= MAX_INCOMPLETE_JOBS) {
+                    throw new IllegalStateException("Cannot accept more bookings. This car wash has " + incompleteCount + " incomplete jobs. Complete or cancel some before accepting new ones (max " + MAX_INCOMPLETE_JOBS + ").");
+                }
+            }
 
             // Update all booking fields
             booking.setCarPlate(updatedBooking.getCarPlate());

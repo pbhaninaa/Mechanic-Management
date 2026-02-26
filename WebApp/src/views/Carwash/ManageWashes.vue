@@ -4,7 +4,7 @@
       {{ updateError }}
     </v-alert>
     <v-card-text>
-      <TableComponent title="Manage Washes" :headers="headers" :items="washes"  :items-per-page="5" :loading="loading">
+      <TableComponent title="Manage Washes" :headers="headers" :items="washes"  :items-per-page="10" :loading="loading">
         <!-- Status with colored chips -->
         <template #item.status="{ item }">
           <v-chip :color="getStatusColor(item.status)" dark>
@@ -117,6 +117,7 @@ const updateStatus = async (job: WashJob, newStatus: string) => {
 
 
 // Fetch all bookings and filter to those assigned to this car wash operator
+// Service provider: hide completed jobs, show only active ones (admins see all via car-wash-bookings)
 const fetchWashes = async () => {
   loading.value = true;
   try {
@@ -126,7 +127,9 @@ const fetchWashes = async () => {
     const userId = String(loggedInUser?.id || "");
 
     washes.value = allBookings.filter(
-      (booking) => String(booking?.carWashId ?? "") === userId
+      (booking) =>
+        String(booking?.carWashId ?? "") === userId &&
+        String(booking?.status ?? "").toLowerCase() !== "completed"
     );
   } catch (err) {
     console.error("Failed to fetch bookings:", err);

@@ -11,6 +11,7 @@
   :headers="headers"
   :items="items"
   :items-per-page="itemsPerPage"
+  :items-per-page-options="itemsPerPageOptions"
   :loading="loading"
   class="elevation-1 table-truncate"
 >
@@ -71,16 +72,18 @@ const props = withDefaults(
     items: any[];
     loading?: boolean;
     itemsPerPage?: number;
+    itemsPerPageOptions?: number[];
     noDataMessage?: string;
   }>(),
   {
     loading: false,
-    itemsPerPage: 5,
+    itemsPerPage: 10,
+    itemsPerPageOptions: () => [5, 10, 15, 20, 25],
     noDataMessage: "No items found.",
   }
 );
 
-const { title, headers, items, loading, itemsPerPage, noDataMessage } =
+const { title, headers, items, loading, itemsPerPage, itemsPerPageOptions, noDataMessage } =
   toRefs(props);
 </script>
 

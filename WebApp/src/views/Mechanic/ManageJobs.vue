@@ -5,7 +5,7 @@
         title="Manage Jobs"
         :headers="headers"
         :items="jobs"
-        :items-per-page="5"
+        :items-per-page="10"
         :loading="loading"
       >
         <template #item.status="{ item }">
@@ -155,10 +155,10 @@ const fetchJobs = async () => {
     const role = (loggedInUser?.roles?.[0] ?? "").toString().toLowerCase();
     const isAdmin = role === "admin";
 
+    let data: MechanicJob[] = [];
     if (isAdmin) {
       const res = await apiService.getAllRequestHistory();
-      const data = res?.data;
-      jobs.value = Array.isArray(data) ? data : [];
+      data = Array.isArray(res?.data) ? res.data : [];
     } else {
       const mechanicId = loggedInUser?.id;
       if (!mechanicId) {
@@ -166,9 +166,11 @@ const fetchJobs = async () => {
         return;
       }
       const res = await apiService.getRequestHistoryByMechanicId(mechanicId);
-      const data = res?.data;
-      jobs.value = Array.isArray(data) ? data : [];
+      data = Array.isArray(res?.data) ? res.data : [];
+      // Service provider: hide completed jobs, show only active ones
+      data = data.filter((j) => !isStatus(j, JOB_STATUS.COMPLETED));
     }
+    jobs.value = data;
   } catch (err) {
     console.error("Failed to fetch jobs:", err);
     jobs.value = [];

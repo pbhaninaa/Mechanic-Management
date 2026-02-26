@@ -2,7 +2,7 @@
   <PageContainer>
     <v-card-text>
       <!-- Earnings Table -->
-      <TableComponent title="Earnings" :headers="headers" :items="earnings"  :items-per-page="5"
+      <TableComponent title="Earnings" :headers="headers" :items="earnings"  :items-per-page="10"
         :loading="loading">
 
         <template #item.amount="{ item }">

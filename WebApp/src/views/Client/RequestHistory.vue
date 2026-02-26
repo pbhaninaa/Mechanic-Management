@@ -4,7 +4,7 @@
       <div v-if="historyLoading">Loading your requests...</div>
       <div v-else-if="historyError" class="error">{{ historyError }}</div>
       <div v-else>
-        <TableComponent title="My Request History" :headers="headers" :items="requests"  :items-per-page="5" :loading="historyLoading">
+        <TableComponent title="My Request History" :headers="headers" :items="requests"  :items-per-page="10" :loading="historyLoading">
           <template #item.status="{ item }">
             <v-chip :color="getStatusColor(item.status)" dark>
               {{ item.status }}

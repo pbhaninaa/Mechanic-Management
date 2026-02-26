@@ -3,7 +3,7 @@
 
     <v-card-text>
       <TableComponent title="My Car Wash History" :headers="headers" :items="bookings" 
-        :items-per-page="5" :loading="loading">
+        :items-per-page="10" :loading="loading">
 
 
         <template #item.serviceTypes="{ item }">

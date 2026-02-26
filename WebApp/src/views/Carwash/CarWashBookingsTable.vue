@@ -2,7 +2,7 @@
   <PageContainer>
     <v-card-text>
       <TableComponent title="Car Wash Bookings" :headers="headers" :items="bookings" 
-        :items-per-page="5" :loading="loading">
+        :items-per-page="10" :loading="loading">
         <!-- Service Types as comma-separated string -->
         <template #item.serviceTypes="{ item }">
           {{ item.serviceTypes.join(", ") }}

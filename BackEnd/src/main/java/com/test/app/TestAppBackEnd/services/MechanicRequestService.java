@@ -80,6 +80,8 @@ public class MechanicRequestService {
         return enrichWithPhoneNumbers(repository.findByStatusAndMechanicIdIsNull("pending"));
     }
 
+    private static final int MAX_INCOMPLETE_JOBS = 5;
+
     public Optional<MechanicRequest> acceptJob(String requestId, String mechanicId) {
         Optional<MechanicRequest> opt = repository.findById(requestId);
         if (opt.isEmpty()) return Optional.empty();
@@ -89,6 +91,10 @@ public class MechanicRequestService {
         }
         if (!"pending".equals(req.getStatus())) {
             throw new IllegalStateException("Only pending jobs can be accepted");
+        }
+        long incompleteCount = repository.countIncompleteByMechanicId(mechanicId);
+        if (incompleteCount >= MAX_INCOMPLETE_JOBS) {
+            throw new IllegalStateException("You cannot accept more jobs. You have " + incompleteCount + " incomplete jobs. Complete or cancel some before accepting new ones (max " + MAX_INCOMPLETE_JOBS + ").");
         }
         req.setMechanicId(mechanicId);
         req.setStatus("assigned");
@@ -137,6 +143,16 @@ public class MechanicRequestService {
 
         MechanicRequest existing = requests.get();
 
+        // Enforce max incomplete jobs when mechanic is being assigned (via update)
+        String newMechanicId = updated.getMechanicId();
+        if (newMechanicId != null && !newMechanicId.isBlank()
+                && ("assigned".equalsIgnoreCase(updated.getStatus()) || "accepted".equalsIgnoreCase(updated.getStatus()))
+                && (existing.getMechanicId() == null || existing.getMechanicId().isBlank())) {
+            long incompleteCount = repository.countIncompleteByMechanicId(newMechanicId);
+            if (incompleteCount >= MAX_INCOMPLETE_JOBS) {
+                throw new IllegalStateException("Cannot accept more jobs. This mechanic has " + incompleteCount + " incomplete jobs. Complete or cancel some before accepting new ones (max " + MAX_INCOMPLETE_JOBS + ").");
+            }
+        }
 
         // Update all fields
         existing.setDescription(updated.getDescription());

@@ -23,7 +23,7 @@
     <v-card class="mt-6" outlined v-if="!loading && !error">
    
 <TableComponent title=" Pending Job Requests" :headers="tableHeaders" :items="pendingJobRequests" item-key="id"
-       dense no-pagination :loading="loading">
+       :items-per-page="5" dense no-pagination :loading="loading">
 
         <template #item.actions="{ item }">
           <div class="d-flex justify-center">
@@ -74,19 +74,30 @@ const statsCards = computed(() => [
 // Table headers - Phone only for Admin
 const profile = getSafeJson("userProfile", {});
 const isAdmin = (profile?.roles || []).includes(USER_ROLES.ADMIN);
+const formatPrice = (item: any) =>
+  item?.servicePrice != null && !isNaN(item.servicePrice)
+    ? formatCurrency(item.servicePrice)
+    : "—";
+
+const formatServiceDesc = (item: any) => {
+  const parts = [item?.title, item?.category, item?.description].filter(Boolean);
+  return parts.length ? parts.join(" · ") : (item?.description || "—");
+};
+
 const tableHeaders = computed(() => {
   const base = [
-    { title: "Client Name", value: "username" },
-    { title: "Service", value: "description" },
+    { title: "Client", value: "username" },
+    { title: "Request Description", value: "serviceDesc", formatter: formatServiceDesc },
+    { title: "Price", value: "price", formatter: formatPrice },
     { title: "Date", value: "date" },
     { title: "Location", value: "location" },
     { title: "Actions", value: "actions", sortable: false },
   ];
   if (isAdmin) {
-    base.splice(3, 0, {
-      title: "Phone Number",
+    base.splice(4, 0, {
+      title: "Phone",
       value: "phoneNumber",
-      formatter: (item) => item?.phoneNumber || "—",
+      formatter: (item: any) => item?.phoneNumber || "—",
     });
   }
   return base;
