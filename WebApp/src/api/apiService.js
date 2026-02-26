@@ -110,6 +110,16 @@ class ApiService {
     return this.deleteAllUsersAdmin();
   }
 
+  /** Request password reset - sends email with reset link */
+  async forgotPassword(email) {
+    return this.post(API_ENDPOINTS.FORGOT_PASSWORD, { email });
+  }
+
+  /** Reset password with token from email link */
+  async resetPassword(token, newPassword) {
+    return this.post(API_ENDPOINTS.RESET_PASSWORD, { token, newPassword });
+  }
+
   // ---------- User Profile ----------
   async fetchUserProfile() {
     return this.get(API_ENDPOINTS.PROFILE);

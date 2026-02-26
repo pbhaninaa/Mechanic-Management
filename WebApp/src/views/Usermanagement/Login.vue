@@ -37,6 +37,11 @@
           class="mb-3"
         />
 
+        <!-- Forgot Password Link -->
+        <div class="text-center mb-2">
+          <router-link to="/forgot-password" class="text-body-2 text-primary">Forgot password?</router-link>
+        </div>
+
         <!-- Divider -->
         <v-divider class="my-3"></v-divider>
 

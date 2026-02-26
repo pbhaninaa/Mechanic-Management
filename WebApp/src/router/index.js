@@ -4,6 +4,8 @@ import { getSafeJson } from "@/utils/storage";
 
 import Login from "../views/Usermanagement/Login.vue";
 import SignUp from "../views/Usermanagement/SignUp.vue";
+import ForgotPassword from "../views/Usermanagement/ForgotPassword.vue";
+import ResetPassword from "../views/Usermanagement/ResetPassword.vue";
 import CreateProfile from "../views/Usermanagement/CreateProfile.vue";
 import Profile from "../views/Usermanagement/Profile.vue";
 import Dashboard from "../views/Dashboards/Dashboard.vue";
@@ -28,6 +30,8 @@ const routes = [
 
   { path: "/login", name: "Login", component: Login, meta: { requiresGuest: true } },
   { path: "/signup", name: "SignUp", component: SignUp, meta: { requiresGuest: true } },
+  { path: "/forgot-password", name: "ForgotPassword", component: ForgotPassword, meta: { requiresGuest: true } },
+  { path: "/reset-password", name: "ResetPassword", component: ResetPassword, meta: { requiresGuest: true } },
   { path: "/create-profile", name: "CreateProfile", component: CreateProfile, props: true, meta: { requiresAuth: true } },
   { path: "/profile", name: "Profile", component: Profile, meta: { requiresAuth: true } },
   { path: "/dashboard", name: "Dashboard", component: Dashboard, meta: { requiresAuth: true } },

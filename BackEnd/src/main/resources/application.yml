@@ -10,3 +10,8 @@ spring:
           auth: true
           starttls:
             enable: true
+        debug: true
+# From address for outgoing emails - must match Gmail account when using Gmail SMTP
+app.mail.from: jaystarven@gmail.com
+# Frontend base URL for password reset links (must match how you access the web app)
+app.frontend-url: https://172.20.10.11:3000

@@ -12,6 +12,10 @@ export const API_ENDPOINTS = {
   APPLICATIONS: '/job-applications',
   DELETE_ACCOUNT: '/users',
   DELETE_ALL_USERS: '/users/all',
+  // Auth - Password Reset
+  FORGOT_PASSWORD: '/users/forgot-password',
+  RESET_PASSWORD: '/users/reset-password',
+
   // Request History Endpoints
   REQUEST_HISTORY: '/request-history',
   REQUEST_HISTORY_BY_USER: (username) => `/request-history/user/${username}`,

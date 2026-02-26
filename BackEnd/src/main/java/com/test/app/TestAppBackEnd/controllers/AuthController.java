@@ -6,11 +6,13 @@ import com.test.app.TestAppBackEnd.repositories.UserRepository;
 import com.test.app.TestAppBackEnd.models.LoginRequest;
 import com.test.app.TestAppBackEnd.models.LoginResponse;
 import com.test.app.TestAppBackEnd.models.LoginUserDto;
+import com.test.app.TestAppBackEnd.models.ResetPasswordRequest;
 import com.test.app.TestAppBackEnd.entities.User;
 import com.test.app.TestAppBackEnd.entities.UserProfile;
 import com.test.app.TestAppBackEnd.models.ApiResponse;
 
 import com.test.app.TestAppBackEnd.services.DevDataService;
+import com.test.app.TestAppBackEnd.services.PasswordResetService;
 import com.test.app.TestAppBackEnd.services.UserProfileService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
@@ -37,13 +39,15 @@ public class AuthController {
     private final JwtUtil jwtUtil;
     private final PasswordEncoder passwordEncoder;
     private final DevDataService devDataService;
+    private final PasswordResetService passwordResetService;
 
     public AuthController(UserRepository userRepository,
                           UserProfileRepository userProfileRepository,
                           AuthenticationManager authenticationManager, UserProfileService userProfileService,
                           JwtUtil jwtUtil,
                           PasswordEncoder passwordEncoder,
-                          DevDataService devDataService) {
+                          DevDataService devDataService,
+                          PasswordResetService passwordResetService) {
         this.userRepository = userRepository;
         this.userProfileRepository = userProfileRepository;
         this.authenticationManager = authenticationManager;
@@ -51,6 +55,7 @@ public class AuthController {
         this.jwtUtil = jwtUtil;
         this.passwordEncoder = passwordEncoder;
         this.devDataService = devDataService;
+        this.passwordResetService = passwordResetService;
     }
 
     // ===== Helper method to get JWT from Authorization header =====
@@ -205,6 +210,56 @@ public class AuthController {
         User savedUser = userRepository.save(user);
 
         return ResponseEntity.ok(new ApiResponse<>("User updated successfully", HttpStatus.OK.value(), savedUser));
+    }
+
+    // ================= FORGOT PASSWORD =================
+    @PostMapping("/forgot-password")
+    public ResponseEntity<ApiResponse<String>> forgotPassword(@RequestBody java.util.Map<String, String> body) {
+        String email = body != null ? body.get("email") : null;
+        if (email == null || email.isBlank()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiResponse<>("Email is required", HttpStatus.BAD_REQUEST.value(), null));
+        }
+        try {
+            passwordResetService.requestPasswordReset(email.trim());
+            return ResponseEntity.ok(new ApiResponse<>(
+                    "If an account exists with this email, you will receive a password reset link shortly.",
+                    HttpStatus.OK.value(),
+                    null));
+        } catch (Exception e) {
+            return ResponseEntity.ok(new ApiResponse<>(
+                    "If an account exists with this email, you will receive a password reset link shortly.",
+                    HttpStatus.OK.value(),
+                    null));
+        }
+    }
+
+    // ================= RESET PASSWORD =================
+    @PostMapping("/reset-password")
+    public ResponseEntity<ApiResponse<String>> resetPassword(@RequestBody ResetPasswordRequest body) {
+        String token = body != null ? body.getToken() : null;
+        String newPassword = body != null ? body.getNewPassword() : null;
+        if (token != null) token = token.trim();
+        if (token == null || token.isBlank()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiResponse<>("Reset token is required", HttpStatus.BAD_REQUEST.value(), null));
+        }
+        if (newPassword == null || newPassword.isBlank()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiResponse<>("New password is required", HttpStatus.BAD_REQUEST.value(), null));
+        }
+        if (newPassword.length() < 6) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiResponse<>("Password must be at least 6 characters", HttpStatus.BAD_REQUEST.value(), null));
+        }
+        boolean success = passwordResetService.resetPassword(token, newPassword);
+        if (!success) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiResponse<>("Invalid or expired reset token. Please request a new password reset.",
+                            HttpStatus.BAD_REQUEST.value(), null));
+        }
+        return ResponseEntity.ok(new ApiResponse<>("Password has been reset successfully. You can now log in.",
+                HttpStatus.OK.value(), null));
     }
 
     // ================= DELETE USER =================

@@ -35,6 +35,9 @@ public class JwtFilter extends OncePerRequestFilter {
         String path = request.getServletPath();
         return path.equals("/api/auth/login")
                 || path.equals("/api/auth/register")
+                || path.equals("/api/users/login")
+                || path.equals("/api/users/forgot-password")
+                || path.equals("/api/users/reset-password")
                 || path.startsWith("/public");
     }
 
