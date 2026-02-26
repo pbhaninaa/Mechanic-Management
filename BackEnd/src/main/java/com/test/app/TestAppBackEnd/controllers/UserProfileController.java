@@ -118,17 +118,24 @@ public class UserProfileController {
 
         System.out.println("[UPDATE] Logged-in user: " + loggedInUsername + ", IsAdmin: " + isAdmin);
 
-        // Only allow updating own profile or if admin
-        if (!loggedInUsername.equals(updatedProfile.getUsername()) && !isAdmin) {
-            System.out.println("[UPDATE] Unauthorized attempt by " + loggedInUsername);
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(new ApiResponse<>("Unauthorized to update this profile", 403, null));
+        // Admin can update any profile; others can only update their own
+        String targetUsername;
+        if (isAdmin) {
+            targetUsername = updatedProfile.getUsername();
+            if (targetUsername == null || targetUsername.isBlank()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(new ApiResponse<>("Username is required when updating another user's profile", 400, null));
+            }
+        } else {
+            // Non-admin: only own profile - use logged-in username, ignore body (avoids case/mismatch bugs)
+            targetUsername = loggedInUsername;
+            updatedProfile.setUsername(loggedInUsername);
         }
 
         var response = userProfileService.updateProfile(
-                        updatedProfile.getUsername(),
+                        targetUsername,
                         updatedProfile,
-                        isAdmin // pass isAdmin here
+                        isAdmin
                 )
                 .map(profile -> ResponseEntity.ok(new ApiResponse<>("Profile updated", 200, profile)))
                 .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND)
