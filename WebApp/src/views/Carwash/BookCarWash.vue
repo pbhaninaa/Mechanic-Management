@@ -168,7 +168,7 @@ const isFormComplete = computed(() =>
 
 const bookingError = ref("");
 const submitBooking = async () => {
-  if (!isFormComplete.value || loading.value) return;
+  if (!isFormComplete.value || loading.value) return; // prevent double submit
   bookingError.value = "";
   loading.value = true;
   try {

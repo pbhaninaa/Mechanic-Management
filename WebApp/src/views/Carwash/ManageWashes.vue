@@ -23,7 +23,9 @@
           <v-tooltip text="Start wash (client has paid)" location="top">
             <template #activator="{ props }">
               <v-btn v-bind="props" small color="green" variant="text" class="mr-1"
-                @click="updateStatus(item, JOB_STATUS.IN_PROGRESS)" :disabled="item.status === JOB_STATUS.COMPLETED || item.status !== JOB_STATUS.PAID">
+                :loading="actionLoadingId === item.id"
+                :disabled="item.status === JOB_STATUS.COMPLETED || item.status !== JOB_STATUS.PAID || !!actionLoadingId"
+                @click="updateStatus(item, JOB_STATUS.IN_PROGRESS)">
                 <v-icon size="18">mdi-play</v-icon>
               </v-btn>
             </template>
@@ -32,7 +34,9 @@
           <v-tooltip text="Finish wash - you have done the work" location="top">
             <template #activator="{ props }">
               <v-btn v-bind="props" small color="blue" variant="text" class="mr-1"
-                @click="updateStatus(item, JOB_STATUS.COMPLETED)" :disabled="item.status === JOB_STATUS.COMPLETED || item.status !== JOB_STATUS.IN_PROGRESS">
+                :loading="actionLoadingId === item.id"
+                :disabled="item.status === JOB_STATUS.COMPLETED || item.status !== JOB_STATUS.IN_PROGRESS || !!actionLoadingId"
+                @click="updateStatus(item, JOB_STATUS.COMPLETED)">
                 <v-icon size="18">mdi-check</v-icon>
               </v-btn>
             </template>
@@ -74,6 +78,7 @@ interface WashJob {
 
 const washes = ref<WashJob[]>([]);
 const loading = ref(false);
+const actionLoadingId = ref<string | number | null>(null);
 const updateError = ref("");
 
 const headers = [
@@ -96,9 +101,10 @@ const updateStatus = async (job: WashJob, newStatus: string) => {
     updateError.value = "Cannot update: booking has no ID. Please refresh the page.";
     return;
   }
+  if (actionLoadingId.value) return;
+  actionLoadingId.value = jobId;
   updateError.value = "";
   try {
-    loading.value = true;
     const previousStatus = job.status;
     job.status = newStatus;
 
@@ -111,7 +117,7 @@ const updateStatus = async (job: WashJob, newStatus: string) => {
     job.status = previousStatus;
     updateError.value = `Failed to update status. Please try again.`;
   } finally {
-    loading.value = false;
+    actionLoadingId.value = null;
   }
 };
 

@@ -13,7 +13,13 @@
         </template>
 
         <template #item.actions="{ item }">
-          <v-btn small color="green" :disabled="item.status.toLowerCase() === 'completed'" @click="markCompleted(item)">
+          <v-btn
+            small
+            color="green"
+            :loading="actionLoadingId === item.id"
+            :disabled="item.status.toLowerCase() === 'completed' || !!actionLoadingId"
+            @click="markCompleted(item)"
+          >
             Mark Completed
           </v-btn>
         </template>
@@ -47,6 +53,7 @@ interface Payment {
 
 const { currencySymbol } = useCurrency();
 const payments = ref<Payment[]>([]);
+const actionLoadingId = ref<string | null>(null);
 
 const headers = [
   { title: "Client", value: "client" },
@@ -80,15 +87,17 @@ const loadPayments = async () => {
 
 // Mark payment as completed
 const markCompleted = async (payment) => {
+  if (actionLoadingId.value) return;
+  actionLoadingId.value = payment.id;
   try {
-
-
     const job = await apiService.getMechanicRequestsById(payment.jobId);
     const payload = { ...job, status: JOB_STATUS.COMPLETED };
     await apiService.updateRequestMechanic(payload);
     await loadPayments();
   } catch (err) {
     console.error("Failed to update payment status:", err);
+  } finally {
+    actionLoadingId.value = null;
   }
 };
 

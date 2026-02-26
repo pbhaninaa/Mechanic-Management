@@ -14,8 +14,8 @@
           </template>
 
           <template #item.actions="{ item }">
-            <v-btn class="mr-4" color="primary" small @click="editUser(item)">Edit</v-btn>
-            <v-btn color="error" small @click="confirmDelete(item)">Delete</v-btn>
+            <v-btn class="mr-4" color="primary" small :disabled="loading || createLoading || deleteAllLoading" @click="editUser(item)">Edit</v-btn>
+            <v-btn color="error" small :disabled="loading || createLoading || deleteAllLoading" @click="confirmDelete(item)">Delete</v-btn>
           </template>
         </TableComponent>
 

@@ -39,7 +39,7 @@
 
         <!-- Submit Button -->
         <Button label="Request Mechanic" :color="STATUS_COLORS.REJECTED" block :loading="loading"
-          :disabled="!isFormValid" @click="submitRequest" />
+          :disabled="!isFormValid || loading" @click="submitRequest" />
 
         <v-alert v-if="message" :type="messageType" class="mt-3" closable @click:close="message = ''">
           {{ message }}
@@ -181,6 +181,7 @@ watch(
 
 
 const submitRequest = async () => {
+  if (loading.value) return;
   const { valid } = await form.value.validate();
   if (!valid) {
     message.value = "Please fill in all required fields correctly";

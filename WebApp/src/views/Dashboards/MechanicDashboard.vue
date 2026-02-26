@@ -27,8 +27,21 @@
 
         <template #item.actions="{ item }">
           <div class="d-flex justify-center">
-            <v-btn color="green" small @click="updateJobStatus(item, 'accepted')">Accept</v-btn>
-            <v-btn color="red" small class="ml-2" @click="updateJobStatus(item, 'decline')">Decline</v-btn>
+            <v-btn
+              color="green"
+              small
+              :loading="actionLoadingId === item.id"
+              :disabled="!!actionLoadingId"
+              @click="updateJobStatus(item, 'accepted')"
+            >Accept</v-btn>
+            <v-btn
+              color="red"
+              small
+              class="ml-2"
+              :loading="actionLoadingId === item.id"
+              :disabled="!!actionLoadingId"
+              @click="updateJobStatus(item, 'decline')"
+            >Decline</v-btn>
           </div>
         </template>
       </TableComponent>
@@ -51,6 +64,7 @@ import { useCurrency } from "@/composables/useCurrency";
 
 const loading = ref(false);
 const error = ref<string | null>(null);
+const actionLoadingId = ref<string | number | null>(null);
 const jobRequests = ref<any[]>([]);
 const search = ref("");
 interface JobRequest {
@@ -118,14 +132,17 @@ const pendingJobRequests = computed(() =>
   jobRequests.value.filter((j) => j.status ===JOB_STATUS.PENDING).slice(0, 5)
 );
 const updateJobStatus = async (job: JobRequest, status: string) => {
+  if (actionLoadingId.value) return;
+  actionLoadingId.value = job.id;
   try {
     const profile = getSafeJson("userProfile", {});
     const payload = { ...job, status, mechanicId: profile?.id };
-  
     await apiService.updateRequestMechanic(payload);
     job.status = status;
   } catch (err: any) {
     console.error("Failed to update job status:", err);
+  } finally {
+    actionLoadingId.value = null;
   }
 };
 

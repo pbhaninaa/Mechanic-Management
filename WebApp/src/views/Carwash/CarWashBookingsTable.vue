@@ -25,7 +25,9 @@
           <v-tooltip text="Accept" location="top">
             <template #activator="{ props }">
               <v-btn v-bind="props" variant="text" size="small" color="green" class="mr-1"
-                @click="onAcceptClick(item)" :disabled="item.status === JOB_STATUS.COMPLETED || item.status === JOB_STATUS.ACCEPTED">
+                :loading="actionLoadingId === item.id"
+                :disabled="item.status === JOB_STATUS.COMPLETED || item.status === JOB_STATUS.ACCEPTED || !!actionLoadingId"
+                @click="onAcceptClick(item)">
                 <v-icon size="18">mdi-check</v-icon>
               </v-btn>
             </template>
@@ -62,7 +64,7 @@
         <v-card-actions>
           <v-spacer />
           <v-btn variant="text" @click="assignDialog = false">Cancel</v-btn>
-          <v-btn color="primary" :disabled="!selectedCarWashId" @click="confirmAssign">Assign</v-btn>
+          <v-btn color="primary" :loading="assignLoading" :disabled="!selectedCarWashId" @click="confirmAssign">Assign</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -95,6 +97,8 @@ interface Booking {
 
 const bookings = ref<Booking[]>([]);
 const loading = ref(false);
+const actionLoadingId = ref<string | number | null>(null);
+const assignLoading = ref(false);
 const loggedInUser = getSafeJson("userProfile", {});
 const isAdmin = () => (loggedInUser?.roles?.[0]?.toLowerCase?.() ?? "") === "admin";
 
@@ -154,11 +158,16 @@ const onAcceptClick = (booking: Booking) => {
 
 const confirmAssign = async () => {
   if (!bookingToAssign.value || !selectedCarWashId.value) return;
-  await updateStatus(bookingToAssign.value, JOB_STATUS.ACCEPTED, String(selectedCarWashId.value));
-  assignDialog.value = false;
-  bookingToAssign.value = null;
-  selectedCarWashId.value = null;
-  fetchBookings();
+  assignLoading.value = true;
+  try {
+    await updateStatus(bookingToAssign.value, JOB_STATUS.ACCEPTED, String(selectedCarWashId.value));
+    assignDialog.value = false;
+    bookingToAssign.value = null;
+    selectedCarWashId.value = null;
+    fetchBookings();
+  } finally {
+    assignLoading.value = false;
+  }
 };
 
 const fetchBookings = async () => {
@@ -188,6 +197,9 @@ const fetchBookings = async () => {
 };
 
 const updateStatus = async (booking: Booking, status: string, carWashIdOverride?: string) => {
+  if (actionLoadingId.value && !carWashIdOverride) return;
+  if (!carWashIdOverride) actionLoadingId.value = booking.id;
+
   const previousStatus = booking.status;
   const previousCarWashId = booking.carWashId;
   booking.status = status;
@@ -195,11 +207,12 @@ const updateStatus = async (booking: Booking, status: string, carWashIdOverride?
 
   try {
     await apiService.updateCarWashBooking(booking.id, booking);
-    console.log(`Booking ${booking.id} status updated to ${status}`);
   } catch (err) {
     console.error("Failed to update status:", err);
     booking.status = previousStatus;
     booking.carWashId = previousCarWashId;
+  } finally {
+    if (!carWashIdOverride) actionLoadingId.value = null;
   }
 };
 

@@ -24,8 +24,9 @@
                 color="green"
                 variant="text"
                 class="mr-1"
+                :loading="actionLoadingId === (item.id ?? item.requestId)"
+                :disabled="!canStart(item) || !!actionLoadingId"
                 @click="updateStatus(item, JOB_STATUS.IN_PROGRESS)"
-                :disabled="!canStart(item)"
               >
                 <v-icon size="18">mdi-play</v-icon>
               </v-btn>
@@ -40,8 +41,9 @@
                 color="blue"
                 variant="text"
                 class="mr-1"
+                :loading="actionLoadingId === (item.id ?? item.requestId)"
+                :disabled="!canComplete(item) || !!actionLoadingId"
                 @click="updateStatus(item, JOB_STATUS.COMPLETED)"
-                :disabled="!canComplete(item)"
               >
                 <v-icon size="18">mdi-check</v-icon>
               </v-btn>
@@ -80,6 +82,7 @@ interface MechanicJob {
 
 const jobs = ref<MechanicJob[]>([]);
 const loading = ref(false);
+const actionLoadingId = ref<string | number | null>(null);
 
 const isAdmin = (loggedInUser?.roles || []).includes(USER_ROLES.ADMIN);
 const { formatCurrency } = useCurrency();
@@ -126,8 +129,9 @@ const updateStatus = async (job: MechanicJob, newStatus: string) => {
     toast.error("Cannot update: job has no ID. Please refresh the page.");
     return;
   }
+  if (actionLoadingId.value) return;
+  actionLoadingId.value = jobId;
   try {
-    loading.value = true;
     const previousStatus = job.status;
     const role = (loggedInUser?.roles?.[0] ?? "").toString().toLowerCase();
     const mechanicId = role === "admin" ? job.mechanicId : (loggedInUser?.id ?? job.mechanicId);
@@ -145,7 +149,7 @@ const updateStatus = async (job: MechanicJob, newStatus: string) => {
     console.error(`Failed to update job status for job ${job.id}`, error);
     job.status = previousStatus;
   } finally {
-    loading.value = false;
+    actionLoadingId.value = null;
   }
 };
 

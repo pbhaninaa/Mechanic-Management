@@ -30,8 +30,21 @@
       >
         <template #item.actions="{ item }">
           <div class="d-flex justify-center">
-            <v-btn color="green" small @click="updateBookingStatus(item, 'accepted')">Accept</v-btn>
-            <v-btn color="red" small class="ml-2" @click="updateBookingStatus(item, 'declined')">Decline</v-btn>
+            <v-btn
+              color="green"
+              small
+              :loading="actionLoadingId === item.id"
+              :disabled="!!actionLoadingId"
+              @click="updateBookingStatus(item, 'accepted')"
+            >Accept</v-btn>
+            <v-btn
+              color="red"
+              small
+              class="ml-2"
+              :loading="actionLoadingId === item.id"
+              :disabled="!!actionLoadingId"
+              @click="updateBookingStatus(item, 'declined')"
+            >Decline</v-btn>
           </div>
         </template>
       </TableComponent>
@@ -50,6 +63,7 @@ import { COLORS } from "@/utils/constants";
 
 const loading = ref(false);
 const loadError = ref<string | null>(null);
+const actionLoadingId = ref<string | number | null>(null);
 const allBookings = ref<any[]>([]);
 const payments = ref<any[]>([]);
 
@@ -120,7 +134,8 @@ const tableHeaders = [
 
 const updateBookingStatus = async (booking: any, status: string) => {
   const bookingId = booking?.id;
-  if (!bookingId) return;
+  if (!bookingId || actionLoadingId.value) return;
+  actionLoadingId.value = bookingId;
   loadError.value = null;
   const userProfile = getSafeJson("userProfile", {});
   try {
@@ -134,6 +149,8 @@ const updateBookingStatus = async (booking: any, status: string) => {
   } catch (err: any) {
     // Error shown in toast by axios interceptor - don't set loadError
     console.error("Failed to update booking:", err);
+  } finally {
+    actionLoadingId.value = null;
   }
 };
 
