@@ -58,10 +58,11 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue";
 import PageContainer from "@/components/PageContainer.vue";
-import { getStatusColor } from "@/utils/helper";
+import { getStatusColor, sortRequestsByStatus } from "@/utils/helper";
 import apiService from "@/api/apiService";
 import { JOB_STATUS, USER_ROLES } from "@/utils/constants";
 import TableComponent from "@/components/TableComponent.vue";
+import { formatDate } from "@/composables/useDateFormat";
 import { getSafeJson } from "@/utils/storage";
 import { toast } from "@/utils/toast";
 import { useCurrency } from "@/composables/useCurrency";
@@ -96,8 +97,7 @@ const headers = computed(() => {
     { title: "Client", value: "username" },
     { title: "Description", value: "description" },
     { title: "Price", value: "price", formatter: formatPrice },
-    { title: "Date", value: "date" },
-    { title: "Location", value: "location" },
+    { title: "Date", value: "date", formatter: (item) => formatDate(item?.date) },
     { title: "Status", value: "status" },
     { title: "Actions", value: "actions", sortable: false },
   ];
@@ -174,7 +174,7 @@ const fetchJobs = async () => {
       // Service provider: hide completed jobs, show only active ones
       data = data.filter((j) => !isStatus(j, JOB_STATUS.COMPLETED));
     }
-    jobs.value = data;
+    jobs.value = sortRequestsByStatus(data, "manage");
   } catch (err) {
     console.error("Failed to fetch jobs:", err);
     jobs.value = [];

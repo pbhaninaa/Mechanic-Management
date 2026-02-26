@@ -38,7 +38,7 @@ import { ref, onMounted } from "vue";
 import PageContainer from "@/components/PageContainer.vue";
 import apiService from "@/api/apiService";
 import { getSafeJson } from "@/utils/storage";
-import { format } from "date-fns";
+import { formatDateTime } from "@/composables/useDateFormat";
 import { useCurrency } from "@/composables/useCurrency";
 import { getStatusColor } from "@/utils/helper";
 import { USER_ROLES } from "@/utils/constants";
@@ -92,7 +92,7 @@ const fetchEarnings = async () => {
       return {
         id: p.id,
         jobDescription: p.jobDescription || `Job #${p.jobId}`,
-        paidAt: format(new Date(p.paidAt), "dd MMM yyyy, HH:mm"),
+        paidAt: formatDateTime(p.paidAt),
         amount: providerPayout.toFixed(2),
         amountPaidByUser: role === USER_ROLES.ADMIN ? amountPaidByUser.toFixed(2) : undefined,
         platformFee: role === USER_ROLES.ADMIN ? commission.toFixed(2) : undefined,

@@ -42,7 +42,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
 import PageContainer from "@/components/PageContainer.vue";
-import { format } from "date-fns";
+import { formatDate } from "@/composables/useDateFormat";
 import apiService from "@/api/apiService";
 import { getStatusColor } from "@/utils/helper";
 import { useCurrency } from "@/composables/useCurrency";
@@ -73,7 +73,6 @@ const headers = [
   { title: "Services", value: "serviceTypes" },
   { title: "Date", value: "date" },
   { title: "Price", value: "price" },
-  { title: "Location", value: "location" },
   { title: "Status", value: "status" },
   { title: "Actions", value: "actions", sortable: false }
 ];
@@ -102,9 +101,6 @@ const fetchBookings = async () => {
     loading.value = false;
   }
 };
-// Format date for table
-const formatDate = (dateStr: string) => format(new Date(dateStr), "dd MMM yyyy");
-
 // Redirect to payment
 
 const payForRequest = async (request) => {

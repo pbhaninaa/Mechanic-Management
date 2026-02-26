@@ -51,12 +51,11 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
 import PageContainer from "@/components/PageContainer.vue";
-import { getStatusColor } from "@/utils/helper";
+import { getStatusColor, sortRequestsByStatus } from "@/utils/helper";
 import apiService from "@/api/apiService";
 import { JOB_STATUS } from "@/utils/constants";
 import TableComponent from "@/components/TableComponent.vue";
-
-
+import { formatDate } from "@/composables/useDateFormat";
 import { getSafeJson } from "@/utils/storage";
 
 const loggedInUser = getSafeJson("userProfile", {});
@@ -85,9 +84,8 @@ const headers = [
   { title: "Client", value: "clientUsername" },
   { title: "Plate", value: "carPlate" },
   { title: "Car Type", value: "carType" },
-  { title: "Location", value: "location" },
   { title: "Services", value: "serviceTypes" },
-  { title: "Date", value: "date" },
+  { title: "Date", value: "date", formatter: (item) => formatDate(item?.date) },
   { title: "Status", value: "status" },
   { title: "Actions", value: "actions", sortable: false },
 ];
@@ -132,11 +130,12 @@ const fetchWashes = async () => {
 
     const userId = String(loggedInUser?.id || "");
 
-    washes.value = allBookings.filter(
+    const filtered = allBookings.filter(
       (booking) =>
         String(booking?.carWashId ?? "") === userId &&
         String(booking?.status ?? "").toLowerCase() !== "completed"
     );
+    washes.value = sortRequestsByStatus(filtered, "manage");
   } catch (err) {
     console.error("Failed to fetch bookings:", err);
     washes.value = [];

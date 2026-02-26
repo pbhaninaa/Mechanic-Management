@@ -69,6 +69,7 @@ import apiService from "@/api/apiService";
 import { JOB_STATUS } from "@/utils/constants";
 import { getStatusColor } from "@/utils/helper";
 import TableComponent from "@/components/TableComponent.vue";
+import { formatDate } from "@/composables/useDateFormat";
 import { getSafeJson } from "@/utils/storage";
 import { useCurrency } from "@/composables/useCurrency";
 interface JobRequest {
@@ -112,8 +113,7 @@ const headers = computed(() => {
     { title: "Client", value: "username" },
     { title: "Description", value: "description" },
     { title: "Price", value: "price", formatter: formatPrice },
-    { title: "Date", value: "date" },
-    { title: "Location", value: "location" },
+    { title: "Date", value: "date", formatter: (item) => formatDate(item?.date) },
     { title: "Status", value: "status" },
     { title: "Actions", value: "actions", sortable: false },
   ];

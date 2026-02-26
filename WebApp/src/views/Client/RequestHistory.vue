@@ -39,6 +39,7 @@ import { JOB_STATUS } from "@/utils/constants";
 import { useRouter } from 'vue-router';
 import { getStatusColor } from "../../utils/helper";
 import TableComponent from "@/components/TableComponent.vue";
+import { formatDate } from "@/composables/useDateFormat";
 import { getSafeJson } from "@/utils/storage";
 import { useCurrency } from "@/composables/useCurrency";
 const router = useRouter();
@@ -74,8 +75,7 @@ const historyError = ref<string | null>(null);
 const headers = [
   { title: "Description", value: "description" },
   { title: "Price", value: "price", formatter: (item: RequestHistory) => formatPrice(item.servicePrice) },
-  { title: "Location", value: "location" },
-  { title: "Date", value: "date" },
+  { title: "Date", value: "date", formatter: (item) => formatDate(item?.date) },
   { title: "Status", value: "status" },
   { title: "Actions", value: "actions", sortable: false }
 ];

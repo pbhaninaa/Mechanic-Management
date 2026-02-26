@@ -40,6 +40,7 @@ import { JOB_STATUS } from "@/utils/constants";
 import { getStatusColor } from "@/utils/helper";
 import { useCurrency } from "@/composables/useCurrency";
 import TableComponent from "@/components/TableComponent.vue";
+import { formatDateTime } from "@/composables/useDateFormat";
 import Test from "@/views/Test.vue";
 interface Payment {
   id: string;
@@ -59,7 +60,7 @@ const headers = [
   { title: "Client", value: "client" },
   { title: "Amount", value: "amount" },
   { title: "Jod Description", value: "jobDescription" },
-  { title: "Payment Date", value: "date" },
+  { title: "Payment Date", value: "date", formatter: (item) => formatDateTime(item?.date) },
   { title: "Status", value: "status" },
   { title: "Actions", value: "actions", sortable: false },
 ];

@@ -79,6 +79,7 @@ import { getStatusColor } from "@/utils/helper";
 import { JOB_STATUS } from "@/utils/constants";
 import TableComponent from "@/components/TableComponent.vue";
 import { getSafeJson } from "@/utils/storage";
+import { formatDate } from "@/composables/useDateFormat";
 
 interface Booking {
   id: number;
@@ -116,15 +117,9 @@ const headers = [
   { title: "Car Description", value: "carDescription" },
   { title: "Service Types", value: "serviceTypes" },
   { title: "Date", value: "date" },
-  { title: "Location", value: "location" },
   { title: "Status", value: "status" },
   { title: "Actions", value: "actions", sortable: false },
 ];
-
-const formatDate = (isoDate: string) => {
-  const date = new Date(isoDate);
-  return date.toLocaleString();
-};
 
 const fetchCarWashes = async () => {
   carWashesLoading.value = true;

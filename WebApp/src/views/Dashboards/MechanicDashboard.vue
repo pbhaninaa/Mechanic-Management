@@ -58,6 +58,7 @@ import PageContainer from "@/components/PageContainer.vue";
 import apiService from "@/api/apiService";
 import { JOB_STATUS, COLORS, USER_ROLES } from "@/utils/constants";
 import TableComponent from "@/components/TableComponent.vue";
+import { formatDate } from "@/composables/useDateFormat";
 import { getSafeJson } from "@/utils/storage";
 import { useCurrency } from "@/composables/useCurrency";
 
@@ -103,8 +104,7 @@ const tableHeaders = computed(() => {
     { title: "Client", value: "username" },
     { title: "Request Description", value: "serviceDesc", formatter: formatServiceDesc },
     { title: "Price", value: "price", formatter: formatPrice },
-    { title: "Date", value: "date" },
-    { title: "Location", value: "location" },
+    { title: "Date", value: "date", formatter: (item) => formatDate(item?.date) },
     { title: "Actions", value: "actions", sortable: false },
   ];
   if (isAdmin) {

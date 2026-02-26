@@ -60,6 +60,7 @@ import apiService from "@/api/apiService";
 import { getSafeJson } from "@/utils/storage";
 import { useCurrency } from "@/composables/useCurrency";
 import { COLORS } from "@/utils/constants";
+import { formatDate } from "@/composables/useDateFormat";
 
 const loading = ref(false);
 const loadError = ref<string | null>(null);
@@ -127,8 +128,7 @@ const tableHeaders = [
   { title: "Client", value: "clientUsername" },
   { title: "Request Description", value: "desc", formatter: formatBookingDesc },
   { title: "Price", value: "price", formatter: formatPrice },
-  { title: "Date", value: "date" },
-  { title: "Location", value: "location" },
+  { title: "Date", value: "date", formatter: (item) => formatDate(item?.date) },
   { title: "Actions", value: "actions", sortable: false },
 ];
 

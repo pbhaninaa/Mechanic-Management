@@ -262,6 +262,48 @@ function haversineDistance(coords1, coords2) {
 
   return R * c; // distance in km
 }
+/**
+ * Status priority for sorting requests.
+ * @param {Array<{status?: string, date?: string}>} items
+ * @param {'manage'|'default'} [order='default'] - 'manage': paid→accepted→pending→completed. 'default': pending→accepted→paid→rest
+ * @returns {Array} Sorted copy of items
+ */
+export const sortRequestsByStatus = (items, order = "default") => {
+  if (!Array.isArray(items) || items.length === 0) return [...items];
+
+  const priority = (s) => {
+    const status = String(s || "").toLowerCase();
+    if (order === "manage") {
+      if (status === "paid") return 0;
+      if (status === "accepted" || status === "assigned") return 1;
+      if (status === "pending") return 2;
+      if (status === "completed") return 3;
+      return 4;
+    }
+    // default: needs-attention first
+    if (status === "pending") return 0;
+    if (status === "accepted" || status === "assigned") return 1;
+    if (status === "paid") return 2;
+    if (status === "in progress") return 3;
+    if (status === "completed") return 4;
+    if (status === "declined" || status === "rejected") return 5;
+    return 6;
+  };
+
+  const dateSort = (a, b) => {
+    const da = a?.date ? new Date(a.date).getTime() : 0;
+    const db = b?.date ? new Date(b.date).getTime() : 0;
+    return da - db;
+  };
+
+  return [...items].sort((a, b) => {
+    const pa = priority(a?.status);
+    const pb = priority(b?.status);
+    if (pa !== pb) return pa - pb;
+    return dateSort(a, b);
+  });
+};
+
 // Helpers for job status
 export const getStatusColor = (status) => {
   if (!status) return "grey";

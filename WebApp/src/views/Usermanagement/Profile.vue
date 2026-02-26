@@ -108,14 +108,14 @@
           <v-list-item>
             <v-list-item-title>Created At</v-list-item-title>
             <v-list-item-subtitle>
-              {{ formatDate(profile.createdAt) }}
+              {{ formatDateTime(profile.createdAt) }}
             </v-list-item-subtitle>
           </v-list-item>
 
           <v-list-item>
             <v-list-item-title>Updated At</v-list-item-title>
             <v-list-item-subtitle>
-              {{ formatDate(profile.updatedAt) }}
+              {{ formatDateTime(profile.updatedAt) }}
             </v-list-item-subtitle>
           </v-list-item>
         </v-list>
@@ -138,6 +138,7 @@ import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import PageContainer from "@/components/PageContainer.vue";
 import { useProfile } from "@/composables/useProfile";
+import { formatDateTime } from "@/composables/useDateFormat";
 
 const router = useRouter();
 const { profile, loading, error, loadProfile } = useProfile();
@@ -149,11 +150,6 @@ const goToEditProfile = () => {
     localStorage.setItem("profile", JSON.stringify(profile.value));
   }
   router.push({ name: "CreateProfile" });
-};
-
-// Format date nicely
-const formatDate = (dateStr) => {
-  return dateStr ? new Date(dateStr).toLocaleString() : "N/A";
 };
 
 // Load profile on mount
