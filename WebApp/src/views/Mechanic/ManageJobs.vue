@@ -67,14 +67,14 @@ import { useCurrency } from "@/composables/useCurrency";
 const loggedInUser = getSafeJson("userProfile", {});
 
 interface MechanicJob {
-  id?: number;
-  requestId?: number;
+  id?: string;
+  requestId?: string;
   username: string;
   description: string;
   date: string;
   location: string;
   status: string;
-  mechanicId: number | null;
+  mechanicId: string | null;
   servicePrice?: number;
 }
 
@@ -111,11 +111,14 @@ const headers = computed(() => {
 const isStatus = (item: MechanicJob, status: string) =>
   String(item?.status || "").toLowerCase() === String(status || "").toLowerCase();
 
+/** No actions when completed */
+const isCompleted = (item: MechanicJob) => isStatus(item, JOB_STATUS.COMPLETED);
+
 /** Start button: enabled only when paid (payment required before starting) */
-const canStart = (item: MechanicJob) => isStatus(item, JOB_STATUS.PAID);
+const canStart = (item: MechanicJob) => !isCompleted(item) && isStatus(item, JOB_STATUS.PAID);
 
 /** Complete button: enabled when in progress */
-const canComplete = (item: MechanicJob) => isStatus(item, JOB_STATUS.IN_PROGRESS);
+const canComplete = (item: MechanicJob) => !isCompleted(item) && isStatus(item, JOB_STATUS.IN_PROGRESS);
 
 const updateStatus = async (job: MechanicJob, newStatus: string) => {
   const jobId = job?.id ?? job?.requestId;
@@ -130,7 +133,7 @@ const updateStatus = async (job: MechanicJob, newStatus: string) => {
     const mechanicId = role === "admin" ? job.mechanicId : (loggedInUser?.id ?? job.mechanicId);
     const payload = {
       ...job,
-      id: Number(jobId),
+      id: String(jobId),
       status: newStatus,
       mechanicId: mechanicId ?? job.mechanicId,
     };

@@ -13,7 +13,7 @@
           <v-tooltip text="Accept" location="top">
             <template #activator="{ props }">
               <v-btn v-bind="props" variant="text" size="small" color="green" class="mr-1"
-                @click="onAcceptClick(item)" :disabled="!isAdmin() && isStatus(item, JOB_STATUS.ACCEPTED)">
+                @click="onAcceptClick(item)" :disabled="isCompleted(item) || (!isAdmin() && isStatus(item, JOB_STATUS.ACCEPTED))">
                 <v-icon size="18">mdi-check</v-icon>
               </v-btn>
             </template>
@@ -22,7 +22,7 @@
           <v-tooltip text="Decline" location="top">
             <template #activator="{ props }">
               <v-btn v-bind="props" variant="text" size="small" color="red"
-                @click="updateJobStatus(item, JOB_STATUS.DECLINED)" :disabled="!isAdmin() && isStatus(item, JOB_STATUS.DECLINED)">
+                @click="updateJobStatus(item, JOB_STATUS.DECLINED)" :disabled="isCompleted(item) || (!isAdmin() && isStatus(item, JOB_STATUS.DECLINED))">
                 <v-icon size="18">mdi-close</v-icon>
               </v-btn>
             </template>
@@ -68,13 +68,13 @@ import TableComponent from "@/components/TableComponent.vue";
 import { getSafeJson } from "@/utils/storage";
 import { useCurrency } from "@/composables/useCurrency";
 interface JobRequest {
-  id: number;
+  id: string;
   username: string;
   description: string;
   date: string;
   location: string;
   status: string;
-  mechanicId: number;
+  mechanicId: string;
   servicePrice?: number;
 }
 
@@ -86,13 +86,14 @@ const isAdmin = () => (profile?.roles?.[0]?.toLowerCase?.() ?? "") === "admin";
 
 const isStatus = (item: JobRequest, status: string) =>
   String(item?.status || "").toLowerCase() === String(status || "").toLowerCase();
+const isCompleted = (item: JobRequest) => isStatus(item, JOB_STATUS.COMPLETED);
 
 // Admin assign mechanic dialog
 const assignDialog = ref(false);
 const jobToAssign = ref<JobRequest | null>(null);
-const selectedMechanicId = ref<number | null>(null);
+const selectedMechanicId = ref<string | null>(null);
 const mechanicsLoading = ref(false);
-const mechanicOptions = ref<{ id: number; label: string }[]>([]);
+const mechanicOptions = ref<{ id: string; label: string }[]>([]);
 
 const { formatCurrency } = useCurrency();
 const formatPrice = (item: JobRequest) =>
@@ -132,7 +133,7 @@ const fetchMechanics = async () => {
     mechanicOptions.value = profiles
       .filter((p: any) => p?.id != null)
       .map((p: any) => ({
-        id: p.id,
+        id: String(p.id),
         label: `${p.firstName || ""} ${p.lastName || ""} (${p.username || p.email || "—"})`.trim() || `Mechanic #${p.id}`,
       }));
   } catch (err) {
@@ -182,7 +183,7 @@ const loadJobRequests = async () => {
     console.error("Failed to load job requests:", err);
   }
 };
-const updateJobStatus = async (job: JobRequest, status: string, mechanicIdOverride?: number) => {
+const updateJobStatus = async (job: JobRequest, status: string, mechanicIdOverride?: string) => {
   try {
     const profile = getSafeJson("userProfile", {});
     const mechanicId = mechanicIdOverride ?? profile?.id;

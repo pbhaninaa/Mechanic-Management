@@ -6,6 +6,7 @@ import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonSetter;
@@ -15,8 +16,8 @@ import com.fasterxml.jackson.annotation.JsonSetter;
 public class UserProfile {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long idNumber;
+    @Column(length = 36, updatable = false, nullable = false)
+    private String id;
 
     @Column(nullable = false, unique = true)
     private String username;
@@ -62,9 +63,14 @@ public class UserProfile {
         this.updatedAt = LocalDateTime.now();
     }
 
+    @PrePersist
+    public void prePersist() {
+        if (id == null) id = UUID.randomUUID().toString();
+    }
+
     // Getters and Setters
-    public Long  getId() { return idNumber; }
-    public void setId(Long id) { this.idNumber = id; }
+    public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
 
     public String getUsername() { return username; }
     public void setUsername(String username) { this.username = username; }

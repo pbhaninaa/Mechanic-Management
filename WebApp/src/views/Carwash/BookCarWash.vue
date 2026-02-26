@@ -172,7 +172,11 @@ const submitBooking = async () => {
   bookingError.value = "";
   loading.value = true;
   try {
-    await apiService.createCarWashBooking(newBooking.value);
+    const payload = {
+      ...newBooking.value,
+      servicePrice: Number(newBooking.value.servicePrice) || computedPrice.value,
+    };
+    await apiService.createCarWashBooking(payload);
     router.push({ name: "MyWashes" });
   } catch (error) {
     const msg = error?.message || "Booking failed. Please try again.";

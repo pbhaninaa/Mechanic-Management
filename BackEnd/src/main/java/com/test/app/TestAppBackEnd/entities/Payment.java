@@ -2,19 +2,20 @@ package com.test.app.TestAppBackEnd.entities;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 public class Payment {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Column(length = 36, updatable = false, nullable = false)
+    private String id;
 
     private Double amount;
     private String clientUsername;
-    private Long jobId;
-    private Long mechanicId;
-    private Long carWashId; // <--- Added
+    private String jobId;
+    private String mechanicId;
+    private String carWashId;
     private Double platformFee;
     private LocalDateTime paidAt;
     private String jobDescription;
@@ -23,7 +24,7 @@ public class Payment {
     // Constructors
     public Payment() {}
 
-    public Payment(Double amount, String clientUsername, Long jobId, Long mechanicId, Long carWashId, Double platformFee,String jobDescription) {
+    public Payment(Double amount, String clientUsername, String jobId, String mechanicId, String carWashId, Double platformFee, String jobDescription) {
         this.amount = amount;
         this.clientUsername = clientUsername;
         this.jobId = jobId;
@@ -34,20 +35,26 @@ public class Payment {
         this.jobDescription = jobDescription;
     }
 
-    // Getters & Setters
-    public Long getId() { return id; }
+    @PrePersist
+    public void prePersist() {
+        if (id == null) id = UUID.randomUUID().toString();
+    }
 
-    public Long getJobId() { return jobId; }
-    public void setJobId(Long jobId) { this.jobId = jobId; }
+    // Getters & Setters
+    public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
+
+    public String getJobId() { return jobId; }
+    public void setJobId(String jobId) { this.jobId = jobId; }
 
     public String getClientUsername() { return clientUsername; }
     public void setClientUsername(String clientUsername) { this.clientUsername = clientUsername; }
 
-    public Long getMechanicId() { return mechanicId; }
-    public void setMechanicId(Long mechanicId) { this.mechanicId = mechanicId; }
+    public String getMechanicId() { return mechanicId; }
+    public void setMechanicId(String mechanicId) { this.mechanicId = mechanicId; }
 
-    public Long getCarWashId() { return carWashId; } // <--- Getter
-    public void setCarWashId(Long carWashId) { this.carWashId = carWashId; } // <--- Setter
+    public String getCarWashId() { return carWashId; }
+    public void setCarWashId(String carWashId) { this.carWashId = carWashId; }
 
     public Double getAmount() { return amount; }
     public void setAmount(Double amount) { this.amount = amount; }

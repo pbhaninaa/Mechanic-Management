@@ -108,6 +108,7 @@ export interface CreateJobData {
   description: string;
   category: string;
   priority: 'low' | 'medium' | 'high' | 'emergency';
+  servicePrice?: number;
   location: {
     latitude: number;
     longitude: number;

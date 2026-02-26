@@ -23,7 +23,7 @@
           <v-tooltip text="Start wash (client has paid)" location="top">
             <template #activator="{ props }">
               <v-btn v-bind="props" small color="green" variant="text" class="mr-1"
-                @click="updateStatus(item, JOB_STATUS.IN_PROGRESS)" :disabled="item.status !== JOB_STATUS.PAID">
+                @click="updateStatus(item, JOB_STATUS.IN_PROGRESS)" :disabled="item.status === JOB_STATUS.COMPLETED || item.status !== JOB_STATUS.PAID">
                 <v-icon size="18">mdi-play</v-icon>
               </v-btn>
             </template>
@@ -32,7 +32,7 @@
           <v-tooltip text="Finish wash - you have done the work" location="top">
             <template #activator="{ props }">
               <v-btn v-bind="props" small color="blue" variant="text" class="mr-1"
-                @click="updateStatus(item, JOB_STATUS.COMPLETED)" :disabled="item.status !== JOB_STATUS.IN_PROGRESS">
+                @click="updateStatus(item, JOB_STATUS.COMPLETED)" :disabled="item.status === JOB_STATUS.COMPLETED || item.status !== JOB_STATUS.IN_PROGRESS">
                 <v-icon size="18">mdi-check</v-icon>
               </v-btn>
             </template>

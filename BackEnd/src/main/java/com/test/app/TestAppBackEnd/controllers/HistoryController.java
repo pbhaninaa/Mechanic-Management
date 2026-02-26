@@ -44,7 +44,7 @@ public class HistoryController {
 
     // Get by mechanic id
     @GetMapping("/mechanic/{mechanicId}")
-    public ResponseEntity<ApiResponse<List<MechanicRequest>>> getByMechanicId(@PathVariable Long mechanicId) {
+    public ResponseEntity<ApiResponse<List<MechanicRequest>>> getByMechanicId(@PathVariable String mechanicId) {
         List<MechanicRequest> histories = mechanicRequestService.getByMechanicId(mechanicId);
         if (histories.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(

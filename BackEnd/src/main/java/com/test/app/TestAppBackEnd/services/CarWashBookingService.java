@@ -64,12 +64,12 @@ public class CarWashBookingService {
         return repository.findByClientUsername(clientUsername);
     }
 
-    public Optional<CarWashBooking> getBookingById(Long id) {
+    public Optional<CarWashBooking> getBookingById(String id) {
         return repository.findById(id);
     }
 
     // ================= UPDATE =================
-    public CarWashBooking updateBooking(Long id, CarWashBooking updatedBooking, String loggedInUsername) {
+    public CarWashBooking updateBooking(String id, CarWashBooking updatedBooking, String loggedInUsername) {
         return repository.findById(id).map(booking -> {
             // Check if status is changing
 
@@ -109,11 +109,11 @@ public class CarWashBookingService {
 
 
             return savedBooking;
-        }).orElseThrow(() -> new RuntimeException("Booking not found with id " + id));
+        }).orElseThrow(() -> new RuntimeException("Booking not found with id: " + id));
     }
 
     // ================= DELETE =================
-    public void deleteBooking(Long id) {
+    public void deleteBooking(String id) {
         repository.deleteById(id);
     }
 }

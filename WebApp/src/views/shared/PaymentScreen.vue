@@ -72,8 +72,8 @@ const bookingId = (route.query.bookingId as string) || '';
 const jobDes = (route.query.jobDes as string) || '';
 const amount = parseFloat((route.query.amount as string) || '0');
 const clientUsername = (route.query.clientUsername as string) || '';
-const mechanicId = Number(route.query.mechanicId) || 0;
-const carWashId = Number(route.query.carWashId) || 0;
+const mechanicId = String(route.query.mechanicId || '');
+const carWashId = String(route.query.carWashId || '');
 
 // Payment state
 const paymentMethod = ref<'Card' | 'Bank Transfer' | 'Mobile Money'>('Card');
@@ -98,7 +98,7 @@ const processPayment = async () => {
 
   try {
     const paymentPayload: any = {
-      jobId: Number(bookingId),
+      jobId: bookingId,
       amount: amount,
       clientUsername: clientUsername,
     };
@@ -106,11 +106,11 @@ const processPayment = async () => {
     let job: any = null;
 
     if (jobDes.toLowerCase() !== "car wash service") {
-      paymentPayload.mechanicId = mechanicId;
+      if (mechanicId) paymentPayload.mechanicId = mechanicId;
       const mechanicRes = await apiService.getMechanicRequestsById(bookingId);
       job = mechanicRes?.data ?? mechanicRes;
     } else {
-      paymentPayload.carWashId = carWashId;
+      if (carWashId) paymentPayload.carWashId = carWashId;
       const carWashRes = await apiService.getCarWashBookingById(bookingId);
       job = carWashRes?.data ?? carWashRes;
     }

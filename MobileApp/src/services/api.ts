@@ -282,6 +282,7 @@ class ApiService {
         description: jobData.description,
         category: jobData.category,
         priority: jobData.priority,
+        servicePrice: jobData.servicePrice ?? 0,
         location: jobData.location?.address || 'Unknown',
         latitude: jobData.location?.latitude,
         longitude: jobData.location?.longitude,

@@ -4,9 +4,9 @@ import com.test.app.TestAppBackEnd.entities.Payment;
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 
-public interface PaymentRepository extends JpaRepository<Payment, Long> {
+public interface PaymentRepository extends JpaRepository<Payment, String> {
     List<Payment> findByClientUsername(String clientUsername);
-    List<Payment> findByMechanicId(Long mechanicId);
-    List<Payment> findByCarWashId(Long carWashId);
+    List<Payment> findByMechanicId(String mechanicId);
+    List<Payment> findByCarWashId(String carWashId);
 
 }

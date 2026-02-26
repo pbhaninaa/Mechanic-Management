@@ -22,7 +22,7 @@
           </v-chip>
         </template>
         <template #item.actions="{ item }">
-          <v-btn small color="green" :disabled="item.status.toLowerCase() !== 'accepted'" @click="payForRequest(item)">
+          <v-btn small color="green" :disabled="item.status.toLowerCase() === 'completed' || item.status.toLowerCase() !== 'accepted'" @click="payForRequest(item)">
             Pay
           </v-btn>
           <v-btn v-if="false" small color="blue" :disabled="item.status.toLowerCase() !== 'accepted'"

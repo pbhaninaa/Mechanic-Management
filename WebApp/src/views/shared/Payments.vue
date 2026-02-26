@@ -36,13 +36,13 @@ import { useCurrency } from "@/composables/useCurrency";
 import TableComponent from "@/components/TableComponent.vue";
 import Test from "@/views/Test.vue";
 interface Payment {
-  id: number;
+  id: string;
   client: string;
   mechanic: string;
   amount: number;
   date: string;
   status: string;
-  jobId: number;
+  jobId: string;
 }
 
 const { currencySymbol } = useCurrency();

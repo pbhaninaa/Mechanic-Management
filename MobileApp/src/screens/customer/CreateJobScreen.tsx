@@ -72,11 +72,13 @@ const CreateJobScreen = ({ navigation }: any) => {
   const handleSubmit = async () => {
     if (!validateForm()) return;
 
+    const servicePrice = (CONFIG.JOB_CATEGORY_PRICES as Record<string, number>)?.[category] ?? 500;
     const jobData: CreateJobData = {
       title: title.trim(),
       description: description.trim(),
       category,
       priority,
+      servicePrice,
       location: {
         latitude: location!.latitude,
         longitude: location!.longitude,
@@ -302,6 +304,13 @@ const CreateJobScreen = ({ navigation }: any) => {
           </View>
           
           <View style={styles.inputGroup}>
+            <Text style={styles.inputLabel}>Estimated Price</Text>
+            <Text style={styles.priceText}>
+              R {((CONFIG.JOB_CATEGORY_PRICES as Record<string, number>)?.[category] ?? 500).toLocaleString()}
+            </Text>
+          </View>
+
+          <View style={styles.inputGroup}>
             <Text style={styles.inputLabel}>Priority</Text>
             <View style={styles.priorityGrid}>
               {CONFIG.JOB_PRIORITIES.map((pri) => (
@@ -408,6 +417,11 @@ const styles = StyleSheet.create({
   textArea: {
     height: 100,
     textAlignVertical: 'top',
+  },
+  priceText: {
+    fontSize: CONFIG.FONT_SIZES.LARGE,
+    fontWeight: '600',
+    color: CONFIG.COLORS.SUCCESS,
   },
   locationTypeSelector: {
     flexDirection: 'row',

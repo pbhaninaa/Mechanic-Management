@@ -43,8 +43,8 @@ public class PaymentService {
             throw new IllegalArgumentException("Payment amount must be provided");
         }
 
-        Long jobId = request.getJobId();
-        if (jobId == null) {
+        String jobId = request.getJobId();
+        if (jobId == null || jobId.isBlank()) {
             throw new IllegalArgumentException("Job ID must be provided");
         }
 
@@ -57,7 +57,7 @@ public class PaymentService {
                 request.getMechanicId(),
                 request.getCarWashId(),
                 platformFee,
-                request.getMechanicId() != null ? "Car Mechanical Service" : "Car Wash Service"
+                (request.getMechanicId() != null && !request.getMechanicId().isBlank()) ? "Car Mechanical Service" : "Car Wash Service"
         );
         payment.setStatus("completed");
 
@@ -78,20 +78,20 @@ public class PaymentService {
         return paymentRepository.findByClientUsername(clientUsername);
     }
 
-    public Payment getPaymentById(Long id) {
+    public Payment getPaymentById(String id) {
         return paymentRepository.findById(id).orElse(null);
     }
 
-    public List<Payment> getPaymentsByMechanic(Long mechanicId) {
+    public List<Payment> getPaymentsByMechanic(String mechanicId) {
         return paymentRepository.findByMechanicId(mechanicId);
     }
 
-    public List<Payment> getPaymentsByCarWash(Long carWashId) {
+    public List<Payment> getPaymentsByCarWash(String carWashId) {
         return paymentRepository.findByCarWashId(carWashId);
     }
 
     // ================= DELETE =================
-    public Payment deletePaymentById(Long paymentId) {
+    public Payment deletePaymentById(String paymentId) {
         Payment payment = paymentRepository.findById(paymentId)
                 .orElseThrow(() -> new RuntimeException("Payment not found with ID: " + paymentId));
         paymentRepository.delete(payment);
@@ -103,7 +103,7 @@ public class PaymentService {
     }
 
     // ================= UPDATE STATUS =================
-    public Payment updatePaymentStatus(Long paymentId, String newStatus) {
+    public Payment updatePaymentStatus(String paymentId, String newStatus) {
         Payment payment = paymentRepository.findById(paymentId)
                 .orElseThrow(() -> new RuntimeException("Payment not found with ID: " + paymentId));
         payment.setStatus(newStatus);

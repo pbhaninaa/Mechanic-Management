@@ -41,7 +41,7 @@ public class CarWashController {
 
     // Get booking by ID
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<CarWashBooking>> getBookingById(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<CarWashBooking>> getBookingById(@PathVariable String id) {
         CarWashBooking booking = bookingService.getBookingById(id)
                 .orElseThrow(() -> new RuntimeException("Booking not found with id " + id));
         return ResponseEntity.ok(new ApiResponse<>("Booking fetched successfully", HttpStatus.OK.value(), booking));
@@ -49,7 +49,7 @@ public class CarWashController {
 
     @PutMapping("/update/{id}")
     public ResponseEntity<ApiResponse<CarWashBooking>> updateBooking(
-            @PathVariable Long id,
+            @PathVariable String id,
             @RequestBody CarWashBooking booking,
             Authentication auth) {
         String loggedInUsername = auth != null ? auth.getName() : null;
@@ -60,7 +60,7 @@ public class CarWashController {
 
     // Delete booking
     @DeleteMapping("/delete/{id}")
-    public ResponseEntity<ApiResponse<Void>> deleteBooking(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<Void>> deleteBooking(@PathVariable String id) {
         bookingService.deleteBooking(id);
         return ResponseEntity.ok(new ApiResponse<>("Booking deleted successfully", HttpStatus.OK.value(), null));
     }

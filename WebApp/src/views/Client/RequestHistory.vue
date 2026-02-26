@@ -12,7 +12,7 @@
           </template>
 
            <template #item.actions="{ item }">
-          <v-btn small color="green" :disabled="!canPay(item)" @click="payForRequest(item)">
+          <v-btn small color="green" :disabled="isCompleted(item) || !canPay(item)" @click="payForRequest(item)">
             Pay
           </v-btn>
           <v-btn v-if="false" small color="blue" :disabled="item.status.toLowerCase() !== 'accepted'"
@@ -44,14 +44,14 @@ import { useCurrency } from "@/composables/useCurrency";
 const router = useRouter();
 // TypeScript interface matching backend entity
 interface RequestHistory {
-  id: number;
+  id: string;
   username: string;
   description: string;
   location: string;
   date: string;
   status: string;
   servicePrice?: number;
-  mechanicId?: number;
+  mechanicId?: string;
 }
 
 const { formatCurrency } = useCurrency();
@@ -63,6 +63,7 @@ const canPay = (item: RequestHistory) => {
   const s = (item?.status || "").toLowerCase();
   return s === "accepted" || s === "assigned";
 };
+const isCompleted = (item: RequestHistory) => (item?.status || "").toLowerCase() === "completed";
 
 // State
 const requests = ref<RequestHistory[]>([]);

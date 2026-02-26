@@ -29,6 +29,21 @@ export const CONFIG = {
     'Emergency',
     'Other',
   ],
+
+  // Default price per category (Rands) - used when creating jobs
+  JOB_CATEGORY_PRICES: {
+    'Battery Service': 550,
+    'Tire Service': 480,
+    'Engine Repair': 850,
+    'Electrical': 650,
+    'Diagnostics': 350,
+    'Oil Change': 350,
+    'Brake Service': 650,
+    'AC/Heating': 720,
+    'Towing': 400,
+    'Emergency': 500,
+    'Other': 500,
+  },
   
   // Job Priorities
   JOB_PRIORITIES: [

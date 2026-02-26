@@ -3,13 +3,14 @@ package com.test.app.TestAppBackEnd.entities;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Entity
 public class CarWashBooking {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Column(length = 36, updatable = false, nullable = false)
+    private String id;
 
     private String clientUsername;
     private String carWashId; // initially null, set when a carwash takes the request
@@ -46,8 +47,14 @@ public class CarWashBooking {
         this.createdAt = LocalDateTime.now();
     }
 
+    @PrePersist
+    public void prePersist() {
+        if (id == null) id = UUID.randomUUID().toString();
+    }
+
     // Getters & Setters
-    public Long getId() { return id; }
+    public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
     public String getClientUsername() { return clientUsername; }
     public void setClientUsername(String clientUsername) { this.clientUsername = clientUsername; }
     public String getCarWashId() { return carWashId; }

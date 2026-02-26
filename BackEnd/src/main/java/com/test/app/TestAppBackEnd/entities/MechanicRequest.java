@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.Data;
 
 import java.time.LocalDate;
+import java.util.UUID;
 
 @Entity
 @Table(name = "request_mechanic")
@@ -12,8 +13,8 @@ import java.time.LocalDate;
 public class MechanicRequest {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Column(length = 36, updatable = false, nullable = false)
+    private String id;
 
     @Column(nullable = false)
     private String username;
@@ -23,8 +24,8 @@ public class MechanicRequest {
 
     @Column(nullable = false)
     private String location;
-    @Column(nullable = true,name = "MechanicId")
-    private Long mechanicId;
+    @Column(nullable = true, name = "MechanicId", length = 36)
+    private String mechanicId;
 
     private Double latitude;
     private Double longitude;
@@ -45,9 +46,14 @@ public class MechanicRequest {
     @JsonInclude(JsonInclude.Include.ALWAYS)
     private String phoneNumber; // Populated from UserProfile for display in tables
 
+    @PrePersist
+    public void prePersist() {
+        if (id == null) id = UUID.randomUUID().toString();
+    }
+
     // ===== Getters & Setters =====
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
 
     public String getUsername() { return username; }
     public void setUsername(String username) { this.username = username; }
@@ -69,8 +75,8 @@ public class MechanicRequest {
 
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
-    public Long getMechanicId() { return mechanicId; }
-    public void setMechanicId(Long mechanicId) { this.mechanicId = mechanicId; }
+    public String getMechanicId() { return mechanicId; }
+    public void setMechanicId(String mechanicId) { this.mechanicId = mechanicId; }
 
     public String getCategory() { return category; }
     public void setCategory(String category) { this.category = category; }

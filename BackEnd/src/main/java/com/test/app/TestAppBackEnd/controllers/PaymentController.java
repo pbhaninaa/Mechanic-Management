@@ -60,7 +60,7 @@ public class PaymentController {
 
     // Get payments by mechanic ID
     @GetMapping("/mechanic/{mechanicId}")
-    public ResponseEntity<ApiResponse<List<Payment>>> getPaymentsByMechanic(@PathVariable Long mechanicId) {
+    public ResponseEntity<ApiResponse<List<Payment>>> getPaymentsByMechanic(@PathVariable String mechanicId) {
         List<Payment> payments = paymentService.getPaymentsByMechanic(mechanicId);
         ApiResponse<List<Payment>> response = new ApiResponse<>(
                 "Fetched payments for mechanic ID: " + mechanicId,
@@ -72,7 +72,7 @@ public class PaymentController {
 
     // Get payments by car wash ID
     @GetMapping("/carWash/{carWashId}")
-    public ResponseEntity<ApiResponse<List<Payment>>> getPaymentsByCarWash(@PathVariable Long carWashId) {
+    public ResponseEntity<ApiResponse<List<Payment>>> getPaymentsByCarWash(@PathVariable String carWashId) {
         List<Payment> payments = paymentService.getPaymentsByCarWash(carWashId);
         ApiResponse<List<Payment>> response = new ApiResponse<>(
                 "Fetched payments for car wash ID: " + carWashId,
@@ -84,7 +84,7 @@ public class PaymentController {
 
     // Delete payment by ID
     @DeleteMapping("/{paymentId}")
-    public ResponseEntity<ApiResponse<Payment>> deletePaymentById(@PathVariable Long paymentId) {
+    public ResponseEntity<ApiResponse<Payment>> deletePaymentById(@PathVariable String paymentId) {
         Payment deletedPayment = paymentService.deletePaymentById(paymentId);
         ApiResponse<Payment> response = new ApiResponse<>(
                 "Payment deleted successfully",
@@ -97,7 +97,7 @@ public class PaymentController {
     // Update payment status
     @PutMapping("/{paymentId}/status")
     public ResponseEntity<ApiResponse<Payment>> updatePaymentStatus(
-            @PathVariable Long paymentId,
+            @PathVariable String paymentId,
             @RequestParam String status) {
         try {
             Payment payment = paymentService.updatePaymentStatus(paymentId, status);

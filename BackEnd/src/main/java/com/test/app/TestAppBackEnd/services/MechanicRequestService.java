@@ -60,7 +60,7 @@ public class MechanicRequestService {
         return enrichWithPhoneNumbers(all);
     }
 
-    public Optional<MechanicRequest> getById(Long id) {
+    public Optional<MechanicRequest> getById(String id) {
         return repository.findById(id).map(r -> {
             enrichWithPhoneNumber(r);
             return r;
@@ -71,7 +71,7 @@ public class MechanicRequestService {
         return enrichWithPhoneNumbers(repository.findByUsername(username));
     }
 
-    public List<MechanicRequest> getByMechanicId(Long mechanicId) {
+    public List<MechanicRequest> getByMechanicId(String mechanicId) {
         return enrichWithPhoneNumbers(repository.findByMechanicId(mechanicId));
     }
 
@@ -80,7 +80,7 @@ public class MechanicRequestService {
         return enrichWithPhoneNumbers(repository.findByStatusAndMechanicIdIsNull("pending"));
     }
 
-    public Optional<MechanicRequest> acceptJob(Long requestId, Long mechanicId) {
+    public Optional<MechanicRequest> acceptJob(String requestId, String mechanicId) {
         Optional<MechanicRequest> opt = repository.findById(requestId);
         if (opt.isEmpty()) return Optional.empty();
         MechanicRequest req = opt.get();
@@ -97,7 +97,7 @@ public class MechanicRequestService {
         return Optional.of(saved);
     }
 
-    public Optional<MechanicRequest> completeJob(Long requestId, Long mechanicId, String loggedInUsername) {
+    public Optional<MechanicRequest> completeJob(String requestId, String mechanicId, String loggedInUsername) {
         Optional<MechanicRequest> opt = repository.findById(requestId);
         if (opt.isEmpty()) return Optional.empty();
         MechanicRequest req = opt.get();
@@ -178,7 +178,7 @@ public class MechanicRequestService {
     }
 
     // ================= DELETE =================
-    public boolean deleteById(Long id) {
+    public boolean deleteById(String id) {
         if (!repository.existsById(id)) return false;
         repository.deleteById(id);
         return true;

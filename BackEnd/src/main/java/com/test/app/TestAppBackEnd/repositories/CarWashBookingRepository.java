@@ -7,7 +7,7 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface CarWashBookingRepository extends JpaRepository<CarWashBooking, Long> {
+public interface CarWashBookingRepository extends JpaRepository<CarWashBooking, String> {
     List<CarWashBooking> findByClientUsername(String clientUsername);
     List<CarWashBooking> findByCarWashId(String carWashId);
 }

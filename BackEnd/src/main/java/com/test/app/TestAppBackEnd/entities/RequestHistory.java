@@ -2,14 +2,15 @@ package com.test.app.TestAppBackEnd.entities;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(name = "request_history")
 public class RequestHistory {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Column(length = 36, updatable = false, nullable = false)
+    private String id;
 
     private String username;   // 👈 New field for the user
 
@@ -31,10 +32,16 @@ public class RequestHistory {
         this.status = status;
     }
 
+    @PrePersist
+    public void prePersist() {
+        if (id == null) id = UUID.randomUUID().toString();
+    }
+
     // --- Getters & Setters ---
-    public Long getId() {
+    public String getId() {
         return id;
     }
+    public void setId(String id) { this.id = id; }
 
     public String getUsername() {
         return username;

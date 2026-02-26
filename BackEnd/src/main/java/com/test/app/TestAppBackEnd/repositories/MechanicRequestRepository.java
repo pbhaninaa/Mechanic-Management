@@ -7,9 +7,9 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface MechanicRequestRepository extends JpaRepository<MechanicRequest, Long> {
+public interface MechanicRequestRepository extends JpaRepository<MechanicRequest, String> {
     List<MechanicRequest> findByUsername(String username);
-    List<MechanicRequest> findByMechanicId(Long mechanicId);
+    List<MechanicRequest> findByMechanicId(String mechanicId);
     List<MechanicRequest> findByStatusAndMechanicIdIsNull(String status);
     void deleteByUsername(String username);
 }

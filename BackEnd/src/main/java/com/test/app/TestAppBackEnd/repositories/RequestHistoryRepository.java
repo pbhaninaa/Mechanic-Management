@@ -7,6 +7,6 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface RequestHistoryRepository extends JpaRepository<RequestHistory, Long> {
+public interface RequestHistoryRepository extends JpaRepository<RequestHistory, String> {
     List<RequestHistory> findByUsername(String username);
 }

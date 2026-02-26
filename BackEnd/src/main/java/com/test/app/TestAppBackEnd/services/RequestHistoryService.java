@@ -20,7 +20,7 @@ public class RequestHistoryService {
         return requestHistoryRepository.findAll();
     }
 
-    public Optional<RequestHistory> getById(Long id) {
+    public Optional<RequestHistory> getById(String id) {
         return requestHistoryRepository.findById(id);
     }
 
@@ -32,7 +32,7 @@ public class RequestHistoryService {
         return requestHistoryRepository.save(requestHistory);
     }
 
-    public void delete(Long id) {
+    public void delete(String id) {
         requestHistoryRepository.deleteById(id);
     }
 }

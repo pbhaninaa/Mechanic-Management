@@ -25,7 +25,7 @@
           <v-tooltip text="Accept" location="top">
             <template #activator="{ props }">
               <v-btn v-bind="props" variant="text" size="small" color="green" class="mr-1"
-                @click="onAcceptClick(item)" :disabled="item.status === JOB_STATUS.ACCEPTED">
+                @click="onAcceptClick(item)" :disabled="item.status === JOB_STATUS.COMPLETED || item.status === JOB_STATUS.ACCEPTED">
                 <v-icon size="18">mdi-check</v-icon>
               </v-btn>
             </template>

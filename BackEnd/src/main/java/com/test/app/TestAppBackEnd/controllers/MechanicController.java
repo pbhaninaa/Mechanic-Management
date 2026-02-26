@@ -57,7 +57,7 @@ public class MechanicController {
 
     /** Get mechanic request by ID */
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<MechanicRequest>> getMechanicRequestById(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<MechanicRequest>> getMechanicRequestById(@PathVariable String id) {
         return service.getById(id)
                 .map(r -> ResponseEntity.ok(new ApiResponse<>("Fetched mechanic request successfully", HttpStatus.OK.value(), r)))
                 .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -73,15 +73,15 @@ public class MechanicController {
 
     /** Get mechanic requests assigned to a specific mechanic */
     @GetMapping("/mechanic/{mechanicId}")
-    public ResponseEntity<ApiResponse<List<MechanicRequest>>> getMechanicRequestsByMechanicId(@PathVariable Long mechanicId) {
+    public ResponseEntity<ApiResponse<List<MechanicRequest>>> getMechanicRequestsByMechanicId(@PathVariable String mechanicId) {
         List<MechanicRequest> requests = service.getByMechanicId(mechanicId);
         return ResponseEntity.ok(new ApiResponse<>("Fetched mechanic requests for mechanic successfully", HttpStatus.OK.value(), requests));
     }
 
     /** Mechanic accepts an available job */
     @PostMapping("/{id}/accept")
-    public ResponseEntity<ApiResponse<MechanicRequest>> acceptJob(@PathVariable Long id, @RequestBody Map<String, Long> body, Authentication auth) {
-        Long mechanicId = body != null && body.containsKey("mechanicId") ? body.get("mechanicId") : null;
+    public ResponseEntity<ApiResponse<MechanicRequest>> acceptJob(@PathVariable String id, @RequestBody Map<String, String> body, Authentication auth) {
+        String mechanicId = body != null && body.containsKey("mechanicId") ? body.get("mechanicId") : null;
         if (mechanicId == null) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(new ApiResponse<>("mechanicId is required", HttpStatus.BAD_REQUEST.value(), null));
@@ -99,8 +99,8 @@ public class MechanicController {
 
     /** Mechanic marks a job as completed */
     @PostMapping("/{id}/complete")
-    public ResponseEntity<ApiResponse<MechanicRequest>> completeJob(@PathVariable Long id, @RequestBody Map<String, Long> body, Authentication auth) {
-        Long mechanicId = body != null && body.containsKey("mechanicId") ? body.get("mechanicId") : null;
+    public ResponseEntity<ApiResponse<MechanicRequest>> completeJob(@PathVariable String id, @RequestBody Map<String, String> body, Authentication auth) {
+        String mechanicId = body != null && body.containsKey("mechanicId") ? body.get("mechanicId") : null;
         if (mechanicId == null) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(new ApiResponse<>("mechanicId is required", HttpStatus.BAD_REQUEST.value(), null));
@@ -119,7 +119,7 @@ public class MechanicController {
 
     /** Delete a single mechanic request by ID */
     @DeleteMapping("/{id}")
-    public ResponseEntity<ApiResponse<Void>> deleteMechanicRequestById(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<Void>> deleteMechanicRequestById(@PathVariable String id) {
         boolean deleted = service.deleteById(id);
         if (deleted) {
             return ResponseEntity.ok(new ApiResponse<>("Mechanic request deleted successfully", HttpStatus.OK.value(), null));
