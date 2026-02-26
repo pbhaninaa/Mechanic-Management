@@ -134,17 +134,25 @@ public class PaymentService {
 
                 // Fetch the car wash booking to get description/type
                 serviceType = carWashBookingRepository.findById(payment.getJobId())
-                        .map(booking -> "Car Wash Service: " + booking.getCarDescription())
+                        .map(booking -> {
+                            StringBuilder sb = new StringBuilder("Car Wash: ");
+                            if (booking.getServiceTypes() != null && !booking.getServiceTypes().isEmpty()) {
+                                sb.append(String.join(", ", booking.getServiceTypes()));
+                            }
+                            if (booking.getCarDescription() != null && !booking.getCarDescription().isBlank()) {
+                                sb.append(" - ").append(booking.getCarDescription());
+                            }
+                            return sb.length() > "Car Wash: ".length() ? sb.toString() : "Car Wash Service";
+                        })
                         .orElse("Car Wash Service");
             }
 
             if (recipientEmail != null) {
                 String subject = "New Payment Received";
                 String body = "Hi,\n\n" +
-                        "You have received a new payment for your service (" + serviceType + ").\n" +
+                        "You have received a new payment for " + serviceType + ".\n\n" +
                         "Amount: R" + payment.getAmount() + "\n" +
-                        "Client: " + payment.getClientUsername() + "\n" +
-                        "Job ID: " + payment.getJobId() + "\n\nThank you!";
+                        "Client: " + payment.getClientUsername() + "\n\nThank you!";
 
                 emailService.sendEmail(recipientEmail, "no-reply@testapp.com", subject, body);
             }

@@ -80,7 +80,7 @@ public class AuthController {
             }
             if (loginIdentifier == null || loginIdentifier.isBlank()) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body(new ApiResponse<>("Username or email is required", 400, null));
+                        .body(new ApiResponse<>("Username or email is required", HttpStatus.BAD_REQUEST.value(), null));
             }
 
             Authentication auth = authenticationManager.authenticate(
@@ -99,33 +99,33 @@ public class AuthController {
             LoginResponse loginResponse = new LoginResponse(token, token, hasProfile, userDto);
 
             return ResponseEntity.ok(
-                    new ApiResponse<>("Login successful", 200, loginResponse)
+                    new ApiResponse<>("Login successful", HttpStatus.OK.value(), loginResponse)
             );
 
         } catch (BadCredentialsException e) {
             return ResponseEntity
                     .status(HttpStatus.UNAUTHORIZED)
-                    .body(new ApiResponse<>("Invalid username or password", 401, null));
+                    .body(new ApiResponse<>("Invalid username or password", HttpStatus.UNAUTHORIZED.value(), null));
 
         } catch (UsernameNotFoundException e) {
             return ResponseEntity
                     .status(HttpStatus.NOT_FOUND)
-                    .body(new ApiResponse<>("User not found", 404, null));
+                    .body(new ApiResponse<>("User not found", HttpStatus.NOT_FOUND.value(), null));
 
         } catch (DisabledException e) {
             return ResponseEntity
                     .status(HttpStatus.UNAUTHORIZED)
-                    .body(new ApiResponse<>("User account is disabled", 401, null));
+                    .body(new ApiResponse<>("User account is disabled", HttpStatus.UNAUTHORIZED.value(), null));
 
         } catch (AuthenticationException e) {
             return ResponseEntity
                     .status(HttpStatus.UNAUTHORIZED)
-                    .body(new ApiResponse<>("Authentication failed", 401, null));
+                    .body(new ApiResponse<>("Authentication failed", HttpStatus.UNAUTHORIZED.value(), null));
 
         } catch (Exception e) {
             return ResponseEntity
                     .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ApiResponse<>("Internal server error", 500, null));
+                    .body(new ApiResponse<>("Internal server error", HttpStatus.INTERNAL_SERVER_ERROR.value(), null));
         }
     }
 
@@ -139,7 +139,7 @@ public class AuthController {
         Optional<User> existingUser = userRepository.findByUsername(user.getUsername());
         if (existingUser.isPresent()) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body(new ApiResponse<>("Username already exists", 409, null));
+                    .body(new ApiResponse<>("Username already exists", HttpStatus.CONFLICT.value(), null));
         }
 
         User savedUser = userRepository.save(
@@ -147,7 +147,7 @@ public class AuthController {
         );
 
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(new ApiResponse<>("User created successfully", 201, savedUser));
+                .body(new ApiResponse<>("User created successfully", HttpStatus.CREATED.value(), savedUser));
     }
 
     // ================= GET ALL USERS =================
@@ -156,7 +156,7 @@ public class AuthController {
         boolean tokenValid = isTokenValid(request);
 
         List<User> users = userRepository.findAll();
-        return ResponseEntity.ok(new ApiResponse<>("All users retrieved", 200, users));
+        return ResponseEntity.ok(new ApiResponse<>("All users retrieved", HttpStatus.OK.value(), users));
     }
 
     // ================= GET USER BY USERNAME =================
@@ -167,9 +167,9 @@ public class AuthController {
         Optional<User> user = userRepository.findByUsername(username);
         if (user.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new ApiResponse<>("User not found", 404, null));
+                    .body(new ApiResponse<>("User not found", HttpStatus.NOT_FOUND.value(), null));
         }
-        return ResponseEntity.ok(new ApiResponse<>("User retrieved", 200, user.get()));
+        return ResponseEntity.ok(new ApiResponse<>("User retrieved", HttpStatus.OK.value(), user.get()));
     }
 
     // ================= UPDATE USER =================
@@ -182,7 +182,7 @@ public class AuthController {
         Optional<User> existingUser = userRepository.findByUsername(username);
         if (existingUser.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new ApiResponse<>("User not found", 404, null));
+                    .body(new ApiResponse<>("User not found", HttpStatus.NOT_FOUND.value(), null));
         }
 
         User user = existingUser.get();
@@ -204,7 +204,7 @@ public class AuthController {
 
         User savedUser = userRepository.save(user);
 
-        return ResponseEntity.ok(new ApiResponse<>("User updated successfully", 200, savedUser));
+        return ResponseEntity.ok(new ApiResponse<>("User updated successfully", HttpStatus.OK.value(), savedUser));
     }
 
     // ================= DELETE USER =================
@@ -217,22 +217,22 @@ public class AuthController {
         Optional<User> existingUser = userRepository.findByUsername(username);
         if (existingUser.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new ApiResponse<>("User not found", 404, null));
+                    .body(new ApiResponse<>("User not found", HttpStatus.NOT_FOUND.value(), null));
         }
         userProfileRepository.deleteByUsername(username);
         userRepository.delete(existingUser.get());
-        return ResponseEntity.ok(new ApiResponse<>("User deleted successfully", 200, null));
+        return ResponseEntity.ok(new ApiResponse<>("User deleted successfully", HttpStatus.OK.value(), null));
     }
     // ================= DEV: RESET DB (ADMIN ONLY) =================
     @DeleteMapping("/reset-db")
     public ResponseEntity<ApiResponse<String>> resetDatabase(Authentication auth) {
         if (auth == null || auth.getName() == null || auth.getName().isBlank()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(new ApiResponse<>("Authentication required", 401, null));
+                    .body(new ApiResponse<>("Authentication required", HttpStatus.UNAUTHORIZED.value(), null));
         }
         if (!userProfileService.isAdminByUsername(auth.getName())) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(new ApiResponse<>("Admin access required", 403, null));
+                    .body(new ApiResponse<>("Admin access required", HttpStatus.FORBIDDEN.value(), null));
         }
         String currentUsername = auth.getName();
         devDataService.resetDatabaseExceptCurrentUser(currentUsername);
@@ -253,7 +253,7 @@ public class AuthController {
 
         if (!isAdmin) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(new ApiResponse<>("Only admins can delete all users", 403, null));
+                    .body(new ApiResponse<>("Only admins can delete all users", HttpStatus.FORBIDDEN.value(), null));
         }
 
         try {
@@ -262,11 +262,11 @@ public class AuthController {
             userRepository.deleteAll();
 
             return ResponseEntity.status(HttpStatus.NO_CONTENT)
-                    .body(new ApiResponse<>("All users deleted successfully", 204, null));
+                    .body(new ApiResponse<>("All users deleted successfully", HttpStatus.NO_CONTENT.value(), null));
 
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ApiResponse<>("Failed to delete users", 500, null));
+                    .body(new ApiResponse<>("Failed to delete users", HttpStatus.INTERNAL_SERVER_ERROR.value(), null));
         }
     }
 

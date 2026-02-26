@@ -28,7 +28,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<Object>> handleIllegalArgument(IllegalArgumentException ex) {
         log.warn("Validation error: {}", ex.getMessage());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(new ApiResponse<>(ex.getMessage(), 400, null));
+                .body(new ApiResponse<>(ex.getMessage(), HttpStatus.BAD_REQUEST.value(), null));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -38,7 +38,7 @@ public class GlobalExceptionHandler {
                 .collect(Collectors.joining(", "));
         log.warn("Validation failed: {}", errors);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(new ApiResponse<>("Validation failed: " + errors, 400, null));
+                .body(new ApiResponse<>("Validation failed: " + errors, HttpStatus.BAD_REQUEST.value(), null));
     }
 
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
@@ -46,35 +46,35 @@ public class GlobalExceptionHandler {
         String message = "Invalid value for parameter '" + ex.getName() + "': " + ex.getValue();
         log.warn("Type mismatch: {}", message);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(new ApiResponse<>(message, 400, null));
+                .body(new ApiResponse<>(message, HttpStatus.BAD_REQUEST.value(), null));
     }
 
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ApiResponse<Object>> handleBadCredentials(BadCredentialsException ex) {
         log.warn("Authentication failed: {}", ex.getMessage());
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body(new ApiResponse<>("Invalid username or password", 401, null));
+                .body(new ApiResponse<>("Invalid username or password", HttpStatus.UNAUTHORIZED.value(), null));
     }
 
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ApiResponse<Object>> handleAccessDenied(AccessDeniedException ex) {
         log.warn("Access denied: {}", ex.getMessage());
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                .body(new ApiResponse<>("Access denied", 403, null));
+                .body(new ApiResponse<>("Access denied", HttpStatus.FORBIDDEN.value(), null));
     }
 
     @ExceptionHandler(org.springframework.dao.EmptyResultDataAccessException.class)
     public ResponseEntity<ApiResponse<Object>> handleEntityNotFound(org.springframework.dao.EmptyResultDataAccessException ex) {
         log.warn("Resource not found: {}", ex.getMessage());
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(new ApiResponse<>("Requested resource was not found", 404, null));
+                .body(new ApiResponse<>("Requested resource was not found", HttpStatus.NOT_FOUND.value(), null));
     }
 
     @ExceptionHandler(IllegalStateException.class)
     public ResponseEntity<ApiResponse<Object>> handleIllegalState(IllegalStateException ex) {
         log.warn("Invalid state: {}", ex.getMessage());
         return ResponseEntity.status(HttpStatus.CONFLICT)
-                .body(new ApiResponse<>(ex.getMessage(), 409, null));
+                .body(new ApiResponse<>(ex.getMessage(), HttpStatus.CONFLICT.value(), null));
     }
 
     @ExceptionHandler(RuntimeException.class)
@@ -83,7 +83,7 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(new ApiResponse<>(
                         ex.getMessage() != null ? ex.getMessage() : "An unexpected error occurred",
-                        500,
+                        HttpStatus.INTERNAL_SERVER_ERROR.value(),
                         null));
     }
 
@@ -91,6 +91,6 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<Object>> handleGenericException(Exception ex) {
         log.error("Unhandled exception: ", ex);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(new ApiResponse<>("An unexpected error occurred. Please try again later.", 500, null));
+                .body(new ApiResponse<>("An unexpected error occurred. Please try again later.", HttpStatus.INTERNAL_SERVER_ERROR.value(), null));
     }
 }

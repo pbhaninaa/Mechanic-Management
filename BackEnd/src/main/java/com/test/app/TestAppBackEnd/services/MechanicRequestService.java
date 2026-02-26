@@ -110,14 +110,21 @@ public class MechanicRequestService {
         return Optional.of(saved);
     }
 
+    private String toJobDescription(MechanicRequest request) {
+        if (request.getTitle() != null && !request.getTitle().isBlank()) return request.getTitle();
+        if (request.getDescription() != null && !request.getDescription().isBlank()) return request.getDescription();
+        if (request.getCategory() != null && !request.getCategory().isBlank()) return request.getCategory();
+        return "mechanic service";
+    }
+
     private void notifyClientRequestAccepted(MechanicRequest request) {
         notificationService.notifyRequestAccepted(
-                request.getUsername(), "https://172.19.80.1:3000/history", "Mechanic Request");
+                request.getUsername(), "https://172.19.80.1:3000/history", "Mechanic Request", toJobDescription(request));
     }
 
     private void notifyClientServiceCompleted(MechanicRequest request, String loggedInUsername) {
         notificationService.notifyServiceCompleted(
-                request.getUsername(), loggedInUsername, "mechanic service");
+                request.getUsername(), loggedInUsername, "mechanic service", toJobDescription(request));
     }
 
     // ================= UPDATE =================
@@ -155,9 +162,10 @@ public class MechanicRequestService {
             } else if ("completed".equalsIgnoreCase(newStatus)) {
                 notifyClientServiceCompleted(existing, loggedInUsername);
             } else {
+                String jobDesc = toJobDescription(existing);
                 String subject = "Mechanic Request Status Updated";
                 String body = "Hi " + existing.getUsername() + ",\n\n" +
-                        "Your (" + existing.getDescription() + " ) request status has been changed to: " +
+                        "Your " + jobDesc + " request status has been changed to: " +
                         newStatus + ".\n\nThank you!";
                 String to = getClientEmail(existing.getUsername());
                 if (to != null) {

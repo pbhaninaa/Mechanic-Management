@@ -28,7 +28,7 @@ public class MechanicController {
     public ResponseEntity<ApiResponse<MechanicRequest>> createMechanicRequest(@RequestBody MechanicRequest request) {
         MechanicRequest saved = service.create(request);
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(new ApiResponse<>("Mechanic request submitted successfully", 201, saved));
+                .body(new ApiResponse<>("Mechanic request submitted successfully", HttpStatus.CREATED.value(), saved));
     }
 
     /** Update an existing mechanic request */
@@ -36,46 +36,46 @@ public class MechanicController {
     public ResponseEntity<ApiResponse<MechanicRequest>> updateMechanicRequest(@RequestBody MechanicRequest request, Authentication auth) {
         String loggedInUsername = auth != null ? auth.getName() : null;
         return service.update(request, loggedInUsername)
-                .map(r -> ResponseEntity.ok(new ApiResponse<>("Mechanic request updated successfully", 200, r)))
+                .map(r -> ResponseEntity.ok(new ApiResponse<>("Mechanic request updated successfully", HttpStatus.OK.value(), r)))
                 .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(new ApiResponse<>("Mechanic request not found", 404, null)));
+                        .body(new ApiResponse<>("Mechanic request not found", HttpStatus.NOT_FOUND.value(), null)));
     }
 
     /** Get all mechanic requests - admin/overview */
     @GetMapping("/all")
     public ResponseEntity<ApiResponse<List<MechanicRequest>>> getAllMechanicRequests() {
         List<MechanicRequest> requests = service.getAll();
-        return ResponseEntity.ok(new ApiResponse<>("Fetched all mechanic requests successfully", 200, requests));
+        return ResponseEntity.ok(new ApiResponse<>("Fetched all mechanic requests successfully", HttpStatus.OK.value(), requests));
     }
 
     /** Get available (unassigned, pending) jobs for mechanics to accept */
     @GetMapping("/available")
     public ResponseEntity<ApiResponse<List<MechanicRequest>>> getAvailableJobsForMechanics() {
         List<MechanicRequest> requests = service.getAvailableJobsForMechanics();
-        return ResponseEntity.ok(new ApiResponse<>("Fetched available jobs successfully", 200, requests));
+        return ResponseEntity.ok(new ApiResponse<>("Fetched available jobs successfully", HttpStatus.OK.value(), requests));
     }
 
     /** Get mechanic request by ID */
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<MechanicRequest>> getMechanicRequestById(@PathVariable Long id) {
         return service.getById(id)
-                .map(r -> ResponseEntity.ok(new ApiResponse<>("Fetched mechanic request successfully", 200, r)))
+                .map(r -> ResponseEntity.ok(new ApiResponse<>("Fetched mechanic request successfully", HttpStatus.OK.value(), r)))
                 .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(new ApiResponse<>("Mechanic request not found with id: " + id, 404, null)));
+                        .body(new ApiResponse<>("Mechanic request not found with id: " + id, HttpStatus.NOT_FOUND.value(), null)));
     }
 
     /** Get mechanic requests by customer username (customer's job history) */
     @GetMapping("/user/username/{username}")
     public ResponseEntity<ApiResponse<List<MechanicRequest>>> getMechanicRequestsByCustomerUsername(@PathVariable String username) {
         List<MechanicRequest> requests = service.getByUsername(username);
-        return ResponseEntity.ok(new ApiResponse<>("Fetched mechanic requests for customer successfully", 200, requests));
+        return ResponseEntity.ok(new ApiResponse<>("Fetched mechanic requests for customer successfully", HttpStatus.OK.value(), requests));
     }
 
     /** Get mechanic requests assigned to a specific mechanic */
     @GetMapping("/mechanic/{mechanicId}")
     public ResponseEntity<ApiResponse<List<MechanicRequest>>> getMechanicRequestsByMechanicId(@PathVariable Long mechanicId) {
         List<MechanicRequest> requests = service.getByMechanicId(mechanicId);
-        return ResponseEntity.ok(new ApiResponse<>("Fetched mechanic requests for mechanic successfully", 200, requests));
+        return ResponseEntity.ok(new ApiResponse<>("Fetched mechanic requests for mechanic successfully", HttpStatus.OK.value(), requests));
     }
 
     /** Mechanic accepts an available job */
@@ -84,16 +84,16 @@ public class MechanicController {
         Long mechanicId = body != null && body.containsKey("mechanicId") ? body.get("mechanicId") : null;
         if (mechanicId == null) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new ApiResponse<>("mechanicId is required", 400, null));
+                    .body(new ApiResponse<>("mechanicId is required", HttpStatus.BAD_REQUEST.value(), null));
         }
         try {
             return service.acceptJob(id, mechanicId)
-                    .map(r -> ResponseEntity.ok(new ApiResponse<>("Job accepted successfully", 200, r)))
+                    .map(r -> ResponseEntity.ok(new ApiResponse<>("Job accepted successfully", HttpStatus.OK.value(), r)))
                     .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND)
-                            .body(new ApiResponse<>("Job not found", 404, null)));
+                            .body(new ApiResponse<>("Job not found", HttpStatus.NOT_FOUND.value(), null)));
         } catch (IllegalStateException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body(new ApiResponse<>(e.getMessage(), 409, null));
+                    .body(new ApiResponse<>(e.getMessage(), HttpStatus.CONFLICT.value(), null));
         }
     }
 
@@ -103,17 +103,17 @@ public class MechanicController {
         Long mechanicId = body != null && body.containsKey("mechanicId") ? body.get("mechanicId") : null;
         if (mechanicId == null) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new ApiResponse<>("mechanicId is required", 400, null));
+                    .body(new ApiResponse<>("mechanicId is required", HttpStatus.BAD_REQUEST.value(), null));
         }
         String loggedInUsername = auth != null ? auth.getName() : null;
         try {
             return service.completeJob(id, mechanicId, loggedInUsername)
-                    .map(r -> ResponseEntity.ok(new ApiResponse<>("Job completed successfully", 200, r)))
-                    .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND)
-                            .body(new ApiResponse<>("Job not found", 404, null)));
+                    .map(r -> ResponseEntity.<ApiResponse<MechanicRequest>>ok(new ApiResponse<>("Job completed successfully", HttpStatus.OK.value(), r)))
+                    .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND)
+                            .body(new ApiResponse<>("Job not found", HttpStatus.NOT_FOUND.value(), null)));
         } catch (IllegalStateException e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(new ApiResponse<>(e.getMessage(), 403, null));
+                    .body(new ApiResponse<>(e.getMessage(), HttpStatus.FORBIDDEN.value(), null));
         }
     }
 
@@ -122,10 +122,10 @@ public class MechanicController {
     public ResponseEntity<ApiResponse<Void>> deleteMechanicRequestById(@PathVariable Long id) {
         boolean deleted = service.deleteById(id);
         if (deleted) {
-            return ResponseEntity.ok(new ApiResponse<>("Mechanic request deleted successfully", 200, null));
+            return ResponseEntity.ok(new ApiResponse<>("Mechanic request deleted successfully", HttpStatus.OK.value(), null));
         }
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(new ApiResponse<>("Mechanic request not found", 404, null));
+                .body(new ApiResponse<>("Mechanic request not found", HttpStatus.NOT_FOUND.value(), null));
     }
 
     /** Delete all mechanic requests for a customer (by username) */
@@ -133,9 +133,9 @@ public class MechanicController {
     public ResponseEntity<ApiResponse<Void>> deleteMechanicRequestsByUsername(@PathVariable String username) {
         boolean deleted = service.deleteByUsername(username);
         if (deleted) {
-            return ResponseEntity.ok(new ApiResponse<>("Mechanic requests deleted successfully", 200, null));
+            return ResponseEntity.ok(new ApiResponse<>("Mechanic requests deleted successfully", HttpStatus.OK.value(), null));
         }
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(new ApiResponse<>("No mechanic requests found for user", 404, null));
+                .body(new ApiResponse<>("No mechanic requests found for user", HttpStatus.NOT_FOUND.value(), null));
     }
 }

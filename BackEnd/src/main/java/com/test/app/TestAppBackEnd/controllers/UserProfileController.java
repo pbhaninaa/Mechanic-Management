@@ -31,11 +31,11 @@ public class UserProfileController {
             UserProfile saved = userProfileService.createProfileForUser( profile);
 
             return ResponseEntity.status(HttpStatus.CREATED)
-                    .body(new ApiResponse<>("Profile created successfully", 201, saved));
+                    .body(new ApiResponse<>("Profile created successfully", HttpStatus.CREATED.value(), saved));
 
         } catch (IllegalArgumentException ex) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body(new ApiResponse<>(ex.getMessage(), 409, null));
+                    .body(new ApiResponse<>(ex.getMessage(), HttpStatus.CONFLICT.value(), null));
         }
     }
 
@@ -47,9 +47,9 @@ public class UserProfileController {
         System.out.println("[GET] Logged-in user: " + loggedInUsername);
 
         var response = userProfileService.getProfileByUsername(loggedInUsername)
-                .map(profile -> ResponseEntity.ok(new ApiResponse<>("Profile retrieved", 200, profile)))
+                .map(profile -> ResponseEntity.ok(new ApiResponse<>("Profile retrieved", HttpStatus.OK.value(), profile)))
                 .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(new ApiResponse<>("Profile does not exist for this user", 404, null)));
+                        .body(new ApiResponse<>("Profile does not exist for this user", HttpStatus.NOT_FOUND.value(), null)));
 
         System.out.println("[GET] Response ready for user: " + loggedInUsername);
         return response;
@@ -69,21 +69,21 @@ public class UserProfileController {
 
             if (profiles.iterator().hasNext()) {
                 return ResponseEntity.ok(
-                        new ApiResponse<>("Profiles retrieved successfully", 200, profiles)
+                        new ApiResponse<>("Profiles retrieved successfully", HttpStatus.OK.value(), profiles)
                 );
             } else {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(new ApiResponse<>("No profiles found for role: " + role, 404, null));
+                        .body(new ApiResponse<>("No profiles found for role: " + role, HttpStatus.NOT_FOUND.value(), null));
             }
 
         } catch (IllegalArgumentException e) {
             // Role not valid in enum
             return ResponseEntity.badRequest()
-                    .body(new ApiResponse<>("Invalid role: " + role, 400, null));
+                    .body(new ApiResponse<>("Invalid role: " + role, HttpStatus.BAD_REQUEST.value(), null));
         } catch (Exception e) {
             System.err.println("[ERROR] Failed to fetch profiles by role: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ApiResponse<>("An error occurred while fetching profiles", 500, null));
+                    .body(new ApiResponse<>("An error occurred while fetching profiles", HttpStatus.INTERNAL_SERVER_ERROR.value(), null));
         }
     }
 
@@ -104,7 +104,7 @@ public class UserProfileController {
 
         Iterable<UserProfile> profiles = userProfileService.getAllProfiles();
         System.out.println("[GET ALL] Response ready with all profiles");
-        return ResponseEntity.ok(new ApiResponse<>("All profiles retrieved", 200, profiles));
+        return ResponseEntity.ok(new ApiResponse<>("All profiles retrieved", HttpStatus.OK.value(), profiles));
     }
 
     // ================= UPDATE OWN PROFILE =================
@@ -124,7 +124,7 @@ public class UserProfileController {
             targetUsername = updatedProfile.getUsername();
             if (targetUsername == null || targetUsername.isBlank()) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body(new ApiResponse<>("Username is required when updating another user's profile", 400, null));
+                        .body(new ApiResponse<>("Username is required when updating another user's profile", HttpStatus.BAD_REQUEST.value(), null));
             }
         } else {
             // Non-admin: only own profile - use logged-in username, ignore body (avoids case/mismatch bugs)
@@ -137,9 +137,9 @@ public class UserProfileController {
                         updatedProfile,
                         isAdmin
                 )
-                .map(profile -> ResponseEntity.ok(new ApiResponse<>("Profile updated", 200, profile)))
+                .map(profile -> ResponseEntity.ok(new ApiResponse<>("Profile updated", HttpStatus.OK.value(), profile)))
                 .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(new ApiResponse<>("Profile does not exist for this user", 404, null)));
+                        .body(new ApiResponse<>("Profile does not exist for this user", HttpStatus.NOT_FOUND.value(), null)));
 
         System.out.println("[UPDATE] Response ready for user: " + updatedProfile.getUsername());
         return response;
@@ -157,16 +157,16 @@ public class UserProfileController {
 
         if (!loggedInUsername.equals(profile.getUsername()) && !isAdmin) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(new ApiResponse<>("Unauthorized to delete this profile", 403, null));
+                    .body(new ApiResponse<>("Unauthorized to delete this profile", HttpStatus.FORBIDDEN.value(), null));
         }
 
         boolean deleted = userProfileService.deleteProfile(profile.getUsername());
 
         if (deleted) {
-            return ResponseEntity.ok(new ApiResponse<>("Profile deleted successfully", 200, null));
+            return ResponseEntity.ok(new ApiResponse<>("Profile deleted successfully", HttpStatus.OK.value(), null));
         } else {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new ApiResponse<>("Profile does not exist for this user", 404, null));
+                    .body(new ApiResponse<>("Profile does not exist for this user", HttpStatus.NOT_FOUND.value(), null));
         }
     }
 

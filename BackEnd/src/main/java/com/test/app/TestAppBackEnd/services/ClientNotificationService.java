@@ -31,14 +31,18 @@ public class ClientNotificationService {
     private static final String BUSINESS_ADDRESS = "123 Main Street, Cape Town, South Africa";
 
     @Async
-    public void notifyRequestAccepted(String username, String paymentLink , String serviceType) {
+    public void notifyRequestAccepted(String username, String paymentLink, String serviceType, String jobDescription) {
         String to = getClientEmail(username);
         if (to == null) return;
+
+        String jobContext = (jobDescription != null && !jobDescription.isBlank())
+                ? jobDescription
+                : serviceType;
 
         String subject = "Your " + serviceType + " Request Has Been Accepted";
 
         String body = "Hi " + username + ",\n\n" +
-                "Good news! Your " + serviceType + " request has been accepted.\n\n" +
+                "Good news! Your request for " + jobContext + " has been accepted.\n\n" +
                 "To confirm your booking, please complete your payment using the link below:\n\n" +
                 paymentLink + "\n\n" +
                 "You can also access payment from your Request History in the app.\n\n" +
@@ -48,9 +52,13 @@ public class ClientNotificationService {
     }
 
     @Async
-    public void notifyServiceCompleted(String clientUsername, String loggedInUsername, String serviceType) {
+    public void notifyServiceCompleted(String clientUsername, String loggedInUsername, String serviceType, String jobDescription) {
         String to = getClientEmail(clientUsername);
         if (to == null) return;
+
+        String jobContext = (jobDescription != null && !jobDescription.isBlank())
+                ? jobDescription
+                : serviceType;
 
         // Determine the collection address (staff's address if available)
         String collectionAddress = BUSINESS_ADDRESS;
@@ -74,7 +82,7 @@ public class ClientNotificationService {
         String subject = "Your Car Is Ready for Collection";
 
         String body = "Hi " + clientUsername + ",\n\n" +
-                "Your " + serviceType + " has been successfully completed.\n\n" +
+                "Your " + jobContext + " has been successfully completed.\n\n" +
                 "You can now come and collect your car at your convenience.\n\n" +
                 "Get directions using one of the options below:\n\n" +
                 "Waze: " + wazeLink + "\n" +

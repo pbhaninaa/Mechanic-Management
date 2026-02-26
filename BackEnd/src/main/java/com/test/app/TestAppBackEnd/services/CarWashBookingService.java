@@ -34,6 +34,22 @@ public class CarWashBookingService {
                 .orElse(username.contains("@") ? username : null);
     }
 
+    private String toJobDescription(CarWashBooking booking) {
+        StringBuilder sb = new StringBuilder();
+        if (booking.getServiceTypes() != null && !booking.getServiceTypes().isEmpty()) {
+            sb.append(String.join(", ", booking.getServiceTypes()));
+        }
+        if (booking.getCarDescription() != null && !booking.getCarDescription().isBlank()) {
+            if (sb.length() > 0) sb.append(" - ");
+            sb.append(booking.getCarDescription());
+        }
+        if (booking.getCarPlate() != null && !booking.getCarPlate().isBlank()) {
+            if (sb.length() > 0) sb.append(" ");
+            sb.append("(").append(booking.getCarPlate()).append(")");
+        }
+        return sb.length() > 0 ? sb.toString() : "car wash booking";
+    }
+
     // ================= CREATE =================
     public CarWashBooking createBooking(CarWashBooking booking) {
         return repository.save(booking);
@@ -75,16 +91,17 @@ public class CarWashBookingService {
                 String newStatus = booking.getStatus();
                 if ("accepted".equalsIgnoreCase(newStatus)) {
                     notificationService.notifyRequestAccepted(
-                            booking.getClientUsername(), "https://172.19.80.1:3000/my-washes", "Car Wash Booking");
+                            booking.getClientUsername(), "https://172.19.80.1:3000/my-washes", "Car Wash Booking", toJobDescription(booking));
                 } else if ("completed".equalsIgnoreCase(newStatus)) {
                     notificationService.notifyServiceCompleted(
-                            booking.getClientUsername(), loggedInUsername, "car wash service");
+                            booking.getClientUsername(), loggedInUsername, "car wash service", toJobDescription(booking));
                 } else {
+                    String jobDesc = toJobDescription(booking);
                     String to = getClientEmail(booking.getClientUsername());
                     if (to != null) {
                         String subject = "Booking Status Updated";
                         String body = "Hi " + booking.getClientUsername() + ",\n\n" +
-                                "Your (" + booking.getServiceTypes() + ") booking status has been changed to: " +
+                                "Your " + jobDesc + " booking status has been changed to: " +
                                 newStatus + ".\n\nThank you!";
                         emailService.sendEmailNotification(to, subject, body);
                     }
