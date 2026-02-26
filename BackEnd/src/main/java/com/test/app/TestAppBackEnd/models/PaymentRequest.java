@@ -1,10 +1,13 @@
 package com.test.app.TestAppBackEnd.models;
+
 public class PaymentRequest {
     private Double amount;
     private String clientUsername;
     private String jobId;
     private String mechanicId;
     private String carWashId;
+    /** Stripe PaymentIntent ID - when set, backend verifies with Stripe before saving */
+    private String paymentIntentId;
 
     // Getters and setters
     public Double getAmount() { return amount; }
@@ -21,4 +24,7 @@ public class PaymentRequest {
 
     public String getCarWashId() { return carWashId; }
     public void setCarWashId(String carWashId) { this.carWashId = carWashId; }
+
+    public String getPaymentIntentId() { return paymentIntentId; }
+    public void setPaymentIntentId(String paymentIntentId) { this.paymentIntentId = paymentIntentId; }
 }

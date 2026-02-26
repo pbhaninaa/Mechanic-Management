@@ -20,6 +20,7 @@ public class PaymentService {
     private final UserProfileRepository userProfileRepository;
     private final CarWashBookingRepository carWashBookingRepository;
     private final EmailService emailService;
+    private final StripeService stripeService;
     private final double PLATFORM_FEE_PERCENT = 0.10; // 10% fee
 
     public PaymentService(
@@ -27,13 +28,15 @@ public class PaymentService {
             UserProfileRepository userProfileRepository,
             MechanicRequestRepository mechanicRequestRepository,
             CarWashBookingRepository carWashBookingRepository,
-            EmailService emailService
+            EmailService emailService,
+            StripeService stripeService
     ) {
         this.paymentRepository = paymentRepository;
         this.mechanicRequestRepository = mechanicRequestRepository;
         this.userProfileRepository = userProfileRepository;
         this.carWashBookingRepository = carWashBookingRepository;
         this.emailService = emailService;
+        this.stripeService = stripeService;
     }
 
     // ================= PROCESS PAYMENT =================
@@ -41,6 +44,12 @@ public class PaymentService {
     public Payment processPayment(PaymentRequest request) {
         if (request.getAmount() == null) {
             throw new IllegalArgumentException("Payment amount must be provided");
+        }
+
+        if (request.getPaymentIntentId() != null && !request.getPaymentIntentId().isBlank()) {
+            if (!stripeService.verifyPaymentSucceeded(request.getPaymentIntentId())) {
+                throw new IllegalArgumentException("Stripe payment not verified. Payment may have failed or already been processed.");
+            }
         }
 
         String jobId = request.getJobId();

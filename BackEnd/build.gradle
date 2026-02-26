@@ -48,6 +48,9 @@ dependencies {
 	// Email sender
 	implementation 'org.springframework.boot:spring-boot-starter-mail'
 	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.3.0'
+
+	// Stripe payment gateway
+	implementation 'com.stripe:stripe-java:24.10.0'
 }
 
 tasks.named('test') {

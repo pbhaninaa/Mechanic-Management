@@ -262,6 +262,10 @@ async createPayment(paymentRequest) {
   return this.post(API_ENDPOINTS.CREATE_PAYMENT, paymentRequest);
 }
 
+async createPaymentIntent(paymentRequest) {
+  return this.post(API_ENDPOINTS.CREATE_PAYMENT_INTENT, paymentRequest);
+}
+
 async updatePaymentStatus(paymentId, status) {
   return this.put(API_ENDPOINTS.UPDATE_PAYMENT_STATUS(paymentId, status));
 }

@@ -6,7 +6,8 @@
         <p class="mb-4">Complete your payment for the service below:</p>
 
         <v-alert type="info" density="compact" class="mb-4">
-          Payment confirms your booking. For Card, Bank Transfer, and Mobile Money, details are for record-keeping only—no actual charge is processed. Complete payment to confirm your service.
+          <span v-if="paymentMethod === 'Card' && stripeEnabled">Card payments use Stripe (test mode). Use 4242 4242 4242 4242 to test.</span>
+          <span v-else>Bank Transfer and Mobile Money are for record-keeping. Card payments process via Stripe when configured.</span>
         </v-alert>
 
         <!-- Payment Summary -->
@@ -32,14 +33,10 @@
         <!-- Payment Method -->
         <v-select v-model="paymentMethod" :items="paymentMethods" label="Select Payment Method" outlined required />
 
-        <!-- Card Info -->
-        <div v-if="paymentMethod === 'Card'" class="mt-4">
-          <InputField v-model="cardNumber" label="Card Number" type="text" required />
-          <div class="d-flex mt-2">
-            <InputField v-model="expiry" label="Expiry MM/YY" type="text" class="mr-2" required />
-            <InputField v-model="cvv" label="CVV" type="password" required />
-          </div>
-          <InputField v-model="cardHolder" label="Cardholder Name" type="text" required class="mt-2" />
+        <!-- Stripe Card Element (secure - PCI compliant) -->
+        <div v-if="paymentMethod === 'Card' && stripeEnabled" class="mt-4">
+          <label class="v-label mb-2 d-block">Card details</label>
+          <div ref="cardElementRef" class="stripe-card-element" />
         </div>
 
       </v-card-text>
@@ -52,10 +49,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted, watch, nextTick } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import PageContainer from '@/components/PageContainer.vue';
-import InputField from '@/components/InputField.vue';
 import Button from '@/components/Button.vue';
 import apiService from '@/api/apiService';
 import { JOB_STATUS } from '@/utils/constants';
@@ -78,20 +74,78 @@ const carWashId = String(route.query.carWashId || '');
 // Payment state
 const paymentMethod = ref<'Card' | 'Bank Transfer' | 'Mobile Money'>('Card');
 const paymentMethods = ['Card', 'Bank Transfer', 'Mobile Money'];
-const cardNumber = ref('');
-const expiry = ref('');
-const cvv = ref('');
-const cardHolder = ref('');
-
 const loading = ref(false);
+const cardElementRef = ref<HTMLDivElement | null>(null);
 
-// Form validation (card details optional—payment is confirmation only)
+const stripePk = (import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY as string) || '';
+const stripeEnabled = computed(() => !!stripePk && stripePk.startsWith('pk_'));
+
+const stripeRef = ref<any>(null);
+const cardElementRefVal = ref<any>(null);
+const cardElementReady = ref(false);
+
+async function mountStripeCard() {
+  if (!stripeRef.value || !cardElementRef.value) return;
+  if (cardElementRefVal.value) return; // already mounted
+  const elements = stripeRef.value.elements();
+  const card = elements.create('card', { style: { base: { fontSize: '16px' } } });
+  card.mount(cardElementRef.value);
+  cardElementRefVal.value = card;
+  cardElementReady.value = true;
+}
+
+onMounted(async () => {
+  if (stripeEnabled.value && stripePk) {
+    const { loadStripe } = await import('@stripe/stripe-js');
+    stripeRef.value = await loadStripe(stripePk);
+    await nextTick(); // wait for v-if to render the card container
+    if (paymentMethod.value === 'Card') await mountStripeCard();
+  }
+});
+
+watch(paymentMethod, async (method) => {
+  if (method === 'Card' && stripeEnabled.value && stripeRef.value) {
+    await nextTick();
+    await mountStripeCard();
+  } else {
+    cardElementRefVal.value = null;
+    cardElementReady.value = false;
+  }
+});
+
 const isFormValid = computed(() => {
   if (!bookingId || !amount || !clientUsername || !paymentMethod.value) return false;
+  if (paymentMethod.value === 'Card' && stripeEnabled.value) return cardElementReady.value;
   return true;
 });
 
-// Process payment (double-submit protected via loading state)
+const completePaymentAndUpdateJob = async (paymentPayload: any, paymentIntentId?: string) => {
+  if (paymentIntentId) paymentPayload.paymentIntentId = paymentIntentId;
+
+  const res = await apiService.createPayment(paymentPayload);
+  if (res && res.statusCode === 200) {
+    let job: any = null;
+    if (jobDes.toLowerCase() !== "car wash service") {
+      const mechanicRes = await apiService.getMechanicRequestsById(bookingId);
+      job = mechanicRes?.data ?? mechanicRes;
+    } else {
+      const carWashRes = await apiService.getCarWashBookingById(bookingId);
+      job = carWashRes?.data ?? carWashRes;
+    }
+    if (job) {
+      job.status = JOB_STATUS.PAID;
+      if (jobDes.toLowerCase() === "car wash service") {
+        await apiService.updateCarWashBooking(job.id, job);
+      } else {
+        await apiService.updateRequestMechanic(job);
+      }
+    }
+    router.push({ name: "Payments", query: { bookingId } });
+  } else {
+    throw new Error(res?.message || "Payment was not successful");
+  }
+};
+
 const processPayment = async () => {
   if (loading.value) return;
   loading.value = true;
@@ -102,35 +156,24 @@ const processPayment = async () => {
       amount: amount,
       clientUsername: clientUsername,
     };
+    if (mechanicId) paymentPayload.mechanicId = mechanicId;
+    if (carWashId) paymentPayload.carWashId = carWashId;
 
-    let job: any = null;
+    if (paymentMethod.value === 'Card' && stripeEnabled.value && stripeRef.value && cardElementRefVal.value) {
+      const intentRes = await apiService.createPaymentIntent(paymentPayload);
+      const clientSecret = intentRes?.data?.clientSecret || intentRes?.clientSecret;
+      const paymentIntentId = intentRes?.data?.paymentIntentId || intentRes?.paymentIntentId;
 
-    if (jobDes.toLowerCase() !== "car wash service") {
-      if (mechanicId) paymentPayload.mechanicId = mechanicId;
-      const mechanicRes = await apiService.getMechanicRequestsById(bookingId);
-      job = mechanicRes?.data ?? mechanicRes;
-    } else {
-      if (carWashId) paymentPayload.carWashId = carWashId;
-      const carWashRes = await apiService.getCarWashBookingById(bookingId);
-      job = carWashRes?.data ?? carWashRes;
-    }
+      if (!clientSecret) throw new Error(intentRes?.message || "Failed to create payment intent");
 
-    const res = await apiService.createPayment(paymentPayload);
-
-    if (res && res.statusCode === 200) {
-      job.status = JOB_STATUS.PAID;
-      if (jobDes.toLowerCase() === "car wash service") {
-        await apiService.updateCarWashBooking(job.id, job);
-      } else {
-        await apiService.updateRequestMechanic(job);
-      }
-
-      router.push({
-        name: "Payments",
-        query: { bookingId },
+      const { error } = await stripeRef.value.confirmCardPayment(clientSecret, {
+        payment_method: { card: cardElementRefVal.value },
       });
+
+      if (error) throw new Error(error.message || "Payment failed");
+      await completePaymentAndUpdateJob(paymentPayload, paymentIntentId);
     } else {
-      throw new Error(res?.message || "Payment was not successful");
+      await completePaymentAndUpdateJob(paymentPayload);
     }
   } catch (err: any) {
     // Error toast shown by global axios interceptor
@@ -138,14 +181,17 @@ const processPayment = async () => {
     loading.value = false;
   }
 };
-
-
-
 </script>
 
 <style scoped>
 .v-card {
   border-radius: 12px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+}
+.stripe-card-element {
+  padding: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.38);
+  border-radius: 4px;
+  min-height: 40px;
 }
 </style>

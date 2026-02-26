@@ -33,6 +33,7 @@ export const API_ENDPOINTS = {
   PAYMENT_BY_CARWASHID: (carWashId) => `/payments/carWash/${carWashId}`,
 
   CREATE_PAYMENT: '/payments/pay',
+  CREATE_PAYMENT_INTENT: '/payments/create-intent',
   UPDATE_PAYMENT_STATUS: (id, status) => `/payments/${id}/status?status=${status}`,
   // Car Wash Booking Endpoints
   CARWASH_BOOKINGS: '/carwash-bookings',

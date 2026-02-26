@@ -1,14 +1,17 @@
 package com.test.app.TestAppBackEnd.controllers;
 
+import com.stripe.exception.StripeException;
 import com.test.app.TestAppBackEnd.models.ApiResponse;
 import com.test.app.TestAppBackEnd.models.PaymentRequest;
 import com.test.app.TestAppBackEnd.entities.Payment;
 import com.test.app.TestAppBackEnd.services.PaymentService;
+import com.test.app.TestAppBackEnd.services.StripeService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/payments")
@@ -16,6 +19,37 @@ public class PaymentController {
 
     @Autowired
     private PaymentService paymentService;
+
+    @Autowired
+    private StripeService stripeService;
+
+    /** Create Stripe PaymentIntent for card payments - returns clientSecret for frontend */
+    @PostMapping("/create-intent")
+    public ResponseEntity<ApiResponse<Map<String, String>>> createPaymentIntent(@RequestBody PaymentRequest request) {
+        if (request.getAmount() == null || request.getJobId() == null || request.getClientUsername() == null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiResponse<>("amount, jobId and clientUsername required", HttpStatus.BAD_REQUEST.value(), null));
+        }
+        try {
+            long amountCents = Math.round(request.getAmount() * 100);
+            if (amountCents < 50) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(new ApiResponse<>("Amount must be at least R0.50", HttpStatus.BAD_REQUEST.value(), null));
+            }
+            Map<String, String> intent = stripeService.createPaymentIntent(
+                    amountCents,
+                    "zar",
+                    request.getClientUsername(),
+                    request.getJobId(),
+                    request.getMechanicId(),
+                    request.getCarWashId()
+            );
+            return ResponseEntity.ok(new ApiResponse<>("Payment intent created", HttpStatus.OK.value(), intent));
+        } catch (StripeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiResponse<>("Stripe error: " + e.getMessage(), HttpStatus.BAD_REQUEST.value(), null));
+        }
+    }
 
     // Create / Process Payment
     @PostMapping("/pay")
