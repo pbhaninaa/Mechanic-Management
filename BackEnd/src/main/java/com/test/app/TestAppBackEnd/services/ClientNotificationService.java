@@ -12,35 +12,43 @@ import java.nio.charset.StandardCharsets;
 public class ClientNotificationService {
 
     private final EmailService emailService;
+    private final SmsService smsService;
     private final UserProfileRepository userProfileRepository;
 
     public ClientNotificationService(EmailService emailService,
+                                     SmsService smsService,
                                      UserProfileRepository userProfileRepository) {
         this.emailService = emailService;
+        this.smsService = smsService;
         this.userProfileRepository = userProfileRepository;
     }
 
     private String getClientEmail(String username) {
         if (username == null || username.isBlank()) return null;
         return userProfileRepository.findByUsername(username)
-                .map(p -> p.getEmail())
+                .map(UserProfile::getEmail)
                 .filter(e -> e != null && !e.isBlank())
                 .orElse(username.contains("@") ? username : null);
+    }
+
+    private UserProfile getClientProfile(String username) {
+        if (username == null || username.isBlank()) return null;
+        return userProfileRepository.findByUsername(username).orElse(null);
     }
 
     private static final String BUSINESS_ADDRESS = "123 Main Street, Cape Town, South Africa";
 
     @Async
     public void notifyRequestAccepted(String username, String paymentLink, String serviceType, String jobDescription) {
-        String to = getClientEmail(username);
-        if (to == null) return;
+        UserProfile profile = getClientProfile(username);
+        String toEmail = profile != null && profile.getEmail() != null && !profile.getEmail().isBlank()
+                ? profile.getEmail() : (username != null && username.contains("@") ? username : null);
 
         String jobContext = (jobDescription != null && !jobDescription.isBlank())
                 ? jobDescription
                 : serviceType;
 
         String subject = "Your " + serviceType + " Request Has Been Accepted";
-
         String body = "Hi " + username + ",\n\n" +
                 "Good news! Your request for " + jobContext + " has been accepted.\n\n" +
                 "To confirm your booking, please complete your payment using the link below:\n\n" +
@@ -48,13 +56,21 @@ public class ClientNotificationService {
                 "You can also access payment from your Request History in the app.\n\n" +
                 "Thank you for choosing our service!";
 
-        emailService.sendEmailNotification(to, subject, body);
+        if (toEmail != null) {
+            emailService.sendEmailNotification(toEmail, subject, body);
+        }
+
+        if (profile != null && profile.getPhoneNumber() != null && !profile.getPhoneNumber().isBlank()) {
+            String smsBody = "MechConnect: Your " + jobContext + " request has been accepted. Pay now: " + paymentLink;
+            smsService.sendSms(profile.getPhoneNumber(), profile.getCountryCode(), smsBody);
+        }
     }
 
     @Async
     public void notifyServiceCompleted(String clientUsername, String loggedInUsername, String serviceType, String jobDescription) {
-        String to = getClientEmail(clientUsername);
-        if (to == null) return;
+        UserProfile profile = getClientProfile(clientUsername);
+        String toEmail = profile != null && profile.getEmail() != null && !profile.getEmail().isBlank()
+                ? profile.getEmail() : (clientUsername != null && clientUsername.contains("@") ? clientUsername : null);
 
         String jobContext = (jobDescription != null && !jobDescription.isBlank())
                 ? jobDescription
@@ -71,16 +87,10 @@ public class ClientNotificationService {
 
         // Encode for URLs
         String encodedAddress = URLEncoder.encode(collectionAddress, StandardCharsets.UTF_8);
-
-        // Waze link
         String wazeLink = "https://waze.com/ul?q=" + encodedAddress + "&navigate=yes";
-
-        // Google Maps fallback link
         String googleLink = "https://www.google.com/maps/dir/?api=1&destination=" + encodedAddress;
 
-        // HTML email version with clickable buttons (more user-friendly)
         String subject = "Your Car Is Ready for Collection";
-
         String body = "Hi " + clientUsername + ",\n\n" +
                 "Your " + jobContext + " has been successfully completed.\n\n" +
                 "You can now come and collect your car at your convenience.\n\n" +
@@ -90,6 +100,13 @@ public class ClientNotificationService {
                 "If you have any questions, feel free to contact us.\n\n" +
                 "Thank you for choosing our service!";
 
-        emailService.sendEmailNotification(to, subject, body);
+        if (toEmail != null) {
+            emailService.sendEmailNotification(toEmail, subject, body);
+        }
+
+        if (profile != null && profile.getPhoneNumber() != null && !profile.getPhoneNumber().isBlank()) {
+            String smsBody = "MechConnect: Your " + jobContext + " is done. Collect at: " + collectionAddress + " | Waze: " + wazeLink;
+            smsService.sendSms(profile.getPhoneNumber(), profile.getCountryCode(), smsBody);
+        }
     }
 }

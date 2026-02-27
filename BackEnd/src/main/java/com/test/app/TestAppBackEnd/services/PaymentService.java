@@ -1,6 +1,7 @@
 package com.test.app.TestAppBackEnd.services;
 
 import com.test.app.TestAppBackEnd.entities.Payment;
+import com.test.app.TestAppBackEnd.entities.UserProfile;
 import com.test.app.TestAppBackEnd.models.PaymentRequest;
 import com.test.app.TestAppBackEnd.repositories.CarWashBookingRepository;
 import com.test.app.TestAppBackEnd.repositories.MechanicRequestRepository;
@@ -20,6 +21,7 @@ public class PaymentService {
     private final UserProfileRepository userProfileRepository;
     private final CarWashBookingRepository carWashBookingRepository;
     private final EmailService emailService;
+    private final SmsService smsService;
     private final StripeService stripeService;
     private final double PLATFORM_FEE_PERCENT = 0.10; // 10% fee
 
@@ -29,6 +31,7 @@ public class PaymentService {
             MechanicRequestRepository mechanicRequestRepository,
             CarWashBookingRepository carWashBookingRepository,
             EmailService emailService,
+            SmsService smsService,
             StripeService stripeService
     ) {
         this.paymentRepository = paymentRepository;
@@ -36,6 +39,7 @@ public class PaymentService {
         this.userProfileRepository = userProfileRepository;
         this.carWashBookingRepository = carWashBookingRepository;
         this.emailService = emailService;
+        this.smsService = smsService;
         this.stripeService = stripeService;
     }
 
@@ -123,25 +127,16 @@ public class PaymentService {
     @Async
     public void notifyServiceProvider(Payment payment) {
         try {
-            String recipientEmail = null;
+            UserProfile profile = null;
             String serviceType = null;
 
-            // Determine recipient and service type dynamically
             if (payment.getMechanicId() != null) {
-                recipientEmail = userProfileRepository.findById(payment.getMechanicId())
-                        .map(profile -> profile.getEmail())
-                        .orElse(null);
-
-                // Fetch the mechanic request to get description/type
+                profile = userProfileRepository.findById(payment.getMechanicId()).orElse(null);
                 serviceType = mechanicRequestRepository.findById(payment.getJobId())
-                        .map(request -> "Mechanic Service: " + request.getDescription())
+                        .map(r -> "Mechanic Service: " + r.getDescription())
                         .orElse("Mechanic Service");
             } else if (payment.getCarWashId() != null) {
-                recipientEmail = userProfileRepository.findById(payment.getCarWashId())
-                        .map(profile -> profile.getEmail())
-                        .orElse(null);
-
-                // Fetch the car wash booking to get description/type
+                profile = userProfileRepository.findById(payment.getCarWashId()).orElse(null);
                 serviceType = carWashBookingRepository.findById(payment.getJobId())
                         .map(booking -> {
                             StringBuilder sb = new StringBuilder("Car Wash: ");
@@ -156,14 +151,15 @@ public class PaymentService {
                         .orElse("Car Wash Service");
             }
 
-            if (recipientEmail != null) {
-                String subject = "New Payment Received";
-                String body = "Hi,\n\n" +
-                        "You have received a new payment for " + serviceType + ".\n\n" +
-                        "Amount: R" + payment.getAmount() + "\n" +
-                        "Client: " + payment.getClientUsername() + "\n\nThank you!";
+            if (profile == null) return;
 
-                emailService.sendEmail(recipientEmail, "no-reply@testapp.com", subject, body);
+            String msg = "You have received a new payment for " + serviceType + ". Amount: R" + payment.getAmount() + ", Client: " + payment.getClientUsername();
+
+            if (profile.getEmail() != null && !profile.getEmail().isBlank()) {
+                emailService.sendEmail(profile.getEmail(), "no-reply@testapp.com", "New Payment Received", "Hi,\n\n" + msg + "\n\nThank you!");
+            }
+            if (profile.getPhoneNumber() != null && !profile.getPhoneNumber().isBlank()) {
+                smsService.sendSms(profile.getPhoneNumber(), profile.getCountryCode(), "MechConnect: " + msg);
             }
 
         } catch (Exception e) {
