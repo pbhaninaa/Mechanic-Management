@@ -5,6 +5,7 @@ import com.test.app.TestAppBackEnd.repositories.MechanicRequestRepository;
 import com.test.app.TestAppBackEnd.repositories.UserProfileRepository;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -60,6 +61,13 @@ public class MechanicRequestService {
         return enrichWithPhoneNumbers(all);
     }
 
+    public List<MechanicRequest> getAll(String search) {
+        List<MechanicRequest> list = (search != null && !search.isBlank())
+                ? repository.findAllWithSearch(search.trim())
+                : repository.findAll();
+        return enrichWithPhoneNumbers(list);
+    }
+
     public Optional<MechanicRequest> getById(String id) {
         return repository.findById(id).map(r -> {
             enrichWithPhoneNumber(r);
@@ -71,8 +79,35 @@ public class MechanicRequestService {
         return enrichWithPhoneNumbers(repository.findByUsername(username));
     }
 
+    public List<MechanicRequest> getByUsername(String username, String search) {
+        List<MechanicRequest> list = (search != null && !search.isBlank())
+                ? repository.findByUsernameWithSearch(username, search.trim())
+                : repository.findByUsername(username);
+        return enrichWithPhoneNumbers(list);
+    }
+
     public List<MechanicRequest> getByMechanicId(String mechanicId) {
         return enrichWithPhoneNumbers(repository.findByMechanicId(mechanicId));
+    }
+
+    public List<MechanicRequest> getByMechanicId(String mechanicId, String search) {
+        List<MechanicRequest> list = (search != null && !search.isBlank())
+                ? repository.findByMechanicIdWithSearch(mechanicId, search.trim())
+                : repository.findByMechanicId(mechanicId);
+        return enrichWithPhoneNumbers(list);
+    }
+
+    public List<MechanicRequest> getByUsernameAndDateRange(String username, LocalDate startDate, LocalDate endDate) {
+        return enrichWithPhoneNumbers(repository.findByUsernameAndDateBetweenOrderByDateDesc(username, startDate, endDate));
+    }
+
+    public List<MechanicRequest> getByMechanicIdAndDateRange(String mechanicId, LocalDate startDate, LocalDate endDate) {
+        return enrichWithPhoneNumbers(repository.findByMechanicIdAndDateBetweenOrderByDateDesc(mechanicId, startDate, endDate));
+    }
+
+    /** Completed jobs only for a mechanic within date range */
+    public List<MechanicRequest> getCompletedJobsByMechanicIdAndDateRange(String mechanicId, LocalDate startDate, LocalDate endDate) {
+        return enrichWithPhoneNumbers(repository.findByMechanicIdAndStatusAndDateBetweenOrderByDateDesc(mechanicId, "completed", startDate, endDate));
     }
 
     // ================= SPECIAL QUERIES =================

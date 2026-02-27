@@ -27,16 +27,27 @@ public class CarWashController {
 
     // Get all bookings
     @GetMapping
-    public ResponseEntity<ApiResponse<List<CarWashBooking>>> getAllBookings() {
-        List<CarWashBooking> bookings = bookingService.getAllBookings();
+    public ResponseEntity<ApiResponse<List<CarWashBooking>>> getAllBookings(@RequestParam(required = false) String search) {
+        List<CarWashBooking> bookings = bookingService.getAllBookings(search);
         return ResponseEntity.ok(new ApiResponse<>("Fetched all bookings", HttpStatus.OK.value(), bookings));
     }
 
     // Get bookings by client
     @GetMapping("/client/{username}")
-    public ResponseEntity<ApiResponse<List<CarWashBooking>>> getBookingsByClient(@PathVariable String username) {
-        List<CarWashBooking> bookings = bookingService.getBookingsByClient(username);
+    public ResponseEntity<ApiResponse<List<CarWashBooking>>> getBookingsByClient(
+            @PathVariable String username,
+            @RequestParam(required = false) String search) {
+        List<CarWashBooking> bookings = bookingService.getBookingsByClient(username, search);
         return ResponseEntity.ok(new ApiResponse<>("Fetched bookings for client: " + username, HttpStatus.OK.value(), bookings));
+    }
+
+    // Get bookings by car wash provider (for Manage Washes)
+    @GetMapping("/carwash/{carWashId}")
+    public ResponseEntity<ApiResponse<List<CarWashBooking>>> getBookingsByCarWashId(
+            @PathVariable String carWashId,
+            @RequestParam(required = false) String search) {
+        List<CarWashBooking> bookings = bookingService.getBookingsByCarWashId(carWashId, search);
+        return ResponseEntity.ok(new ApiResponse<>("Fetched bookings for car wash: " + carWashId, HttpStatus.OK.value(), bookings));
     }
 
     // Get booking by ID

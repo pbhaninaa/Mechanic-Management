@@ -94,19 +94,15 @@ public class UserProfileController {
 
     // ================= GET ALL PROFILES (ADMIN ONLY) =================
     @GetMapping("/all")
-    public ResponseEntity<ApiResponse<Iterable<UserProfile>>> getAllProfiles(Authentication authentication) {
+    public ResponseEntity<ApiResponse<Iterable<UserProfile>>> getAllProfiles(
+            Authentication authentication,
+            @RequestParam(required = false) String search) {
         String loggedInUsername = authentication.getName();
         boolean isAdmin = userProfileService.isAdminByUsername(loggedInUsername);
 
         System.out.println("[GET ALL] Logged-in user: " + loggedInUsername + ", IsAdmin: " + isAdmin);
 
-        // if (!isAdmin) {
-        // System.out.println("[GET ALL] Unauthorized attempt by " + loggedInUsername);
-        // return ResponseEntity.status(HttpStatus.FORBIDDEN)
-        // .body(new ApiResponse<>("Unauthorized", 403, null, true));
-        // }
-
-        Iterable<UserProfile> profiles = userProfileService.getAllProfiles();
+        Iterable<UserProfile> profiles = userProfileService.getAllProfiles(search);
         System.out.println("[GET ALL] Response ready with all profiles");
         return ResponseEntity.ok(new ApiResponse<>("All profiles retrieved", HttpStatus.OK.value(), profiles));
     }

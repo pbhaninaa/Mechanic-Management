@@ -11,6 +11,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.scheduling.annotation.Async;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 
 @Service
@@ -87,20 +90,66 @@ public class PaymentService {
         return paymentRepository.findAll();
     }
 
+    public List<Payment> getAllPayments(String search) {
+        if (search != null && !search.isBlank()) {
+            return paymentRepository.findAllWithSearch(search.trim());
+        }
+        return paymentRepository.findAll();
+    }
+
     public List<Payment> getPaymentsByClient(String clientUsername) {
         return paymentRepository.findByClientUsername(clientUsername);
     }
 
-    public Payment getPaymentById(String id) {
-        return paymentRepository.findById(id).orElse(null);
+    public List<Payment> getPaymentsByClient(String clientUsername, String search) {
+        if (search != null && !search.isBlank()) {
+            return paymentRepository.findByClientUsernameWithSearch(clientUsername, search.trim());
+        }
+        return paymentRepository.findByClientUsername(clientUsername);
     }
 
     public List<Payment> getPaymentsByMechanic(String mechanicId) {
         return paymentRepository.findByMechanicId(mechanicId);
     }
 
+    public List<Payment> getPaymentsByMechanic(String mechanicId, String search) {
+        if (search != null && !search.isBlank()) {
+            return paymentRepository.findByMechanicIdWithSearch(mechanicId, search.trim());
+        }
+        return paymentRepository.findByMechanicId(mechanicId);
+    }
+
     public List<Payment> getPaymentsByCarWash(String carWashId) {
         return paymentRepository.findByCarWashId(carWashId);
+    }
+
+    public List<Payment> getPaymentsByCarWash(String carWashId, String search) {
+        if (search != null && !search.isBlank()) {
+            return paymentRepository.findByCarWashIdWithSearch(carWashId, search.trim());
+        }
+        return paymentRepository.findByCarWashId(carWashId);
+    }
+
+    public Payment getPaymentById(String id) {
+        return paymentRepository.findById(id).orElse(null);
+    }
+
+    /** Earnings (payments) for a mechanic within date range (paidAt). */
+    public List<Payment> getPaymentsByMechanicAndDateRange(String mechanicId, String startDate, String endDate) {
+        LocalDate start = LocalDate.parse(startDate);
+        LocalDate end = LocalDate.parse(endDate);
+        LocalDateTime startTime = start.atStartOfDay();
+        LocalDateTime endTime = end.atTime(LocalTime.MAX);
+        return paymentRepository.findByMechanicIdAndPaidAtBetweenOrderByPaidAtDesc(mechanicId, startTime, endTime);
+    }
+
+    /** Earnings (payments) for a car wash within date range (paidAt). */
+    public List<Payment> getPaymentsByCarWashAndDateRange(String carWashId, String startDate, String endDate) {
+        LocalDate start = LocalDate.parse(startDate);
+        LocalDate end = LocalDate.parse(endDate);
+        LocalDateTime startTime = start.atStartOfDay();
+        LocalDateTime endTime = end.atTime(LocalTime.MAX);
+        return paymentRepository.findByCarWashIdAndPaidAtBetweenOrderByPaidAtDesc(carWashId, startTime, endTime);
     }
 
     // ================= DELETE =================

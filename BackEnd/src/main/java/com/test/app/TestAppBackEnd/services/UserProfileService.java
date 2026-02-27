@@ -78,6 +78,13 @@ public class UserProfileService {
         return repository.findAll();
     }
 
+    public Iterable<UserProfile> getAllProfiles(String search) {
+        if (search != null && !search.isBlank()) {
+            return repository.findAllWithSearch(search.trim());
+        }
+        return repository.findAll();
+    }
+
     // ================= UPDATE =================
     public Optional<UserProfile> updateProfile(String username, UserProfile updatedProfile, boolean isAdmin) {
         return repository.findByUsername(username)

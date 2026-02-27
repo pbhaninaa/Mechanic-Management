@@ -25,8 +25,8 @@ public class HistoryController {
 
     // Get all histories
     @GetMapping
-    public ResponseEntity<ApiResponse<List<MechanicRequest>>> getAll() {
-        List<MechanicRequest> histories = mechanicRequestService.getAll();
+    public ResponseEntity<ApiResponse<List<MechanicRequest>>> getAll(@RequestParam(required = false) String search) {
+        List<MechanicRequest> histories = mechanicRequestService.getAll(search);
         return ResponseEntity.ok(
                 new ApiResponse<>("Fetched all request histories", HttpStatus.OK.value(), histories)
         );
@@ -34,9 +34,10 @@ public class HistoryController {
 
     // Get by Username
     @GetMapping("/user/{username}")
-    public ResponseEntity<ApiResponse<List<MechanicRequest>>> getByUsername(@PathVariable String username) {
-        List<MechanicRequest> histories = mechanicRequestService.getByUsername(username);
-
+    public ResponseEntity<ApiResponse<List<MechanicRequest>>> getByUsername(
+            @PathVariable String username,
+            @RequestParam(required = false) String search) {
+        List<MechanicRequest> histories = mechanicRequestService.getByUsername(username, search);
         return ResponseEntity.ok(
                 new ApiResponse<>("Fetched request history for user: " + username, HttpStatus.OK.value(), histories)
         );
@@ -44,8 +45,10 @@ public class HistoryController {
 
     // Get by mechanic id
     @GetMapping("/mechanic/{mechanicId}")
-    public ResponseEntity<ApiResponse<List<MechanicRequest>>> getByMechanicId(@PathVariable String mechanicId) {
-        List<MechanicRequest> histories = mechanicRequestService.getByMechanicId(mechanicId);
+    public ResponseEntity<ApiResponse<List<MechanicRequest>>> getByMechanicId(
+            @PathVariable String mechanicId,
+            @RequestParam(required = false) String search) {
+        List<MechanicRequest> histories = mechanicRequestService.getByMechanicId(mechanicId, search);
         if (histories.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
                     new ApiResponse<>("No request history found for mechanic ID: " + mechanicId, HttpStatus.NOT_FOUND.value(), histories)

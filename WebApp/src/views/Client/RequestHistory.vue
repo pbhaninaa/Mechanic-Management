@@ -1,10 +1,68 @@
 <template>
   <PageContainer>
     <v-card-text>
+      <v-row v-if="!historyError" class="mb-4" align="center">
+        <v-col cols="12" sm="auto">
+          <span class="text-subtitle-2 mr-2">Date range:</span>
+        </v-col>
+        <v-col cols="12" sm="2">
+          <v-text-field
+            v-model="reportStartDate"
+            type="date"
+            label="From"
+            density="compact"
+            hide-details
+            variant="outlined"
+          />
+        </v-col>
+        <v-col cols="12" sm="2">
+          <v-text-field
+            v-model="reportEndDate"
+            type="date"
+            label="To"
+            density="compact"
+            hide-details
+            variant="outlined"
+          />
+        </v-col>
+        <v-col cols="12" sm="auto">
+          <v-btn
+            color="primary"
+            variant="tonal"
+            :loading="exportLoading"
+            :disabled="!reportStartDate || !reportEndDate"
+            @click="exportMechanicRequestsReport"
+          >
+            <v-icon start size="18">mdi-download</v-icon>
+            Export CSV
+          </v-btn>
+        </v-col>
+        <v-col cols="12" sm="auto">
+          <v-btn
+            color="primary"
+            variant="tonal"
+            :loading="emailReportLoading"
+            :disabled="!reportStartDate || !reportEndDate"
+            @click="emailMechanicRequestsReport"
+          >
+            <v-icon start size="18">mdi-email</v-icon>
+            Email report
+          </v-btn>
+        </v-col>
+      </v-row>
       <div v-if="historyLoading">Loading your requests...</div>
       <div v-else-if="historyError" class="error">{{ historyError }}</div>
       <div v-else>
-        <TableComponent title="My Request History" :headers="headers" :items="requests"  :items-per-page="10" :loading="historyLoading">
+        <TableComponent
+          title="My Request History"
+          :headers="headers"
+          :items="requests"
+          :items-per-page="10"
+          :loading="historyLoading"
+          show-search
+          search-placeholder="Search description, date, status..."
+          @update:search-value="onSearch"
+        >
           <template #item.status="{ item }">
             <v-chip :color="getStatusColor(item.status)" dark>
               {{ item.status }}
@@ -34,7 +92,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, onMounted, watch } from "vue";
 import PageContainer from "@/components/PageContainer.vue";
 import apiService from "@/api/apiService";
 import { JOB_STATUS } from "@/utils/constants";
@@ -44,6 +102,9 @@ import TableComponent from "@/components/TableComponent.vue";
 import { formatDate } from "@/composables/useDateFormat";
 import { getSafeJson } from "@/utils/storage";
 import { useCurrency } from "@/composables/useCurrency";
+import API from "@/api/axios";
+import { API_ENDPOINTS } from "@/utils/constants";
+import { toast } from "@/utils/toast";
 const router = useRouter();
 // TypeScript interface matching backend entity
 interface RequestHistory {
@@ -73,6 +134,59 @@ const requests = ref<RequestHistory[]>([]);
 const historyLoading = ref(false);
 const historyError = ref<string | null>(null);
 
+// Report date range (default last 30 days)
+const defaultStart = () => {
+  const d = new Date();
+  d.setDate(d.getDate() - 30);
+  return d.toISOString().slice(0, 10);
+};
+const defaultEnd = () => new Date().toISOString().slice(0, 10);
+const reportStartDate = ref(defaultStart());
+const reportEndDate = ref(defaultEnd());
+const exportLoading = ref(false);
+const emailReportLoading = ref(false);
+
+function exportMechanicRequestsReport() {
+  if (!reportStartDate.value || !reportEndDate.value) return;
+  const profile = getSafeJson("userProfile", {}) || getSafeJson("profile", {});
+  exportLoading.value = true;
+  API.get(API_ENDPOINTS.REPORTS_MECHANIC_REQUESTS_EXPORT, {
+    params: {
+      username: profile?.username,
+      startDate: reportStartDate.value,
+      endDate: reportEndDate.value,
+    },
+    responseType: "blob",
+  })
+    .then((res) => {
+      const blob = new Blob([res.data], { type: "text/csv" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `mechanic-requests-history-${reportStartDate.value}-to-${reportEndDate.value}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success("Report downloaded.");
+    })
+    .catch(() => toast.error("Export failed."))
+    .finally(() => { exportLoading.value = false; });
+}
+
+function emailMechanicRequestsReport() {
+  if (!reportStartDate.value || !reportEndDate.value) return;
+  const profile = getSafeJson("userProfile", {}) || getSafeJson("profile", {});
+  emailReportLoading.value = true;
+  apiService
+    .emailMechanicRequestsReport({
+      username: profile?.username,
+      startDate: reportStartDate.value,
+      endDate: reportEndDate.value,
+    })
+    .then(() => {})
+    .catch(() => toast.error("Failed to send report email."))
+    .finally(() => { emailReportLoading.value = false; });
+}
+
 // Table headers
 const headers = [
   { title: "Description", value: "description" },
@@ -84,15 +198,18 @@ const headers = [
 
 
 
-// Fetch request history for current user
+const searchQuery = ref("");
+function onSearch(q) {
+  searchQuery.value = q;
+}
 const loadRequests = async () => {
   const profile = getSafeJson("userProfile", {}) || getSafeJson("profile", {});
   const username = profile?.username;
   historyLoading.value = true;
   historyError.value = null;
-
   try {
-    const response = await apiService.getUserRequestHistory(username);
+    const params = searchQuery.value ? { search: searchQuery.value } : {};
+    const response = await apiService.getUserRequestHistory(username, params);
     const data = Array.isArray(response.data) ? response.data : [];
     requests.value = sortRequestsByStatus(data);
   } catch (err: any) {
@@ -102,6 +219,7 @@ const loadRequests = async () => {
     historyLoading.value = false;
   }
 };
+watch(searchQuery, () => loadRequests());
 const goToDirections = (booking: any) => {
   router.push({
     name: "Mapview",

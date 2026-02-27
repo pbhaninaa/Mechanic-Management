@@ -7,6 +7,9 @@
         :items="jobs"
         :items-per-page="10"
         :loading="loading"
+        show-search
+        search-placeholder="Search client, description, status..."
+        @update:search-value="onSearch"
       >
         <template #item.status="{ item }">
           <v-chip :color="getStatusColor(item.status)" dark>
@@ -43,7 +46,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, watch } from "vue";
 import PageContainer from "@/components/PageContainer.vue";
 import { getStatusColor, sortRequestsByStatus } from "@/utils/helper";
 import apiService from "@/api/apiService";
@@ -140,15 +143,19 @@ const updateStatus = async (job: MechanicJob, newStatus: string) => {
   }
 };
 
+const searchQuery = ref("");
+function onSearch(q) {
+  searchQuery.value = q;
+}
 const fetchJobs = async () => {
   loading.value = true;
   try {
     const role = (loggedInUser?.roles?.[0] ?? "").toString().toLowerCase();
     const isAdmin = role === "admin";
-
+    const params = searchQuery.value ? { search: searchQuery.value } : {};
     let data: MechanicJob[] = [];
     if (isAdmin) {
-      const res = await apiService.getAllRequestHistory();
+      const res = await apiService.getAllRequestHistory(params);
       data = Array.isArray(res?.data) ? res.data : [];
     } else {
       const mechanicId = loggedInUser?.id;
@@ -156,9 +163,8 @@ const fetchJobs = async () => {
         jobs.value = [];
         return;
       }
-      const res = await apiService.getRequestHistoryByMechanicId(mechanicId);
+      const res = await apiService.getRequestHistoryByMechanicId(mechanicId, params);
       data = Array.isArray(res?.data) ? res.data : [];
-      // Service provider: hide completed jobs, show only active ones
       data = data.filter((j) => !isStatus(j, JOB_STATUS.COMPLETED));
     }
     jobs.value = sortRequestsByStatus(data, "manage");
@@ -169,6 +175,7 @@ const fetchJobs = async () => {
     loading.value = false;
   }
 };
+watch(searchQuery, () => fetchJobs());
 
 onMounted(fetchJobs);
 </script>

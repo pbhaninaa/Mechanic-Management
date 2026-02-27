@@ -4,6 +4,7 @@ package com.test.app.TestAppBackEnd.services;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import org.slf4j.Logger;
+import org.springframework.core.io.ByteArrayResource;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -45,6 +46,23 @@ public class EmailService {
         mailSender.send(message);
     }
 
+    /**
+     * Send email with a CSV attachment (e.g. for history reports).
+     */
+    public void sendEmailWithAttachment(String to, String subject, String bodyText,
+                                        byte[] attachmentBytes, String attachmentFileName) throws MessagingException {
+        MimeMessage message = mailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+        helper.setTo(to);
+        helper.setFrom(fromAddress);
+        helper.setSubject(subject);
+        helper.setText(bodyText, false);
+        helper.addAttachment(attachmentFileName, new ByteArrayResource(attachmentBytes), "text/csv");
+
+        mailSender.send(message);
+    }
+
     @Async
     public void sendEmailNotification(String toEmail, String subject, String body) {
         sendEmailNotification(toEmail, subject, body, false);
@@ -57,6 +75,17 @@ public class EmailService {
             log.info("Email sent successfully to {}", toEmail);
         } catch (Exception e) {
             log.error("Failed to send email to {}: {}", toEmail, e.getMessage(), e);
+        }
+    }
+
+    @Async
+    public void sendReportEmail(String toEmail, String subject, String bodyText,
+                                byte[] csvBytes, String attachmentFileName) {
+        try {
+            sendEmailWithAttachment(toEmail, subject, bodyText, csvBytes, attachmentFileName);
+            log.info("Report email sent successfully to {}", toEmail);
+        } catch (Exception e) {
+            log.error("Failed to send report email to {}: {}", toEmail, e.getMessage(), e);
         }
     }
 

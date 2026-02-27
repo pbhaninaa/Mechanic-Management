@@ -6,12 +6,41 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Repository
 public interface MechanicRequestRepository extends JpaRepository<MechanicRequest, String> {
     List<MechanicRequest> findByUsername(String username);
     List<MechanicRequest> findByMechanicId(String mechanicId);
+
+    @Query("SELECT m FROM MechanicRequest m WHERE m.username = :username AND (:q IS NULL OR :q = '' OR " +
+            "LOWER(COALESCE(m.description, '')) LIKE LOWER(CONCAT('%', :q, '%')) OR LOWER(COALESCE(m.location, '')) LIKE LOWER(CONCAT('%', :q, '%')) OR " +
+            "LOWER(m.status) LIKE LOWER(CONCAT('%', :q, '%')) OR LOWER(COALESCE(m.username, '')) LIKE LOWER(CONCAT('%', :q, '%')) OR " +
+            "LOWER(COALESCE(m.carPlate, '')) LIKE LOWER(CONCAT('%', :q, '%')) OR LOWER(COALESCE(m.carType, '')) LIKE LOWER(CONCAT('%', :q, '%'))) ORDER BY m.date DESC")
+    List<MechanicRequest> findByUsernameWithSearch(@Param("username") String username, @Param("q") String q);
+
+    @Query("SELECT m FROM MechanicRequest m WHERE m.mechanicId = :mechanicId AND (:q IS NULL OR :q = '' OR " +
+            "LOWER(COALESCE(m.description, '')) LIKE LOWER(CONCAT('%', :q, '%')) OR LOWER(COALESCE(m.location, '')) LIKE LOWER(CONCAT('%', :q, '%')) OR " +
+            "LOWER(m.status) LIKE LOWER(CONCAT('%', :q, '%')) OR LOWER(COALESCE(m.username, '')) LIKE LOWER(CONCAT('%', :q, '%')) OR " +
+            "LOWER(COALESCE(m.carPlate, '')) LIKE LOWER(CONCAT('%', :q, '%'))) ORDER BY m.date DESC")
+    List<MechanicRequest> findByMechanicIdWithSearch(@Param("mechanicId") String mechanicId, @Param("q") String q);
+
+    @Query("SELECT m FROM MechanicRequest m WHERE (:q IS NULL OR :q = '' OR " +
+            "LOWER(COALESCE(m.description, '')) LIKE LOWER(CONCAT('%', :q, '%')) OR LOWER(COALESCE(m.location, '')) LIKE LOWER(CONCAT('%', :q, '%')) OR " +
+            "LOWER(m.status) LIKE LOWER(CONCAT('%', :q, '%')) OR LOWER(COALESCE(m.username, '')) LIKE LOWER(CONCAT('%', :q, '%')) OR " +
+            "LOWER(COALESCE(m.carPlate, '')) LIKE LOWER(CONCAT('%', :q, '%'))) ORDER BY m.date DESC")
+    List<MechanicRequest> findAllWithSearch(@Param("q") String q);
+
+    /** Requests for a user within date range */
+    List<MechanicRequest> findByUsernameAndDateBetweenOrderByDateDesc(String username, LocalDate startDate, LocalDate endDate);
+
+    /** Requests for a mechanic within date range */
+    List<MechanicRequest> findByMechanicIdAndDateBetweenOrderByDateDesc(String mechanicId, LocalDate startDate, LocalDate endDate);
+
+    /** Completed jobs for a mechanic within date range */
+    List<MechanicRequest> findByMechanicIdAndStatusAndDateBetweenOrderByDateDesc(String mechanicId, String status, LocalDate startDate, LocalDate endDate);
+
     List<MechanicRequest> findByStatusAndMechanicIdIsNull(String status);
     void deleteByUsername(String username);
 

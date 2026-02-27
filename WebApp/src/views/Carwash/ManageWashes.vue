@@ -4,7 +4,16 @@
       {{ updateError }}
     </v-alert>
     <v-card-text>
-      <TableComponent title="Manage Washes" :headers="headers" :items="washes"  :items-per-page="10" :loading="loading">
+      <TableComponent
+        title="Manage Washes"
+        :headers="headers"
+        :items="washes"
+        :items-per-page="10"
+        :loading="loading"
+        show-search
+        search-placeholder="Search client, plate, status..."
+        @update:search-value="onSearch"
+      >
         <!-- Status with colored chips -->
         <template #item.status="{ item }">
           <v-chip :color="getStatusColor(item.status)" dark>
@@ -47,7 +56,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, onMounted, watch } from "vue";
 import PageContainer from "@/components/PageContainer.vue";
 import { getStatusColor, sortRequestsByStatus } from "@/utils/helper";
 import apiService from "@/api/apiService";
@@ -118,15 +127,18 @@ const updateStatus = async (job: WashJob, newStatus: string) => {
 };
 
 
-// Fetch all bookings and filter to those assigned to this car wash operator
-// Service provider: hide completed jobs, show only active ones (admins see all via car-wash-bookings)
+const searchQuery = ref("");
+function onSearch(q) {
+  searchQuery.value = q;
+}
+// Fetch bookings for this car wash operator (backend filters by carWashId and search)
 const fetchWashes = async () => {
   loading.value = true;
   try {
-    const res = await apiService.getAllCarWashBookings();
-    const allBookings = Array.isArray(res?.data) ? res.data : [];
-
     const userId = String(loggedInUser?.id || "");
+    const params = searchQuery.value ? { search: searchQuery.value } : {};
+    const res = await apiService.getCarWashBookingsByCarWashId(userId, params);
+    const allBookings = Array.isArray(res?.data) ? res.data : [];
 
     const filtered = allBookings.filter(
       (booking) =>
@@ -141,7 +153,7 @@ const fetchWashes = async () => {
     loading.value = false;
   }
 };
-
+watch(searchQuery, () => fetchWashes());
 
 onMounted(fetchWashes);
 </script>

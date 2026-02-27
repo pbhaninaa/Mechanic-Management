@@ -2,7 +2,15 @@
   <PageContainer>
    
       <v-card-text>
-        <TableComponent title="Users Management" :headers="headers" :items="users" :loading="loading">
+        <TableComponent
+          title="Users Management"
+          :headers="headers"
+          :items="users"
+          :loading="loading"
+          show-search
+          search-placeholder="Search name, email, username..."
+          @update:search-value="onSearch"
+        >
           <template #item.fullName="{ item }">
             {{ item.firstName }} {{ item.lastName }}
           </template>
@@ -135,7 +143,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import PageContainer from '@/components/PageContainer.vue';
 import InputField from '@/components/InputField.vue';
 import Button from '@/components/Button.vue';
@@ -319,11 +327,16 @@ const saveCreateUser = async () => {
 };
 
 // Load all users
+const searchQuery = ref("");
+function onSearch(q) {
+  searchQuery.value = q;
+}
 const loadUsers = async () => {
   loading.value = true;
   error.value = null;
   try {
-    const res = await apiService.getAllUsers();
+    const params = searchQuery.value ? { search: searchQuery.value } : {};
+    const res = await apiService.getAllUsers(params);
     users.value = res.data || [];
   } catch (err: any) {
     error.value = err.message || 'Failed to fetch users';
@@ -331,6 +344,7 @@ const loadUsers = async () => {
     loading.value = false;
   }
 };
+watch(searchQuery, () => loadUsers());
 
 // Edit user
 const editUser = (user: any) => {

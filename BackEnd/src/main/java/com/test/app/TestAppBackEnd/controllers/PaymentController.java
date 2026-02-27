@@ -65,13 +65,13 @@ public class PaymentController {
 
     // Get all payments (supports both GET /api/payments and GET /api/payments/getPayments)
     @GetMapping({"", "/"})
-    public ResponseEntity<ApiResponse<List<Payment>>> getPaymentsRoot() {
-        return getAllPayments();
+    public ResponseEntity<ApiResponse<List<Payment>>> getPaymentsRoot(@RequestParam(required = false) String search) {
+        return getAllPayments(search);
     }
 
     @GetMapping("/getPayments")
-    public ResponseEntity<ApiResponse<List<Payment>>> getAllPayments() {
-        List<Payment> payments = paymentService.getAllPayments();
+    public ResponseEntity<ApiResponse<List<Payment>>> getAllPayments(@RequestParam(required = false) String search) {
+        List<Payment> payments = paymentService.getAllPayments(search);
         ApiResponse<List<Payment>> response = new ApiResponse<>(
                 "Fetched all payments",
                 HttpStatus.OK.value(),
@@ -82,8 +82,10 @@ public class PaymentController {
 
     // Get payments by client username
     @GetMapping("/client/{username}")
-    public ResponseEntity<ApiResponse<List<Payment>>> getPaymentsByClient(@PathVariable String username) {
-        List<Payment> payments = paymentService.getPaymentsByClient(username);
+    public ResponseEntity<ApiResponse<List<Payment>>> getPaymentsByClient(
+            @PathVariable String username,
+            @RequestParam(required = false) String search) {
+        List<Payment> payments = paymentService.getPaymentsByClient(username, search);
         ApiResponse<List<Payment>> response = new ApiResponse<>(
                 "Fetched payments for client: " + username,
                 HttpStatus.OK.value(),
@@ -94,8 +96,10 @@ public class PaymentController {
 
     // Get payments by mechanic ID
     @GetMapping("/mechanic/{mechanicId}")
-    public ResponseEntity<ApiResponse<List<Payment>>> getPaymentsByMechanic(@PathVariable String mechanicId) {
-        List<Payment> payments = paymentService.getPaymentsByMechanic(mechanicId);
+    public ResponseEntity<ApiResponse<List<Payment>>> getPaymentsByMechanic(
+            @PathVariable String mechanicId,
+            @RequestParam(required = false) String search) {
+        List<Payment> payments = paymentService.getPaymentsByMechanic(mechanicId, search);
         ApiResponse<List<Payment>> response = new ApiResponse<>(
                 "Fetched payments for mechanic ID: " + mechanicId,
                 HttpStatus.OK.value(),
@@ -106,8 +110,10 @@ public class PaymentController {
 
     // Get payments by car wash ID
     @GetMapping("/carWash/{carWashId}")
-    public ResponseEntity<ApiResponse<List<Payment>>> getPaymentsByCarWash(@PathVariable String carWashId) {
-        List<Payment> payments = paymentService.getPaymentsByCarWash(carWashId);
+    public ResponseEntity<ApiResponse<List<Payment>>> getPaymentsByCarWash(
+            @PathVariable String carWashId,
+            @RequestParam(required = false) String search) {
+        List<Payment> payments = paymentService.getPaymentsByCarWash(carWashId, search);
         ApiResponse<List<Payment>> response = new ApiResponse<>(
                 "Fetched payments for car wash ID: " + carWashId,
                 HttpStatus.OK.value(),

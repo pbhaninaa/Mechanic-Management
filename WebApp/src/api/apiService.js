@@ -143,8 +143,8 @@ class ApiService {
     return this.post(API_ENDPOINTS.PROFILE, profileData, config);
   }
 
-  async getAllUsers() {
-    return this.get(`${API_ENDPOINTS.PROFILE}/all`);
+  async getAllUsers(params = {}) {
+    return this.get(`${API_ENDPOINTS.PROFILE}/all`, { params });
   }
 
   async getProfilesByRole(role) {
@@ -169,16 +169,16 @@ async sendEmail(emailData) {
     return this.post(API_ENDPOINTS.REQUEST_HISTORY, requestData);
   }
 
-  async getAllRequestHistory() {
-    return this.get(API_ENDPOINTS.REQUEST_HISTORY);
+  async getAllRequestHistory(params = {}) {
+    return this.get(API_ENDPOINTS.REQUEST_HISTORY, { params });
   }
 
-  async getUserRequestHistory(username) {
-    return this.get(API_ENDPOINTS.REQUEST_HISTORY_BY_USER(username));
+  async getUserRequestHistory(username, params = {}) {
+    return this.get(API_ENDPOINTS.REQUEST_HISTORY_BY_USER(username), { params });
   }
 
-  async getRequestHistoryByMechanicId(mechanicId) {
-    return this.get(API_ENDPOINTS.REQUEST_HISTORY_BY_MECHANIC(mechanicId));
+  async getRequestHistoryByMechanicId(mechanicId, params = {}) {
+    return this.get(API_ENDPOINTS.REQUEST_HISTORY_BY_MECHANIC(mechanicId), { params });
   }
 
   async updateRequestHistoryByUsername(username, requestData) {
@@ -247,15 +247,15 @@ async getAllPayments() {
 async getPaymentsByClient(username) {
   return this.get(`${API_ENDPOINTS.PAYMENTS}/client/${username}`);
 }
-async getPaymentsByClients() {
-  return this.get(`${API_ENDPOINTS.PAYMENTS}/getPayments`);
+async getPaymentsByClients(params = {}) {
+  return this.get(`${API_ENDPOINTS.PAYMENTS}/getPayments`, { params });
 }
 
-async getPaymentsByMechanic(mechanicId) {
-  return this.get(`${API_ENDPOINTS.PAYMENTS}/mechanic/${mechanicId}`);
+async getPaymentsByMechanic(mechanicId, params = {}) {
+  return this.get(`${API_ENDPOINTS.PAYMENTS}/mechanic/${mechanicId}`, { params });
 }
-async getPaymentsByCarWash(carWashId) {
-  return this.get(`${API_ENDPOINTS.PAYMENTS}/carWash/${carWashId}`);
+async getPaymentsByCarWash(carWashId, params = {}) {
+  return this.get(`${API_ENDPOINTS.PAYMENTS}/carWash/${carWashId}`, { params });
 }
 
 async createPayment(paymentRequest) {
@@ -274,13 +274,17 @@ async createCarWashBooking(bookingData) {
   return this.post(API_ENDPOINTS.CREATE_CARWASH_BOOKING, bookingData);
 }
 
-async getAllCarWashBookings() {
-  return this.get(API_ENDPOINTS.CARWASH_BOOKINGS);
+async getAllCarWashBookings(params = {}) {
+  return this.get(API_ENDPOINTS.CARWASH_BOOKINGS, { params });
 }
 
-async getCarWashBookingsByClient(username) {
-  return this.get(API_ENDPOINTS.CARWASH_BOOKINGS_BY_CLIENT(username));
+async getCarWashBookingsByClient(username, params = {}) {
+  return this.get(API_ENDPOINTS.CARWASH_BOOKINGS_BY_CLIENT(username), { params });
 }
+
+  async getCarWashBookingsByCarWashId(carWashId, params = {}) {
+    return this.get(API_ENDPOINTS.CARWASH_BOOKINGS_BY_CARWASH(carWashId), { params });
+  }
 
 async getCarWashBookingById(id) {
   return this.get(API_ENDPOINTS.CARWASH_BOOKING_BY_ID(id));
@@ -299,7 +303,55 @@ async deleteCarWashBooking(id) {
   return this.delete(API_ENDPOINTS.DELETE_CARWASH_BOOKING(id));
 }
 
+  // ---------- Reports (export + email by date range) ----------
+  async exportCarWashReport(username, startDate, endDate) {
+    const response = await API.get(API_ENDPOINTS.REPORTS_CARWASH_EXPORT, {
+      params: { username, startDate, endDate },
+      responseType: 'blob',
+    });
+    return response;
+  }
 
+  async emailCarWashReport(payload) {
+    return this.post(API_ENDPOINTS.REPORTS_CARWASH_EMAIL, payload);
+  }
+
+  async exportMechanicRequestsReport({ username, mechanicId, startDate, endDate }) {
+    const params = { startDate, endDate };
+    if (username) params.username = username;
+    if (mechanicId) params.mechanicId = mechanicId;
+    const response = await API.get(API_ENDPOINTS.REPORTS_MECHANIC_REQUESTS_EXPORT, {
+      params,
+      responseType: 'blob',
+    });
+    return response;
+  }
+
+  async emailMechanicRequestsReport(payload) {
+    return this.post(API_ENDPOINTS.REPORTS_MECHANIC_REQUESTS_EMAIL, payload);
+  }
+
+  async exportEarningsReport(mechanicId, carWashId, startDate, endDate) {
+    const params = { startDate, endDate };
+    if (mechanicId) params.mechanicId = mechanicId;
+    if (carWashId) params.carWashId = carWashId;
+    return API.get(API_ENDPOINTS.REPORTS_EARNINGS_EXPORT, { params, responseType: 'blob' });
+  }
+
+  async emailEarningsReport(payload) {
+    return this.post(API_ENDPOINTS.REPORTS_EARNINGS_EMAIL, payload);
+  }
+
+  async exportCompletedJobsReport(mechanicId, carWashId, startDate, endDate) {
+    const params = { startDate, endDate };
+    if (mechanicId) params.mechanicId = mechanicId;
+    if (carWashId) params.carWashId = carWashId;
+    return API.get(API_ENDPOINTS.REPORTS_COMPLETED_JOBS_EXPORT, { params, responseType: 'blob' });
+  }
+
+  async emailCompletedJobsReport(payload) {
+    return this.post(API_ENDPOINTS.REPORTS_COMPLETED_JOBS_EMAIL, payload);
+  }
 }
 
 // Create and export a singleton instance

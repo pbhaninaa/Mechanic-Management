@@ -1,7 +1,15 @@
 <template>
   <PageContainer>
     <v-card-text>
-<TableComponent title="Payments" :headers="headers" :items="payments" :loading="false">
+<TableComponent
+      title="Payments"
+      :headers="headers"
+      :items="payments"
+      :loading="false"
+      show-search
+      search-placeholder="Search client, job, status..."
+      @update:search-value="onSearch"
+    >
         <template #item.amount="{ item }">
           {{ currencySymbol }} {{ item.amount }}
         </template>
@@ -21,7 +29,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, onMounted, watch } from "vue";
 import PageContainer from "@/components/PageContainer.vue";
 import apiService from "@/api/apiService";
 import { JOB_STATUS } from "@/utils/constants";
@@ -53,10 +61,14 @@ const headers = [
 
 
 
-// Load payments from API
+const searchQuery = ref("");
+function onSearch(q) {
+  searchQuery.value = q;
+}
 const loadPayments = async () => {
   try {
-    const res = await apiService.getPaymentsByClients();   
+    const params = searchQuery.value ? { search: searchQuery.value } : {};
+    const res = await apiService.getPaymentsByClients(params);
     payments.value = res.data.map((p: any) => ({
       id: p.id,
       client: p.clientUsername,
@@ -71,6 +83,7 @@ const loadPayments = async () => {
   }
 };
 
+watch(searchQuery, () => loadPayments());
 onMounted(() => {
   loadPayments();
 });

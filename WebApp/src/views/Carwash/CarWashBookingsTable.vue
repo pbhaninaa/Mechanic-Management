@@ -1,8 +1,16 @@
 <template>
   <PageContainer>
     <v-card-text>
-      <TableComponent title="Car Wash Bookings" :headers="headers" :items="bookings" 
-        :items-per-page="10" :loading="loading">
+      <TableComponent
+        title="Car Wash Bookings"
+        :headers="headers"
+        :items="bookings"
+        :items-per-page="10"
+        :loading="loading"
+        show-search
+        search-placeholder="Search plate, client, status..."
+        @update:search-value="onSearch"
+      >
         <!-- Service Types as comma-separated string -->
         <template #item.serviceTypes="{ item }">
           {{ item.serviceTypes.join(", ") }}
@@ -63,7 +71,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, onMounted, watch } from "vue";
 import PageContainer from "@/components/PageContainer.vue";
 import apiService from "@/api/apiService";
 import { getStatusColor, sortRequestsByStatus } from "@/utils/helper";
@@ -156,10 +164,15 @@ const confirmAssign = async () => {
   }
 };
 
+const searchQuery = ref("");
+function onSearch(q) {
+  searchQuery.value = q;
+}
 const fetchBookings = async () => {
   loading.value = true;
   try {
-    const res = await apiService.getAllCarWashBookings();
+    const params = searchQuery.value ? { search: searchQuery.value } : {};
+    const res = await apiService.getAllCarWashBookings(params);
     const allBookings = Array.isArray(res.data) ? res.data : [];
 
     let list;
@@ -184,6 +197,7 @@ const fetchBookings = async () => {
     loading.value = false;
   }
 };
+watch(searchQuery, () => fetchBookings());
 
 const updateStatus = async (booking: Booking, status: string, carWashIdOverride?: string) => {
   if (actionLoadingId.value && !carWashIdOverride) return;

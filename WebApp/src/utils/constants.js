@@ -38,12 +38,22 @@ export const API_ENDPOINTS = {
   // Car Wash Booking Endpoints
   CARWASH_BOOKINGS: '/carwash-bookings',
   CARWASH_BOOKINGS_BY_CLIENT: (username) => `/carwash-bookings/client/${username}`,
+  CARWASH_BOOKINGS_BY_CARWASH: (carWashId) => `/carwash-bookings/carwash/${carWashId}`,
   CARWASH_BOOKING_BY_ID: (id) => `/carwash-bookings/${id}`,
   CREATE_CARWASH_BOOKING: '/carwash-bookings/create',
   UPDATE_CARWASH_BOOKING: (id) => `/carwash-bookings/update/${id}`,
   DELETE_CARWASH_BOOKING: (id) => `/carwash-bookings/delete/${id}`,
   // Communication - uses send-message (supports email type)
   SEND_EMAIL: '/send-message',
+  // Reports - export and email history by date range
+  REPORTS_CARWASH_EXPORT: '/reports/carwash/export',
+  REPORTS_CARWASH_EMAIL: '/reports/carwash/email',
+  REPORTS_MECHANIC_REQUESTS_EXPORT: '/reports/mechanic-requests/export',
+  REPORTS_MECHANIC_REQUESTS_EMAIL: '/reports/mechanic-requests/email',
+  REPORTS_EARNINGS_EXPORT: '/reports/earnings/export',
+  REPORTS_EARNINGS_EMAIL: '/reports/earnings/email',
+  REPORTS_COMPLETED_JOBS_EXPORT: '/reports/completed-jobs/export',
+  REPORTS_COMPLETED_JOBS_EMAIL: '/reports/completed-jobs/email',
   // Dev - reset db (admin only, keep logged-in user)
   DEV_RESET_DB: '/users/reset-db'
 };

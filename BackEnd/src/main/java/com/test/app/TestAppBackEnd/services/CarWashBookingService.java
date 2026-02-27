@@ -60,8 +60,42 @@ public class CarWashBookingService {
         return repository.findAll();
     }
 
+    public List<CarWashBooking> getAllBookings(String search) {
+        if (search != null && !search.isBlank()) {
+            return repository.findAllWithSearch(search.trim());
+        }
+        return repository.findAll();
+    }
+
     public List<CarWashBooking> getBookingsByClient(String clientUsername) {
         return repository.findByClientUsername(clientUsername);
+    }
+
+    public List<CarWashBooking> getBookingsByClient(String clientUsername, String search) {
+        if (search != null && !search.isBlank()) {
+            return repository.findByClientUsernameWithSearch(clientUsername, search.trim());
+        }
+        return repository.findByClientUsername(clientUsername);
+    }
+
+    public List<CarWashBooking> getBookingsByCarWashId(String carWashId) {
+        return repository.findByCarWashId(carWashId);
+    }
+
+    public List<CarWashBooking> getBookingsByCarWashId(String carWashId, String search) {
+        if (search != null && !search.isBlank()) {
+            return repository.findByCarWashIdWithSearch(carWashId, search.trim());
+        }
+        return repository.findByCarWashId(carWashId);
+    }
+
+    public List<CarWashBooking> getBookingsByClientAndDateRange(String clientUsername, String startDate, String endDate) {
+        return repository.findByClientUsernameAndDateBetween(clientUsername, startDate, endDate);
+    }
+
+    /** Completed bookings only for a car wash provider within date range */
+    public List<CarWashBooking> getCompletedBookingsByCarWashIdAndDateRange(String carWashId, String startDate, String endDate) {
+        return repository.findByCarWashIdAndStatusCompletedAndDateBetween(carWashId, startDate, endDate);
     }
 
     public Optional<CarWashBooking> getBookingById(String id) {

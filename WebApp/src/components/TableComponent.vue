@@ -1,5 +1,19 @@
 <template>
-    <v-card-title>{{ title }}</v-card-title>
+    <div class="d-flex flex-wrap align-center justify-space-between gap-2 mb-3">
+      <v-card-title class="pa-0">{{ title }}</v-card-title>
+      <v-text-field
+        v-if="showSearch"
+        v-model="searchInput"
+        :placeholder="searchPlaceholder"
+        density="compact"
+        hide-details
+        clearable
+        variant="outlined"
+        class="table-search"
+        style="max-width: 280px; min-width: 200px;"
+        prepend-inner-icon="mdi-magnify"
+      />
+    </div>
 
     <!-- Loading -->
     <div v-show="loading" class="text-center my-4">
@@ -49,7 +63,7 @@
 </template>
 
 <script setup lang="ts">
-import { toRefs } from "vue";
+import { toRefs, ref, watch } from "vue";
 import NoDataMessage from "@/components/NoDataMessage.vue";
 import TooltipText from "@/components/TooltipText.vue";
 
@@ -74,17 +88,33 @@ const props = withDefaults(
     itemsPerPage?: number;
     itemsPerPageOptions?: number[];
     noDataMessage?: string;
+    showSearch?: boolean;
+    searchPlaceholder?: string;
   }>(),
   {
     loading: false,
     itemsPerPage: 10,
     itemsPerPageOptions: () => [5, 10, 15, 20, 25],
     noDataMessage: "No items found.",
+    showSearch: false,
+    searchPlaceholder: "Search...",
   }
 );
 
-const { title, headers, items, loading, itemsPerPage, itemsPerPageOptions, noDataMessage } =
+const emit = defineEmits<{ (e: "update:searchValue", value: string): void }>();
+
+const { title, headers, items, loading, itemsPerPage, itemsPerPageOptions, noDataMessage, showSearch, searchPlaceholder } =
   toRefs(props);
+
+const searchInput = ref("");
+let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+watch(searchInput, (val) => {
+  if (debounceTimer) clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(() => {
+    emit("update:searchValue", val ?? "");
+    debounceTimer = null;
+  }, 300);
+});
 </script>
 
 <style scoped>
@@ -92,5 +122,9 @@ const { title, headers, items, loading, itemsPerPage, itemsPerPageOptions, noDat
   max-width: 220px;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+.table-search :deep(.v-field__input) {
+  padding-top: 0;
+  padding-bottom: 0;
 }
 </style>
