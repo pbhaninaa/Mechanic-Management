@@ -12,6 +12,7 @@ export const loginUser = createAsyncThunk(
       if (response.success && response.data) {
         await AsyncStorage.setItem('authToken', response.data.token);
         await AsyncStorage.setItem('user', JSON.stringify(response.data.user));
+        await AsyncStorage.setItem('hasProfile', String(response.data.hasProfile));
         return response.data;
       } else {
         return rejectWithValue(response.message || 'Login failed');
@@ -22,17 +23,39 @@ export const loginUser = createAsyncThunk(
   }
 );
 
+/** Register = create User only. No token. User must login then CreateProfile. */
 export const registerUser = createAsyncThunk(
   'auth/register',
   async (userData: RegisterData, { rejectWithValue }) => {
     try {
-      const response = await apiService.register(userData);
+      await apiService.register(userData);
+      return { success: true };
+    } catch (error: any) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+export const createProfile = createAsyncThunk(
+  'auth/createProfile',
+  async (profileData: {
+    username: string;
+    email: string;
+    firstName: string;
+    lastName: string;
+    phoneNumber: string;
+    countryCode?: string;
+    address?: string;
+    roles: string[];
+  }, { rejectWithValue }) => {
+    try {
+      const response = await apiService.createProfile(profileData);
       if (response.success && response.data) {
-        await AsyncStorage.setItem('authToken', response.data.token);
-        await AsyncStorage.setItem('user', JSON.stringify(response.data.user));
+        await AsyncStorage.setItem('user', JSON.stringify(response.data));
+        await AsyncStorage.setItem('hasProfile', 'true');
         return response.data;
       } else {
-        return rejectWithValue(response.message || 'Registration failed');
+        return rejectWithValue(response.message || 'Failed to create profile');
       }
     } catch (error: any) {
       return rejectWithValue(error.message);
@@ -47,11 +70,13 @@ export const logoutUser = createAsyncThunk(
       await apiService.logout();
       await AsyncStorage.removeItem('authToken');
       await AsyncStorage.removeItem('user');
+      await AsyncStorage.removeItem('hasProfile');
     } catch (error: any) {
       console.error('Logout error:', error);
       // Still clear local storage even if API call fails
       await AsyncStorage.removeItem('authToken');
       await AsyncStorage.removeItem('user');
+      await AsyncStorage.removeItem('hasProfile');
     }
   }
 );
@@ -96,18 +121,28 @@ export const initializeAuth = createAsyncThunk(
     try {
       const token = await AsyncStorage.getItem('authToken');
       const userStr = await AsyncStorage.getItem('user');
+      const hasProfileStr = await AsyncStorage.getItem('hasProfile');
       
       if (token && userStr) {
         const user = JSON.parse(userStr);
-        // Verify token is still valid by getting profile
-        await dispatch(getProfile());
-        return { user, token };
+        const hasProfile = hasProfileStr === 'true';
+        if (hasProfile) {
+          try {
+            await dispatch(getProfile());
+          } catch {
+            await AsyncStorage.removeItem('authToken');
+            await AsyncStorage.removeItem('user');
+            await AsyncStorage.removeItem('hasProfile');
+            return null;
+          }
+        }
+        return { user, token, hasProfile };
       }
       return null;
     } catch (error) {
-      // Clear invalid data
       await AsyncStorage.removeItem('authToken');
       await AsyncStorage.removeItem('user');
+      await AsyncStorage.removeItem('hasProfile');
       return null;
     }
   }
@@ -116,6 +151,7 @@ export const initializeAuth = createAsyncThunk(
 const initialState: AuthState = {
   user: null,
   token: null,
+  hasProfile: false,
   isLoading: false,
   error: null,
   isAuthenticated: false,
@@ -143,6 +179,7 @@ const authSlice = createSlice({
         state.isLoading = false;
         state.user = action.payload.user;
         state.token = action.payload.token;
+        state.hasProfile = action.payload.hasProfile ?? false;
         state.isAuthenticated = true;
         state.error = null;
       })
@@ -157,11 +194,8 @@ const authSlice = createSlice({
         state.isLoading = true;
         state.error = null;
       })
-      .addCase(registerUser.fulfilled, (state, action) => {
+      .addCase(registerUser.fulfilled, (state) => {
         state.isLoading = false;
-        state.user = action.payload.user;
-        state.token = action.payload.token;
-        state.isAuthenticated = true;
         state.error = null;
       })
       .addCase(registerUser.rejected, (state, action) => {
@@ -174,6 +208,7 @@ const authSlice = createSlice({
       .addCase(logoutUser.fulfilled, (state) => {
         state.user = null;
         state.token = null;
+        state.hasProfile = false;
         state.isAuthenticated = false;
         state.error = null;
       })
@@ -186,6 +221,7 @@ const authSlice = createSlice({
       .addCase(getProfile.fulfilled, (state, action) => {
         state.isLoading = false;
         state.user = action.payload;
+        state.hasProfile = true;
         state.isAuthenticated = true;
         state.error = null;
       })
@@ -193,6 +229,21 @@ const authSlice = createSlice({
         state.isLoading = false;
         state.error = action.payload as string;
         state.isAuthenticated = false;
+      })
+
+      .addCase(createProfile.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(createProfile.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.user = action.payload;
+        state.hasProfile = true;
+        state.error = null;
+      })
+      .addCase(createProfile.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload as string;
       })
       
       // Update Profile
@@ -219,10 +270,12 @@ const authSlice = createSlice({
         if (action.payload) {
           state.user = action.payload.user;
           state.token = action.payload.token;
+          state.hasProfile = action.payload.hasProfile ?? true;
           state.isAuthenticated = true;
         } else {
           state.user = null;
           state.token = null;
+          state.hasProfile = false;
           state.isAuthenticated = false;
         }
       })

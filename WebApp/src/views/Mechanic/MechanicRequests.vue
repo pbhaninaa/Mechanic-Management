@@ -1,6 +1,5 @@
 <template>
   <PageContainer>
-    <v-alert v-if="jobStatusError" type="error" dismissible class="mb-4" @click:close="jobStatusError = ''">{{ jobStatusError }}</v-alert>
     <v-card-text>
       <TableComponent title="Job Requests" :headers="headers" :items="jobRequests" :loading="false">
         <template #item.status="{ item }">

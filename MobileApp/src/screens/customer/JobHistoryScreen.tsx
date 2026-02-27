@@ -153,6 +153,24 @@ const JobHistoryScreen = ({ navigation }: any) => {
         </View>
       </View>
 
+      {job.status === 'assigned' && (
+        <TouchableOpacity
+          style={styles.payButton}
+          onPress={() =>
+            navigation.navigate('Payment', {
+              bookingId: job.id,
+              amount: job.estimatedCost ?? job.actualCost ?? 0,
+              jobDes: job.title,
+              mechanicId: job.mechanicId,
+              isCarWash: false,
+            })
+          }
+        >
+          <Icon name="payment" size={16} color={CONFIG.COLORS.SUCCESS} />
+          <Text style={styles.payButtonText}>Pay</Text>
+        </TouchableOpacity>
+      )}
+
       {job.status === 'completed' && !job.customerRating && (
         <TouchableOpacity style={styles.rateButton} onPress={() => handleRateJob(job)}>
           <Icon name="star" size={16} color={CONFIG.COLORS.WARNING} />
@@ -352,6 +370,21 @@ const styles = StyleSheet.create({
   },
   priorityText: {
     fontSize: CONFIG.FONT_SIZES.SMALL,
+    fontWeight: '600',
+  },
+  payButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: CONFIG.COLORS.SUCCESS + '20',
+    paddingVertical: 8,
+    borderRadius: CONFIG.DIMENSIONS.BORDER_RADIUS,
+    gap: 4,
+    marginBottom: 8,
+  },
+  payButtonText: {
+    fontSize: CONFIG.FONT_SIZES.SMALL,
+    color: CONFIG.COLORS.SUCCESS,
     fontWeight: '600',
   },
   rateButton: {

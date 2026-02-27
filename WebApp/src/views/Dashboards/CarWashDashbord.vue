@@ -1,185 +1,181 @@
 <template>
   <PageContainer style="min-width: 100%;">
-    <h1>Car Wash Dashboard</h1>
-    <p>Welcome Car Wash, view your bookings and updates below.</p>
+    <!-- Title -->
+    <v-card-title>Car Wash Dashboard</v-card-title>
+    <p class="mb-6">Welcome Car Wash</p>
 
-    <!-- Loading / Error -->
-    <div v-if="loading" class="text-center my-6">
-      <v-progress-circular indeterminate color="primary"></v-progress-circular>
-    </div>
-    <p v-if="loadError" class="text-error text-center">{{ loadError }}</p>
-
-    <!-- Stats Cards - same as Mechanic (Pending, Completed, Payments, Active) -->
-    <v-row class="mt-4" dense v-if="!loading && !loadError">
-      <v-col v-for="card in statsCards" :key="card.title" cols="12" sm="6" md="3">
-        <v-card :color="card.color" class="pa-4">
-          <v-card-title class="text-h6 white--text">{{ card.title }}</v-card-title>
-          <v-card-text class="text-h5 white--text">{{ card.value }}</v-card-text>
+    <!-- Summary Cards -->
+    <v-row dense>
+      <v-col
+        v-for="card in summaryCards"
+        :key="card.title"
+        cols="12"
+        md="4"
+      >
+        <v-card outlined class="pa-4 text-center">
+          <v-icon :color="card.color" size="36">{{ card.icon }}</v-icon>
+          <h3 class="mt-2">{{ card.value }}</h3>
+          <p class="text-subtitle-2">{{ card.title }}</p>
         </v-card>
       </v-col>
     </v-row>
 
-    <!-- Pending Booking Requests Table - with Accept/Decline actions like Mechanic -->
-    <v-card class="mt-6" outlined v-if="!loading && !loadError">
-      <TableComponent
-        title="Pending Booking Requests"
-        :headers="tableHeaders"
-        :items="pendingBookings"
-        :items-per-page="5"
-        :loading="loading"
-      >
-        <template #item.actions="{ item }">
-          <div class="d-flex justify-center">
-            <v-btn
-              color="green"
-              small
-              :loading="actionLoadingId === item.id"
-              :disabled="!!actionLoadingId"
-              @click="updateBookingStatus(item, 'accepted')"
-            >Accept</v-btn>
-            <v-btn
-              color="red"
-              small
-              class="ml-2"
-              :loading="actionLoadingId === item.id"
-              :disabled="!!actionLoadingId"
-              @click="updateBookingStatus(item, 'declined')"
-            >Decline</v-btn>
-          </div>
-        </template>
-      </TableComponent>
-    </v-card>
+    <!-- Charts Layout -->
+    <v-row dense class="mt-2">
+      <!-- Progress Donut Chart -->
+      <v-col cols="12" md="6">
+        <div class="mt-6 pa-4 chart-card">
+          <h3>Service Progress</h3>
+          <v-divider class="mb-4" />
+          <canvas ref="progressPieChart" class="mini-chart"></canvas>
+        </div>
+      </v-col>
+
+      <!-- Monthly Earnings Line Chart -->
+      <v-col cols="12" md="6">
+        <div class="mt-6 pa-4 chart-card">
+          <h3>Monthly Earnings</h3>
+          <v-divider class="mb-4" />
+          <canvas ref="earningsChart" class="mini-chart"></canvas>
+        </div>
+      </v-col>
+    </v-row>
   </PageContainer>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from "vue";
+import { ref, onMounted } from "vue";
 import PageContainer from "@/components/PageContainer.vue";
-import TableComponent from "@/components/TableComponent.vue";
+import Chart from "chart.js/auto";
+import ChartDataLabels from "chartjs-plugin-datalabels";
 import apiService from "@/api/apiService";
 import { getSafeJson } from "@/utils/storage";
 import { useCurrency } from "@/composables/useCurrency";
-import { COLORS } from "@/utils/constants";
-import { formatDate } from "@/composables/useDateFormat";
 
-const loading = ref(false);
-const loadError = ref<string | null>(null);
-const actionLoadingId = ref<string | number | null>(null);
-const allBookings = ref<any[]>([]);
-const payments = ref<any[]>([]);
+Chart.register(ChartDataLabels);
 
-const { formatCurrency } = useCurrency();
+const { formatCurrency, currencySymbol } = useCurrency();
 
-// Same card titles & colors as Mechanic Dashboard
-const statsCards = computed(() => [
-  { title: "Pending Requests", value: pendingRequestsCount.value, color: COLORS.SOFT_ORANGE },
-  { title: "Completed Jobs", value: carsWashedCount.value, color: COLORS.SOFT_GREEN_DARK },
-  { title: "Payments", value: formatCurrency(revenueTotal.value), color: COLORS.SOFT_BLUE },
-  { title: "Active Requests", value: activeJobsCount.value, color: COLORS.SOFT_PURPLE },
+// Chart refs
+const progressPieChart = ref<HTMLCanvasElement | null>(null);
+const earningsChart = ref<HTMLCanvasElement | null>(null);
+
+// Summary cards
+const summaryCards = ref([
+  { title: "Total Customers", value: 0, icon: "mdi-account", color: "blue" },
+  { title: "Cars Washed", value: 0, icon: "mdi-car", color: "green" },
+  { title: "Revenue", value: formatCurrency(0), icon: "mdi-cash", color: "orange" },
 ]);
 
-// Computed stats from bookings & payments
-const pendingBookings = computed(() =>
-  allBookings.value.filter(
-    (b) =>
-      !b?.carWashId &&
-      String(b?.status ?? "").toLowerCase() === "pending"
-  )
-);
-const pendingRequestsCount = computed(() => pendingBookings.value.length);
+// Earnings per month
+const monthlyEarnings = ref<number[]>(Array(12).fill(0));
+const monthLabels = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
-const profile = getSafeJson("userProfile", {});
-const userId = computed(() => String(profile?.id || ""));
-const activeJobsCount = computed(() =>
-  allBookings.value.filter(
-    (b) =>
-      String(b?.carWashId ?? "") === userId.value &&
-      String(b?.status ?? "").toLowerCase() !== "completed"
-  ).length
-);
+// Function to render charts dynamically
+const renderCharts = () => {
+  // Doughnut chart (Service Progress)
+  if (progressPieChart.value) {
+    new Chart(progressPieChart.value.getContext("2d"), {
+      type: "doughnut",
+      data: {
+        labels: summaryCards.value.map(c => c.title),
+        datasets: [{
+          data: summaryCards.value.map(c => Number(String(c.value).replace(/[^0-9.-]+/g,""))),
+          backgroundColor: summaryCards.value.map(c => c.color),
+        }],
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { position: "bottom" },
+          datalabels: {
+            color: "#fff",
+            formatter: (value, context) => {
+              const total = context.dataset.data.reduce((a, b) => Number(a) + Number(b), 0);
+              return total ? `${((Number(value) / Number(total)) * 100).toFixed(1)}%` : "0%";
+            },
+          },
+        },
+      },
+      plugins: [ChartDataLabels],
+    });
+  }
 
-const carsWashedCount = computed(() =>
-  payments.value.filter(
-    (p: any) => String(p?.carWashId ?? "") === userId.value
-  ).length
-);
-const revenueTotal = computed(() =>
-  payments.value
-    .filter((p: any) => String(p?.carWashId ?? "") === userId.value)
-    .reduce((sum: number, p: any) => sum + (p.amount || 0), 0)
-);
-
-// Table headers - same structure as Mechanic (Client, Description, Price, Date, Location, Actions)
-const formatPrice = (item: any) =>
-  item?.servicePrice != null && !isNaN(item.servicePrice)
-    ? formatCurrency(item.servicePrice)
-    : "—";
-
-const formatBookingDesc = (item: any) => {
-  const parts: string[] = [];
-  if (item?.carType) parts.push(item.carType);
-  if (item?.carDescription) parts.push(item.carDescription);
-  if (Array.isArray(item?.serviceTypes) && item.serviceTypes.length)
-    parts.push(item.serviceTypes.join(", "));
-  return parts.length ? parts.join(" · ") : "—";
-};
-
-const tableHeaders = [
-  { title: "Client", value: "clientUsername" },
-  { title: "Request Description", value: "desc", formatter: formatBookingDesc },
-  { title: "Price", value: "price", formatter: formatPrice },
-  { title: "Date", value: "date", formatter: (item) => formatDate(item?.date) },
-  { title: "Actions", value: "actions", sortable: false },
-];
-
-const updateBookingStatus = async (booking: any, status: string) => {
-  const bookingId = booking?.id;
-  if (!bookingId || actionLoadingId.value) return;
-  actionLoadingId.value = bookingId;
-  loadError.value = null;
-  const userProfile = getSafeJson("userProfile", {});
-  try {
-    const payload = {
-      ...booking,
-      status,
-      carWashId: status === "accepted" ? userProfile?.id : null,
-    };
-    await apiService.updateCarWashBooking(bookingId, payload);
-    await loadDashboardData();
-  } catch (err: any) {
-    // Error shown in toast by axios interceptor - don't set loadError
-    console.error("Failed to update booking:", err);
-  } finally {
-    actionLoadingId.value = null;
+  // Line chart (Monthly Earnings)
+  if (earningsChart.value) {
+    new Chart(earningsChart.value.getContext("2d"), {
+      type: "line",
+      data: {
+        labels: monthLabels,
+        datasets: [{
+          label: `Earnings (${currencySymbol})`,
+          data: monthlyEarnings.value,
+          borderColor: "rgba(54, 162, 235, 0.9)",
+          backgroundColor: "rgba(54, 162, 235, 0.2)",
+          tension: 0.3,
+          fill: true,
+          pointBackgroundColor: "rgba(54, 162, 235, 1)",
+        }],
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true } },
+      },
+    });
   }
 };
 
-const loadDashboardData = async () => {
-  loading.value = true;
-  loadError.value = null;
+// Load real data from API
+const loadSummaryData = async () => {
   try {
-    const [paymentsRes, bookingsRes] = await Promise.all([
-      apiService.getAllPayments(),
-      apiService.getAllCarWashBookings(),
-    ]);
-    payments.value = paymentsRes?.data ?? [];
-    allBookings.value = bookingsRes?.data ?? [];
+    const usersRes = await apiService.getAllUsers();
+    const paymentsRes = await apiService.getAllPayments();
+    const loggedInUser = getSafeJson("userProfile", {});
+
+    const clients = (usersRes.data || []).filter(u => u.roles.includes("CLIENT"));
+    const carWashPayments = (paymentsRes.data || []).filter(p => p.carWashId == loggedInUser.id);
+
+    // Update summary cards
+    summaryCards.value = [
+      { title: "Total Customers", value: clients.length, icon: "mdi-account", color: "blue" },
+      { title: "Cars Washed", value: carWashPayments.length, icon: "mdi-car", color: "green" },
+      { title: "Revenue", value: formatCurrency(carWashPayments.reduce((sum, p) => sum + (p.amount || 0), 0)), icon: "mdi-cash", color: "orange" },
+    ];
+
+    // Calculate monthly earnings for full year
+    const monthTotals: number[] = Array(12).fill(0);
+    carWashPayments.forEach(p => {
+      const month = new Date(p.paidAt).getMonth(); // 0=Jan, 11=Dec
+      monthTotals[month] += p.amount || 0;
+    });
+    monthlyEarnings.value = monthTotals;
+
+    // Render charts
+    renderCharts();
   } catch (err) {
-    loadError.value = "Failed to load dashboard data.";
-    console.error("Failed to load dashboard data:", err);
-  } finally {
-    loading.value = false;
+    console.error("Failed to load summary data:", err);
   }
 };
 
 onMounted(() => {
-  loadDashboardData();
+  loadSummaryData();
 });
 </script>
 
 <style scoped>
-.text-error {
-  color: red;
-  font-weight: 500;
+h3 {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.chart-card {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.mini-chart {
+  max-height: 250px;
 }
 </style>

@@ -20,23 +20,23 @@ const LoginScreen = ({ navigation }: any) => {
   const dispatch = useDispatch();
   const { isLoading, error } = useSelector((state: RootState) => state.auth);
 
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [emailError, setEmailError] = useState('');
+  const [usernameError, setUsernameError] = useState('');
   const [passwordError, setPasswordError] = useState('');
 
   const validateForm = () => {
     let isValid = true;
 
-    // Validate email
-    if (!email.trim()) {
-      setEmailError('Email is required');
+    // Validate username
+    if (!username.trim()) {
+      setUsernameError('Username is required');
       isValid = false;
-    } else if (!CONFIG.VALIDATION.EMAIL_REGEX.test(email)) {
-      setEmailError('Please enter a valid email');
+    } else if (false) {
+      setUsernameError('Please enter a valid Username');
       isValid = false;
     } else {
-      setEmailError('');
+      setUsernameError('');
     }
 
     // Validate password
@@ -57,7 +57,7 @@ const LoginScreen = ({ navigation }: any) => {
     if (!validateForm()) return;
 
     try {
-      await dispatch(loginUser({ email, password }));
+      await dispatch(loginUser({ username, password }));
     } catch (error) {
       Alert.alert('Login Failed', 'Please check your credentials and try again.');
     }
@@ -91,17 +91,16 @@ const LoginScreen = ({ navigation }: any) => {
           )}
 
           <View style={styles.inputContainer}>
-            <Text style={styles.label}>Email</Text>
+            <Text style={styles.label}>Username</Text>
             <TextInput
-              style={[styles.input, emailError ? styles.inputError : null]}
-              placeholder="Enter your email"
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
+              style={[styles.input, usernameError ? styles.inputError : null]}
+              placeholder="Enter your username"
+              value={username}
+              onChangeText={setUsername}
               autoCapitalize="none"
               autoCorrect={false}
             />
-            {emailError ? <Text style={styles.errorText}>{emailError}</Text> : null}
+            {usernameError ? <Text style={styles.errorText}>{usernameError}</Text> : null}
           </View>
 
           <View style={styles.inputContainer}>

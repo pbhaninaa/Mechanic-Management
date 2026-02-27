@@ -17,4 +17,9 @@ public interface MechanicRequestRepository extends JpaRepository<MechanicRequest
 
     @Query("SELECT COUNT(m) FROM MechanicRequest m WHERE m.mechanicId = :mechanicId AND m.status NOT IN ('completed', 'cancelled')")
     long countIncompleteByMechanicId(@Param("mechanicId") String mechanicId);
+
+    /** Count paid or in-progress jobs (not completed) - used to limit new accepts when 5 paid jobs pending */
+    @Query("SELECT COUNT(m) FROM MechanicRequest m WHERE m.mechanicId = :mechanicId " +
+            "AND (LOWER(m.status) = 'paid' OR LOWER(m.status) = 'in progress')")
+    long countPaidIncompleteByMechanicId(@Param("mechanicId") String mechanicId);
 }

@@ -15,4 +15,9 @@ public interface CarWashBookingRepository extends JpaRepository<CarWashBooking, 
 
     @Query("SELECT COUNT(b) FROM CarWashBooking b WHERE b.carWashId = :carWashId AND b.status NOT IN ('completed', 'cancelled')")
     long countIncompleteByCarWashId(@Param("carWashId") String carWashId);
+
+    /** Count paid or in-progress bookings (not completed) - used to limit new accepts when 5 paid jobs pending */
+    @Query("SELECT COUNT(b) FROM CarWashBooking b WHERE b.carWashId = :carWashId " +
+            "AND (LOWER(b.status) = 'paid' OR LOWER(b.status) = 'in progress')")
+    long countPaidIncompleteByCarWashId(@Param("carWashId") String carWashId);
 }

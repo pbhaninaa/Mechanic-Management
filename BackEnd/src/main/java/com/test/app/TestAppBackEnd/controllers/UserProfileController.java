@@ -11,7 +11,8 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/user-profile")
-@CrossOrigin(origins = {"https://172.20.10.11:3000", "https://172.19.80.1:3000", "http://localhost:5173", "http://localhost:3000"})
+@CrossOrigin(origins = { "https://172.20.10.11:3000", "https://172.19.80.1:3000", "http://localhost:5173",
+        "http://localhost:3000" })
 
 public class UserProfileController {
 
@@ -28,7 +29,7 @@ public class UserProfileController {
             Authentication authentication) {
 
         try {
-            UserProfile saved = userProfileService.createProfileForUser( profile);
+            UserProfile saved = userProfileService.createProfileForUser(profile);
 
             return ResponseEntity.status(HttpStatus.CREATED)
                     .body(new ApiResponse<>("Profile created successfully", HttpStatus.CREATED.value(), saved));
@@ -47,13 +48,16 @@ public class UserProfileController {
         System.out.println("[GET] Logged-in user: " + loggedInUsername);
 
         var response = userProfileService.getProfileByUsername(loggedInUsername)
-                .map(profile -> ResponseEntity.ok(new ApiResponse<>("Profile retrieved", HttpStatus.OK.value(), profile)))
+                .map(profile -> ResponseEntity
+                        .ok(new ApiResponse<>("Profile retrieved", HttpStatus.OK.value(), profile)))
                 .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(new ApiResponse<>("Profile does not exist for this user", HttpStatus.NOT_FOUND.value(), null)));
+                        .body(new ApiResponse<>("Profile does not exist for this user", HttpStatus.NOT_FOUND.value(),
+                                null)));
 
         System.out.println("[GET] Response ready for user: " + loggedInUsername);
         return response;
     }
+
     // Get user profiles by role
     @GetMapping("/role/{role}")
     public ResponseEntity<ApiResponse<Iterable<UserProfile>>> getProfilesByRole(
@@ -69,11 +73,11 @@ public class UserProfileController {
 
             if (profiles.iterator().hasNext()) {
                 return ResponseEntity.ok(
-                        new ApiResponse<>("Profiles retrieved successfully", HttpStatus.OK.value(), profiles)
-                );
+                        new ApiResponse<>("Profiles retrieved successfully", HttpStatus.OK.value(), profiles));
             } else {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(new ApiResponse<>("No profiles found for role: " + role, HttpStatus.NOT_FOUND.value(), null));
+                        .body(new ApiResponse<>("No profiles found for role: " + role, HttpStatus.NOT_FOUND.value(),
+                                null));
             }
 
         } catch (IllegalArgumentException e) {
@@ -83,10 +87,10 @@ public class UserProfileController {
         } catch (Exception e) {
             System.err.println("[ERROR] Failed to fetch profiles by role: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ApiResponse<>("An error occurred while fetching profiles", HttpStatus.INTERNAL_SERVER_ERROR.value(), null));
+                    .body(new ApiResponse<>("An error occurred while fetching profiles",
+                            HttpStatus.INTERNAL_SERVER_ERROR.value(), null));
         }
     }
-
 
     // ================= GET ALL PROFILES (ADMIN ONLY) =================
     @GetMapping("/all")
@@ -96,11 +100,11 @@ public class UserProfileController {
 
         System.out.println("[GET ALL] Logged-in user: " + loggedInUsername + ", IsAdmin: " + isAdmin);
 
-//        if (!isAdmin) {
-//            System.out.println("[GET ALL] Unauthorized attempt by " + loggedInUsername);
-//            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-//                    .body(new ApiResponse<>("Unauthorized", 403, null, true));
-//        }
+        // if (!isAdmin) {
+        // System.out.println("[GET ALL] Unauthorized attempt by " + loggedInUsername);
+        // return ResponseEntity.status(HttpStatus.FORBIDDEN)
+        // .body(new ApiResponse<>("Unauthorized", 403, null, true));
+        // }
 
         Iterable<UserProfile> profiles = userProfileService.getAllProfiles();
         System.out.println("[GET ALL] Response ready with all profiles");
@@ -124,27 +128,28 @@ public class UserProfileController {
             targetUsername = updatedProfile.getUsername();
             if (targetUsername == null || targetUsername.isBlank()) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body(new ApiResponse<>("Username is required when updating another user's profile", HttpStatus.BAD_REQUEST.value(), null));
+                        .body(new ApiResponse<>("Username is required when updating another user's profile",
+                                HttpStatus.BAD_REQUEST.value(), null));
             }
         } else {
-            // Non-admin: only own profile - use logged-in username, ignore body (avoids case/mismatch bugs)
+            // Non-admin: only own profile - use logged-in username, ignore body (avoids
+            // case/mismatch bugs)
             targetUsername = loggedInUsername;
             updatedProfile.setUsername(loggedInUsername);
         }
 
         var response = userProfileService.updateProfile(
-                        targetUsername,
-                        updatedProfile,
-                        isAdmin
-                )
+                targetUsername,
+                updatedProfile,
+                isAdmin)
                 .map(profile -> ResponseEntity.ok(new ApiResponse<>("Profile updated", HttpStatus.OK.value(), profile)))
                 .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(new ApiResponse<>("Profile does not exist for this user", HttpStatus.NOT_FOUND.value(), null)));
+                        .body(new ApiResponse<>("Profile does not exist for this user", HttpStatus.NOT_FOUND.value(),
+                                null)));
 
         System.out.println("[UPDATE] Response ready for user: " + updatedProfile.getUsername());
         return response;
     }
-
 
     // ================= DELETE OWN PROFILE =================
     @DeleteMapping
@@ -166,7 +171,8 @@ public class UserProfileController {
             return ResponseEntity.ok(new ApiResponse<>("Profile deleted successfully", HttpStatus.OK.value(), null));
         } else {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new ApiResponse<>("Profile does not exist for this user", HttpStatus.NOT_FOUND.value(), null));
+                    .body(new ApiResponse<>("Profile does not exist for this user", HttpStatus.NOT_FOUND.value(),
+                            null));
         }
     }
 

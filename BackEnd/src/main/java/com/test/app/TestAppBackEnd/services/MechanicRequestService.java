@@ -92,9 +92,9 @@ public class MechanicRequestService {
         if (!"pending".equals(req.getStatus())) {
             throw new IllegalStateException("Only pending jobs can be accepted");
         }
-        long incompleteCount = repository.countIncompleteByMechanicId(mechanicId);
-        if (incompleteCount >= MAX_INCOMPLETE_JOBS) {
-            throw new IllegalStateException("You cannot accept more jobs. You have " + incompleteCount + " incomplete jobs. Complete or cancel some before accepting new ones (max " + MAX_INCOMPLETE_JOBS + ").");
+        long paidIncompleteCount = repository.countPaidIncompleteByMechanicId(mechanicId);
+        if (paidIncompleteCount >= MAX_INCOMPLETE_JOBS) {
+            throw new IllegalStateException("You cannot accept more jobs. You have " + paidIncompleteCount + " paid jobs not yet completed. Complete some before accepting new ones (max " + MAX_INCOMPLETE_JOBS + ").");
         }
         req.setMechanicId(mechanicId);
         req.setStatus("assigned");
@@ -148,9 +148,9 @@ public class MechanicRequestService {
         if (newMechanicId != null && !newMechanicId.isBlank()
                 && ("assigned".equalsIgnoreCase(updated.getStatus()) || "accepted".equalsIgnoreCase(updated.getStatus()))
                 && (existing.getMechanicId() == null || existing.getMechanicId().isBlank())) {
-            long incompleteCount = repository.countIncompleteByMechanicId(newMechanicId);
-            if (incompleteCount >= MAX_INCOMPLETE_JOBS) {
-                throw new IllegalStateException("Cannot accept more jobs. This mechanic has " + incompleteCount + " incomplete jobs. Complete or cancel some before accepting new ones (max " + MAX_INCOMPLETE_JOBS + ").");
+            long paidIncompleteCount = repository.countPaidIncompleteByMechanicId(newMechanicId);
+            if (paidIncompleteCount >= MAX_INCOMPLETE_JOBS) {
+                throw new IllegalStateException("Cannot assign. This mechanic has " + paidIncompleteCount + " paid jobs not yet completed. Complete some before accepting new ones (max " + MAX_INCOMPLETE_JOBS + ").");
             }
         }
 

@@ -1,7 +1,8 @@
 export const CONFIG = {
-  // API Configuration - use your computer's local IP when running on a physical device (same WiFi)
-  // Find your IP: ipconfig (Windows) or ifconfig (Mac/Linux). Example: http://192.168.1.5:8080/api
-  API_BASE_URL: 'http://172.20.10.11:8080/api',
+  // API Configuration - set to your backend URL
+  // Android Emulator: 10.0.2.2 = host's localhost
+  // Physical device: use your computer's IP (e.g. http://192.168.1.5:8080/api)
+  API_BASE_URL: 'https://172.20.10.11:8080/api',
   API_TIMEOUT: 15000,
   
   // App Configuration
@@ -57,6 +58,7 @@ export const CONFIG = {
   JOB_STATUSES: [
     { value: 'pending', label: 'Pending', color: '#FF9800' },
     { value: 'assigned', label: 'Assigned', color: '#2196F3' },
+    { value: 'paid', label: 'Paid', color: '#00BCD4' },
     { value: 'in_progress', label: 'In Progress', color: '#9C27B0' },
     { value: 'completed', label: 'Completed', color: '#4CAF50' },
     { value: 'cancelled', label: 'Cancelled', color: '#F44336' },

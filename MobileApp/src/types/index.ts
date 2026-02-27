@@ -1,9 +1,18 @@
+/** User = login credentials (minimal). UserProfile = full profile (after CreateProfile). */
 export interface User {
+  id?: string;
+  username?: string;
+  email?: string;
+  name?: string;
+  phone?: string;
+  userType?: 'customer' | 'mechanic' | 'admin' | 'carwash';
+}
+export interface UserProfile {
   id: string;
   email: string;
   name: string;
   phone: string;
-  userType: 'customer' | 'mechanic';
+  userType: 'customer' | 'mechanic' | 'admin' | 'carwash';
   profileImage?: string;
   rating?: number;
   totalJobs?: number;
@@ -26,7 +35,7 @@ export interface Job {
   description: string;
   category: string;
   priority: 'low' | 'medium' | 'high' | 'emergency';
-  status: 'pending' | 'assigned' | 'in_progress' | 'completed' | 'cancelled';
+  status: 'pending' | 'assigned' | 'in_progress' | 'completed' | 'cancelled' | 'paid';
   location: {
     latitude: number;
     longitude: number;
@@ -67,6 +76,7 @@ export interface Job {
 export interface AuthState {
   user: User | null;
   token: string | null;
+  hasProfile: boolean;
   isLoading: boolean;
   error: string | null;
   isAuthenticated: boolean;
@@ -90,17 +100,13 @@ export interface RootState {
 }
 
 export interface LoginCredentials {
-  email?: string;
   username?: string;
   password: string;
 }
 
 export interface RegisterData {
-  email: string;
+  username: string;
   password: string;
-  name: string;
-  phone: string;
-  userType: 'customer' | 'mechanic';
 }
 
 export interface CreateJobData {
@@ -120,7 +126,6 @@ export interface CreateJobData {
     year: number;
     licensePlate?: string;
   };
-  // Location tracking options
   useCurrentLocation?: boolean;
   locationFor?: 'self' | 'other';
   otherPersonName?: string;
@@ -137,11 +142,10 @@ export interface UpdateJobData {
 
 export interface ApiResponse<T> {
   success: boolean;
-  data?: T;
   message?: string;
-  error?: string;
+  statusCode?: number;
+  data?: T;
 }
-
 export interface NotificationData {
   id: string;
   title: string;
@@ -197,7 +201,7 @@ export interface LocationTracking {
 export interface LocationUpdate {
   jobId: string;
   userId: string;
-  userType: 'customer' | 'mechanic';
+  userType: 'customer' | 'mechanic' | 'admin' | 'carwash';
   location: {
     latitude: number;
     longitude: number;

@@ -10,6 +10,7 @@ import { User } from '../types';
 // Auth Screens
 import LoginScreen from '../screens/auth/LoginScreen';
 import RegisterScreen from '../screens/auth/RegisterScreen';
+import CreateProfileScreen from '../screens/auth/CreateProfileScreen';
 
 // Customer Screens
 import HomeScreen from '../screens/customer/HomeScreen';
@@ -23,6 +24,7 @@ import LocationTrackingScreen from '../screens/mechanic/LocationTrackingScreen';
 
 // Shared Screens
 import ProfileScreen from '../screens/ProfileScreen';
+import PaymentScreen from '../screens/shared/PaymentScreen';
 
 // Components
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -100,7 +102,7 @@ const MechanicTabNavigator = () => {
 // Main App Navigator
 const AppNavigator = () => {
   const dispatch = useDispatch<AppDispatch>();
-  const { isAuthenticated, isLoading, user } = useSelector((state: RootState) => state.auth);
+  const { isAuthenticated, isLoading, user, hasProfile } = useSelector((state: RootState) => state.auth);
 
   useEffect(() => {
     dispatch(initializeAuth());
@@ -119,13 +121,15 @@ const AppNavigator = () => {
             <Stack.Screen name="Login" component={LoginScreen} />
             <Stack.Screen name="Register" component={RegisterScreen} />
           </>
+        ) : !hasProfile ? (
+          <Stack.Screen name="CreateProfile" component={CreateProfileScreen} />
         ) : (
-          // Main App Stack
           <>
-            {user?.userType === 'customer' ? (
+            {(user?.userType ?? 'customer') === 'customer' ? (
               <>
                 <Stack.Screen name="CustomerTabs" component={CustomerTabNavigator} />
                 <Stack.Screen name="CreateJob" component={CreateJobScreen} />
+                <Stack.Screen name="Payment" component={PaymentScreen} />
               </>
             ) : (
               <Stack.Screen name="MechanicTabs" component={MechanicTabNavigator} />

@@ -79,9 +79,9 @@ public class CarWashBookingService {
                     && newCarWashId != null && !newCarWashId.isBlank()
                     && (booking.getCarWashId() == null || !booking.getCarWashId().equals(newCarWashId));
             if (isNewAcceptance) {
-                long incompleteCount = repository.countIncompleteByCarWashId(newCarWashId);
-                if (incompleteCount >= MAX_INCOMPLETE_JOBS) {
-                    throw new IllegalStateException("Cannot accept more bookings. This car wash has " + incompleteCount + " incomplete jobs. Complete or cancel some before accepting new ones (max " + MAX_INCOMPLETE_JOBS + ").");
+                long paidIncompleteCount = repository.countPaidIncompleteByCarWashId(newCarWashId);
+                if (paidIncompleteCount >= MAX_INCOMPLETE_JOBS) {
+                    throw new IllegalStateException("Cannot accept more bookings. This car wash has " + paidIncompleteCount + " paid jobs not yet completed. Complete some before accepting new ones (max " + MAX_INCOMPLETE_JOBS + ").");
                 }
             }
 
