@@ -163,6 +163,7 @@ const navigationItems = [
   { title: 'Help', icon: 'mdi-help', to: '/help-page', roles: ['client'] },
   { title: 'Job Requests', icon: 'mdi-briefcase', to: '/jobs', roles: ['mechanic'] },
   { title: 'Manage Jobs', icon: 'mdi-wrench', to: '/manage-jobs', roles: ['mechanic', 'admin'] },
+  { title: 'My Services', icon: 'mdi-format-list-bulleted-type', to: '/my-services', roles: ['mechanic', 'carwash'] },
   { title: 'User Management', icon: 'mdi-account-multiple', to: '/users', roles: ['admin'] },
   {
     title: 'Manage Payments',

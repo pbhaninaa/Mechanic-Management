@@ -24,10 +24,11 @@
           <InputField v-model="newBooking.carDescription" label="Car Description (Make/Model/Year/Color)" type="text"
             :disabled="loading" required />
 
-
-
+          <v-alert v-if="!catalogLoading && serviceTypes.length === 0" type="info" density="compact" class="mb-2">
+            No car wash services in the catalog yet. Providers can add services under "My Services".
+          </v-alert>
           <DropdownField v-model="newBooking.serviceTypes" :items="serviceTypes" label="Select Services" multiple chips
-            required />
+            required :disabled="catalogLoading" />
 
           <InputField v-model="formattedPrice" label="Total Price" type="text" :disabled="true" />
           <v-menu v-model="menu" :close-on-content-click="false" transition="scale-transition" offset-y
@@ -47,7 +48,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from "vue";
+import { ref, computed, watch, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import PageContainer from "@/components/PageContainer.vue";
 import InputField from "@/components/InputField.vue";
@@ -78,8 +79,7 @@ const loading = ref(false);
 const formValid = ref(false);
 const isEditMode = ref(false);
 const menu = ref(false);
-// MUST be string like 2026-02-26
-const today = new Date().toISOString().split('T')[0]
+const today = new Date().toISOString().split('T')[0];
 const useCurrentLocation = ref(true);
 
 const carTypes = [
@@ -88,44 +88,29 @@ const carTypes = [
   "Electric", "Hybrid", "Sports Car", "Microcar", "Off-Road", "Compact"
 ];
 
-const serviceTypes = [
-  "Full Wash", "Exterior Wash", "Interior Cleaning", "Engine Wash", "Undercarriage Wash",
-  "Valet Service", "Waxing", "Polish", "Detailing", "Leather Treatment", "Glass Treatment",
-  "Headlight Restoration"
-];
+// Services and prices from DB catalog (loaded on mount)
+const serviceTypes = ref<string[]>([]);
+const catalogPriceMap = ref<Record<string, number>>({});
+const catalogLoading = ref(true);
 
 const newBooking = ref<Booking>({
   clientUsername: loggedInUser.username || "",
   carPlate: "",
   carType: carTypes[0],
   carDescription: "",
-  serviceTypes: [serviceTypes[0]],
+  serviceTypes: [] as string[],
   servicePrice: "0",
   date: "",
   location: "",
   status: "pending",
 });
 
-// Price Map
-const basePrice = {
-  "Full Wash": 120, "Exterior Wash": 50, "Interior Cleaning": 80, "Engine Wash": 100,
-  "Undercarriage Wash": 90, "Valet Service": 220, "Waxing": 180, "Polish": 150,
-  "Detailing": 300, "Leather Treatment": 120, "Glass Treatment": 80, "Headlight Restoration": 100
-};
-
-const priceMap: Record<string, Record<string, number>> = {};
-carTypes.forEach(type => {
-  priceMap[type] = { ...basePrice };
-});
-
-// Computed price
+// Computed price from DB catalog
 const computedPrice = computed(() => {
-  const carType = newBooking.value.carType;
-  if (!carType || newBooking.value.serviceTypes.length === 0) return 0;
-  return newBooking.value.serviceTypes.reduce(
-    (total, service) => total + (priceMap[carType]?.[service] || 0),
-    0
-  );
+  const selected = newBooking.value.serviceTypes || [];
+  const prices = catalogPriceMap.value;
+  if (selected.length === 0) return 0;
+  return selected.reduce((total, service) => total + (prices[service] ?? 0), 0);
 });
 
 // Update servicePrice whenever computedPrice changes
@@ -157,6 +142,37 @@ watch(useCurrentLocation, async (val) => {
   }
 });
 fetchCurrentLocation();
+
+// Load car wash services catalog from DB (for clients)
+async function loadCarwashCatalog() {
+  catalogLoading.value = true;
+  try {
+    const res = await apiService.getServiceCatalog("carwash");
+    const list = res?.data ?? [];
+    const names = [...new Set(list.map((o: any) => o.serviceName).filter(Boolean))].sort();
+    serviceTypes.value = names;
+    const priceMap: Record<string, number> = {};
+    list.forEach((o: any) => {
+      const name = o.serviceName;
+      if (!name) return;
+      const p = Number(o.price);
+      if (!Number.isNaN(p) && (priceMap[name] == null || p < priceMap[name])) priceMap[name] = p;
+    });
+    catalogPriceMap.value = priceMap;
+    if (names.length && newBooking.value.serviceTypes.length === 0) {
+      newBooking.value.serviceTypes = [names[0]];
+    }
+  } catch (_) {
+    serviceTypes.value = [];
+    catalogPriceMap.value = {};
+  } finally {
+    catalogLoading.value = false;
+  }
+}
+
+onMounted(() => {
+  loadCarwashCatalog();
+});
 
 // Form validation
 const isFormComplete = computed(() =>

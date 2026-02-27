@@ -25,9 +25,12 @@
         <InputField v-model="request.vinNumber" label="VIN Number" placeholder="Enter your car's VIN number"
           :disabled="loading" outlined />
 
-        <!-- Service Description - multi-select (like Carwash: wipers, brake pads, engine, etc.) -->
+        <v-alert v-if="!catalogLoading && jobOptions.length <= 1" type="info" density="compact" class="mb-2">
+          No mechanic services in the catalog yet. Providers can add services under "My Services".
+        </v-alert>
+        <!-- Service Description - multi-select (services and prices from DB) -->
         <DropdownField v-model="request.serviceTypes" :items="jobOptions" label="Select Services"
-          placeholder="Select one or more services" multiple chips required :disabled="loading" variant="outlined"
+          placeholder="Select one or more services" multiple chips required :disabled="loading || catalogLoading" variant="outlined"
           :prepopulate-first="false" />
 
         <!-- Custom explanation if "Other" is selected -->
@@ -77,18 +80,7 @@ import { useCurrency } from "@/composables/useCurrency";
 // Router
 const router = useRouter();
 const route = useRoute();
-// Mechanic service options with mock prices (multi-select like Carwash)
-const jobOptions = [
-  "Fix car engine",
-  "Replace brake pads",
-  "Replace wipers",
-  "Change oil",
-  "Battery replacement",
-  "Tire replacement",
-  "AC repair",
-  "Suspension repair",
-  "Other",
-];
+
 const carOptions = [
   "Toyota Camry",
   "Honda Accord",
@@ -102,18 +94,10 @@ const carOptions = [
   "Nissan Rogue",
 ];
 
-// Mock price map - R per service
-const mechanicServicePrices: Record<string, number> = {
-  "Fix car engine": 850,
-  "Replace brake pads": 650,
-  "Replace wipers": 180,
-  "Change oil": 350,
-  "Battery replacement": 550,
-  "Tire replacement": 480,
-  "AC repair": 720,
-  "Suspension repair": 890,
-  "Other": 500,
-};
+// Services and prices from DB catalog (loaded on mount)
+const jobOptions = ref<string[]>([]);
+const mechanicServicePrices = ref<Record<string, number>>({});
+const catalogLoading = ref(true);
 
 const request = ref({
   forSelf: true,
@@ -143,12 +127,13 @@ const rules = {
   required: (value: string) => !!value || "This field is required",
 };
 
-// Computed price from selected services (sum like Carwash)
+// Computed price from selected services (prices from DB catalog)
 const computedPrice = computed(() => {
   const types = request.value.serviceTypes || [];
+  const prices = mechanicServicePrices.value;
   if (types.length === 0) return 0;
   return types.reduce(
-    (total, service) => total + (mechanicServicePrices[service] ?? mechanicServicePrices["Other"]),
+    (total, service) => total + (prices[service] ?? prices["Other"] ?? 0),
     0
   );
 });
@@ -257,8 +242,35 @@ const submitRequest = async () => {
   }
 };
 fetchCurrentLocation();
-// On mount
+
+// Load mechanic services catalog from DB (for clients)
+async function loadMechanicCatalog() {
+  catalogLoading.value = true;
+  try {
+    const res = await apiService.getServiceCatalog("mechanic");
+    const list = res?.data ?? [];
+    const names = [...new Set(list.map((o: any) => o.serviceName).filter(Boolean))].sort();
+    jobOptions.value = names.length ? names : ["Other"];
+    if (!names.includes("Other")) jobOptions.value.push("Other");
+    const priceMap: Record<string, number> = {};
+    list.forEach((o: any) => {
+      const name = o.serviceName;
+      if (!name) return;
+      const p = Number(o.price);
+      if (!Number.isNaN(p) && (priceMap[name] == null || p < priceMap[name])) priceMap[name] = p;
+    });
+    if (priceMap["Other"] == null) priceMap["Other"] = 0;
+    mechanicServicePrices.value = priceMap;
+  } catch (_) {
+    jobOptions.value = ["Other"];
+    mechanicServicePrices.value = { Other: 0 };
+  } finally {
+    catalogLoading.value = false;
+  }
+}
+
 onMounted(() => {
+  loadMechanicCatalog();
   if (request.value.forSelf) fetchCurrentLocation();
 });
 </script>

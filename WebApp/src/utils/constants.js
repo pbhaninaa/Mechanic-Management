@@ -55,7 +55,11 @@ export const API_ENDPOINTS = {
   REPORTS_COMPLETED_JOBS_EXPORT: '/reports/completed-jobs/export',
   REPORTS_COMPLETED_JOBS_EMAIL: '/reports/completed-jobs/email',
   // Dev - reset db (admin only, keep logged-in user)
-  DEV_RESET_DB: '/users/reset-db'
+  DEV_RESET_DB: '/users/reset-db',
+  // Provider services (mechanic/carwash offerings)
+  PROVIDER_SERVICES: '/provider-services',
+  PROVIDER_SERVICE_BY_ID: (id) => `/provider-services/${id}`,
+  PROVIDER_SERVICES_CATALOG: '/provider-services/catalog'
 };
 
 // User Roles

@@ -58,7 +58,7 @@ class ApiService {
   }
 
   handleError(error) {
-    const message = error.response?.data?.message || error.message || 'An unexpected error occurred';
+    const message = error.response?.data?.message || error.response?.data?.error || error.message || 'An unexpected error occurred. Please try again later.';
     const status = error.response?.status;
     const apiError = new Error(message);
     apiError.status = status;
@@ -351,6 +351,28 @@ async deleteCarWashBooking(id) {
 
   async emailCompletedJobsReport(payload) {
     return this.post(API_ENDPOINTS.REPORTS_COMPLETED_JOBS_EMAIL, payload);
+  }
+
+  // ---------- Provider services (My Services - mechanic/carwash) ----------
+  async getMyServiceOfferings(providerType, config = {}) {
+    return this.get(API_ENDPOINTS.PROVIDER_SERVICES, { params: { providerType }, ...config });
+  }
+
+  /** Catalog for clients: all services and prices by provider type (mechanic | carwash) */
+  async getServiceCatalog(providerType) {
+    return this.get(API_ENDPOINTS.PROVIDER_SERVICES_CATALOG, { params: { providerType } });
+  }
+
+  async createServiceOffering(providerType, data) {
+    return this.post(`${API_ENDPOINTS.PROVIDER_SERVICES}?providerType=${encodeURIComponent(providerType)}`, data);
+  }
+
+  async updateServiceOffering(id, data) {
+    return this.put(API_ENDPOINTS.PROVIDER_SERVICE_BY_ID(id), data);
+  }
+
+  async deleteServiceOffering(id) {
+    return this.delete(API_ENDPOINTS.PROVIDER_SERVICE_BY_ID(id));
   }
 }
 

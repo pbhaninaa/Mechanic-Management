@@ -38,8 +38,9 @@ API.interceptors.response.use(
     if (!error.config?.skipGlobalToast) {
       const message =
         error.response?.data?.message ||
+        error.response?.data?.error ||
         error.message ||
-        "An unexpected error occurred";
+        "An unexpected error occurred. Please try again later.";
       toast.error(message);
     }
     if (error.response?.status === 401) {

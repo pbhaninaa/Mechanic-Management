@@ -24,6 +24,7 @@ import MyWashes from "@/views/Carwash/MyWashes.vue";
 import Mapview from "@/views/shared/Mapview.vue";
 import HelpPage from "@/views/Client/HelpPage.vue";
 import PaymentScreen from "@/views/shared/PaymentScreen.vue";
+import MyServices from "@/views/shared/MyServices.vue";
 
 const routes = [
   { path: "/", redirect: "/login" },
@@ -48,7 +49,8 @@ const routes = [
   {path:"/my-washes",name:"MyWashes",component:MyWashes,meta:{requiresAuth:true}},
   {path:"/map-view",name:"Mapview",component:Mapview,meta:{requiresAuth:true}},
   {path:"/help-page",name:"HelpPage",component:HelpPage,meta:{requiresAuth:true}},
-  {path:"/payment-screen",name:"PaymentScreen",component:PaymentScreen,meta:{requiresAuth:true}}
+  {path:"/payment-screen",name:"PaymentScreen",component:PaymentScreen,meta:{requiresAuth:true}},
+  { path: "/my-services", name: "MyServices", component: MyServices, meta: { requiresAuth: true } }
 ];
 
 const router = createRouter({
