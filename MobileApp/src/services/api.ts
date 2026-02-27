@@ -291,8 +291,6 @@ class ApiService {
         priority: jobData.priority,
         servicePrice: jobData.servicePrice ?? 0,
         location: jobData.location?.address || 'Unknown',
-        latitude: jobData.location?.latitude,
-        longitude: jobData.location?.longitude,
         date: new Date().toISOString().split('T')[0],
         status: 'pending',
       };
@@ -327,8 +325,6 @@ class ApiService {
         priority: job.priority,
         servicePrice: job.estimatedCost ?? job.actualCost,
         location: job.location?.address || '',
-        latitude: job.location?.latitude,
-        longitude: job.location?.longitude,
         date: (job.scheduledDate || job.createdAt).toISOString().split('T')[0],
         status: jobData.status || job.status,
       };

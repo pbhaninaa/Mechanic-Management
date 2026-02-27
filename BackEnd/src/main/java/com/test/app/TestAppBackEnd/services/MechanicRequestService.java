@@ -187,11 +187,9 @@ public class MechanicRequestService {
             }
         }
 
-        // Update all fields
+        // Update all fields (coords not persisted; location string is used)
         existing.setDescription(updated.getDescription());
         existing.setLocation(updated.getLocation());
-        existing.setLatitude(updated.getLatitude());
-        existing.setLongitude(updated.getLongitude());
         existing.setDate(updated.getDate());
         existing.setStatus(updated.getStatus());
         existing.setUsername(updated.getUsername());

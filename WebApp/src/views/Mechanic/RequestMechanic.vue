@@ -27,7 +27,7 @@
         <InputField v-if="request.serviceTypes?.includes('Other')" v-model="request.customDescription"
           label="Please specify (for Other)" :disabled="loading" outlined />
 <!--  Car Plate  -->
-  <InputField v-model="request.carPlate" label="Car Plate Number" placeholder="Enter your car plate number" :disabled="loading" outlined />
+  <InputField :model-value="request.carPlate" @update:model-value="request.carPlate = (($event) ?? '').toString().toUpperCase()" label="Car Plate Number" placeholder="Enter your car plate number" :disabled="loading" outlined />
        <InputField v-model="request.vinNumber" label="VIN Number" placeholder="Enter your car's VIN number" :disabled="loading" outlined /> 
   <!-- Total Price (pre-defined, like Carwash) -->
         <InputField :model-value="formattedPrice" label="Total Price" type="text" disabled />
@@ -118,8 +118,6 @@ const request = ref({
   carPlate: "",
   vinNumber: "",
   carType: "",
-  latitude: null,
-  longitude: null,
   date: "",
   servicePrice: 0,
 });
@@ -180,8 +178,6 @@ const fetchCurrentLocation = async () => {
     return;
   }
 
-  request.value.latitude = result.coords.latitude;
-  request.value.longitude = result.coords.longitude;
   request.value.location = result.locationName;
 };
 
@@ -194,8 +190,6 @@ watch(
       await fetchCurrentLocation();
     } else {
       request.value.location = "";
-      request.value.latitude = null;
-      request.value.longitude = null;
     }
   }
 );
@@ -228,9 +222,7 @@ const submitRequest = async () => {
       location: request.value.location,
       carType: request.value.carType,
       carPlate: request.value.carPlate,
-      latitude: request.value.latitude,
       vinNumber: request.value.vinNumber,
-      longitude: request.value.longitude,
       date: request.value.date,
       status: JOB_STATUS.PENDING,
       servicePrice: computedPrice.value,
@@ -248,8 +240,6 @@ const submitRequest = async () => {
       location: "",
       carPlate: "",
       vinNumber: "",
-      latitude: null,
-      longitude: null,
       date: "",
       carType: "",
     };

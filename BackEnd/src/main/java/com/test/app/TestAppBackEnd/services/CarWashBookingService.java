@@ -3,6 +3,7 @@ package com.test.app.TestAppBackEnd.services;
 import com.test.app.TestAppBackEnd.entities.CarWashBooking;
 import com.test.app.TestAppBackEnd.repositories.CarWashBookingRepository;
 import com.test.app.TestAppBackEnd.repositories.UserProfileRepository;
+import com.test.app.TestAppBackEnd.util.DateFormatUtil;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -52,6 +53,8 @@ public class CarWashBookingService {
 
     // ================= CREATE =================
     public CarWashBooking createBooking(CarWashBooking booking) {
+        String normalizedDate = DateFormatUtil.normalizeToIsoDate(booking.getDate());
+        if (normalizedDate != null) booking.setDate(normalizedDate);
         return repository.save(booking);
     }
 
@@ -119,13 +122,14 @@ public class CarWashBookingService {
                 }
             }
 
-            // Update all booking fields
+            // Update all booking fields (date saved as yyyy-MM-dd for range search)
+            String normalizedDate = DateFormatUtil.normalizeToIsoDate(updatedBooking.getDate());
+            if (normalizedDate != null) booking.setDate(normalizedDate);
             booking.setCarPlate(updatedBooking.getCarPlate());
             booking.setCarType(updatedBooking.getCarType());
             booking.setCarDescription(updatedBooking.getCarDescription());
             booking.setServiceTypes(updatedBooking.getServiceTypes());
             booking.setServicePrice(updatedBooking.getServicePrice());
-            booking.setDate(updatedBooking.getDate());
             booking.setLocation(updatedBooking.getLocation());
             booking.setStatus(updatedBooking.getStatus());
             booking.setCarWashId(updatedBooking.getCarWashId());

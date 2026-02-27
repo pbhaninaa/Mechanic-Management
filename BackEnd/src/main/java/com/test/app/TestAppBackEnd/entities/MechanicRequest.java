@@ -27,9 +27,6 @@ public class MechanicRequest {
     @Column(nullable = true, name = "MechanicId", length = 36)
     private String mechanicId;
 
-    private Double latitude;
-    private Double longitude;
-
     private String carType;
     private String carPlate;
     private String vinNumber;
@@ -64,12 +61,7 @@ public class MechanicRequest {
     public String getLocation() { return location; }
     public void setLocation(String location) { this.location = location; }
 
-    public Double getLatitude() { return latitude; }
-    public void setLatitude(Double latitude) { this.latitude = latitude; }
-
-    public Double getLongitude() { return longitude; }
-    public void setLongitude(Double longitude) { this.longitude = longitude; }
-public String getCarType() { return carType; }
+    public String getCarType() { return carType; }
     public void setCarType(String carType) { this.carType = carType; }
     public LocalDate getDate() { return date; }
     public void setDate(LocalDate date) { this.date = date; }

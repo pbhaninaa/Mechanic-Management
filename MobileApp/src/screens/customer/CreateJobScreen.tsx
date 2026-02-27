@@ -233,7 +233,7 @@ const CreateJobScreen = ({ navigation }: any) => {
           <TextInput
             style={styles.textInput}
             value={licensePlate}
-            onChangeText={setLicensePlate}
+            onChangeText={(text) => setLicensePlate(text.toUpperCase())}
             placeholder="e.g., ABC123"
             autoCapitalize="characters"
           />

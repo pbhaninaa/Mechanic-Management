@@ -14,7 +14,7 @@
                 type="text" :disabled="loading" required />
             </v-col>
             <v-col cols="12" md="4">
-              <InputField v-model="newBooking.carPlate" label="Car Plate Number" type="text" :disabled="loading"
+              <InputField :model-value="newBooking.carPlate" @update:model-value="newBooking.carPlate = (($event) ?? '').toString().toUpperCase()" label="Car Plate Number" type="text" :disabled="loading"
                 required />
             </v-col>
           </v-row>
