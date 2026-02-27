@@ -49,9 +49,10 @@ const { currencySymbol } = useCurrency();
 // Logged in user
 const loggedInUser = getSafeJson("userProfile", {}) || {};
 const role = loggedInUser.roles?.[0];
-// Table headers: Service providers see "Amount" (their payout); Admin sees Amount Paid, Commission, Provider Payout
+// Table headers: Service providers see "Amount" (their payout); Admin sees Done By (who did the job), Amount Paid, Commission, Provider Payout
 const headers = [
   { title: "Job Description", value: "jobDescription" },
+  ...(role === USER_ROLES.ADMIN ? [{ title: "Done By", value: "serviceProvider" }] : []),
   { title: "Date", value: "paidAt" },
   ...(role === USER_ROLES.ADMIN
     ? [
@@ -73,25 +74,40 @@ const fetchEarnings = async () => {
 
   try {
     let response;
+    let providerMap: Record<string, string> = {};
     if (role === USER_ROLES.MECHANIC) {
       response = await apiService.getPaymentsByMechanic(loggedInUser.id);
     } else if (role === USER_ROLES.CAR_WASH) {
       response = await apiService.getPaymentsByCarWash(loggedInUser.id);
     } else if (role === USER_ROLES.ADMIN) {
-      response = await apiService.getPaymentsByClients();
+      const [paymentsRes, profilesRes] = await Promise.all([
+        apiService.getPaymentsByClients(),
+        apiService.getAllUsers(),
+      ]);
+      response = paymentsRes;
+      const profiles = profilesRes.data || [];
+      profiles.forEach((profile: any) => {
+        const name = [profile.firstName, profile.lastName].filter(Boolean).join(" ").trim() || profile.username;
+        if (profile.id) providerMap[profile.id] = name || profile.id;
+      });
     } else {
       throw new Error("Invalid user role for earnings");
     }
 
     // Map backend data to table-friendly format
-    // Service providers (mechanic/carwash) see only their payout (amount). Admin sees full breakdown.
+    // Service providers (mechanic/carwash) see only their payout (amount). Admin sees full breakdown + Service Provider.
     earnings.value = (response.data || []).map((p) => {
       const providerPayout = Number(p.amount || 0);
       const commission = Number(p.platformFee || 0);
       const amountPaidByUser = providerPayout + commission;
+      const providerId = p.mechanicId || p.carWashId;
+      const providerType = p.mechanicId ? "Mechanic" : p.carWashId ? "Car Wash" : "";
+      const providerName = providerId ? (providerMap[providerId] || null) : null;
+      const serviceProvider = providerName || (providerType || "-");
       return {
         id: p.id,
         jobDescription: p.jobDescription || `Job #${p.jobId}`,
+        serviceProvider: role === USER_ROLES.ADMIN ? serviceProvider : undefined,
         paidAt: formatDateTime(p.paidAt),
         amount: providerPayout.toFixed(2),
         amountPaidByUser: role === USER_ROLES.ADMIN ? amountPaidByUser.toFixed(2) : undefined,
