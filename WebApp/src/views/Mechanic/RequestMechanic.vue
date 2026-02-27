@@ -14,10 +14,17 @@
           placeholder="Please be as specific as possible ie. 123 Main St, City" :extra-rules="[rules.required]"
           :disabled="loading || request.forSelf" :readonly="request.forSelf" required />
         <!-- Select Car type  -->
-        <DropdownField v-model="request.carType" :items="carOptions" label="Select Car Type"
-          placeholder="Select one or more services"   required :disabled="loading" variant="outlined"
+        <DropdownField v-model="request.carType" :items="carOptions" label="Select Manufacturer "
+          placeholder="Select one or more services" required :disabled="loading" variant="outlined"
           :prepopulate-first="false" />
-          
+        <!--  Car Plate  -->
+        <InputField :model-value="request.carPlate"
+          @update:model-value="request.carPlate = (($event) ?? '').toString().toUpperCase()" label="Car Plate Number"
+          placeholder="Enter your car plate number" :disabled="loading" outlined />
+
+        <InputField v-model="request.vinNumber" label="VIN Number" placeholder="Enter your car's VIN number"
+          :disabled="loading" outlined />
+
         <!-- Service Description - multi-select (like Carwash: wipers, brake pads, engine, etc.) -->
         <DropdownField v-model="request.serviceTypes" :items="jobOptions" label="Select Services"
           placeholder="Select one or more services" multiple chips required :disabled="loading" variant="outlined"
@@ -26,10 +33,7 @@
         <!-- Custom explanation if "Other" is selected -->
         <InputField v-if="request.serviceTypes?.includes('Other')" v-model="request.customDescription"
           label="Please specify (for Other)" :disabled="loading" outlined />
-<!--  Car Plate  -->
-  <InputField :model-value="request.carPlate" @update:model-value="request.carPlate = (($event) ?? '').toString().toUpperCase()" label="Car Plate Number" placeholder="Enter your car plate number" :disabled="loading" outlined />
-       <InputField v-model="request.vinNumber" label="VIN Number" placeholder="Enter your car's VIN number" :disabled="loading" outlined /> 
-  <!-- Total Price (pre-defined, like Carwash) -->
+        <!-- Total Price (pre-defined, like Carwash) -->
         <InputField :model-value="formattedPrice" label="Total Price" type="text" disabled />
 
         <!-- Preferred Date -->
@@ -44,8 +48,9 @@
         </v-menu>
 
         <!-- Submit Button -->
-        <Button label="Request Mechanic" :color="STATUS_COLORS.REJECTED" block :loading="loading"
+        <Button label="Request Mechanic" :color="STATUS_COLORS.REJECTED"  :loading="loading"
           :disabled="!isFormValid || loading" @click="submitRequest" />
+
 
         <v-alert v-if="message" :type="messageType" class="mt-3" closable @click:close="message = ''">
           {{ message }}

@@ -1,33 +1,34 @@
 <template>
   <PageContainer>
-    <v-alert v-if="bookingError" type="error" dismissible class="mb-4" @click:close="bookingError = ''">{{ bookingError }}</v-alert>
+    <v-alert v-if="bookingError" type="error" dismissible class="mb-4" @click:close="bookingError = ''">{{ bookingError
+    }}</v-alert>
     <v-card>
       <v-card-title>Car Wash Booking</v-card-title>
       <v-card-text>
         <v-form ref="form" v-model="formValid" lazy-validation>
-          <v-row>
-            <v-col cols="12" md="4">
-              <DropdownField v-model="newBooking.carType" :items="carTypes" label="Car Type" required />
-            </v-col>
-            <v-col cols="12" md="4">
-              <InputField v-model="newBooking.carDescription" label="Car Description (Make/Model/Year/Color)"
-                type="text" :disabled="loading" required />
-            </v-col>
-            <v-col cols="12" md="4">
-              <InputField :model-value="newBooking.carPlate" @update:model-value="newBooking.carPlate = (($event) ?? '').toString().toUpperCase()" label="Car Plate Number" type="text" :disabled="loading"
-                required />
-            </v-col>
-          </v-row>
+          <v-radio-group v-model="useCurrentLocation" row>
+            <v-radio label="For Myself" :value="true" />
+            <v-radio label="For Someone Else" :value="false" />
+          </v-radio-group>
+          <v-alert v-if="locationError" type="warning" density="compact" class="mb-2">{{ locationError }}</v-alert>
+
+          <InputField v-model="newBooking.location" label="Location" type="text"
+            :disabled="loading || useCurrentLocation" :readonly="useCurrentLocation" required />
+
+          <DropdownField v-model="newBooking.carType" :items="carTypes" label="Car Type" required />
+          <InputField :model-value="newBooking.carPlate"
+            @update:model-value="newBooking.carPlate = (($event) ?? '').toString().toUpperCase()"
+            label="Car Plate Number" type="text" :disabled="loading" required />
+
+
+          <InputField v-model="newBooking.carDescription" label="Car Description (Make/Model/Year/Color)" type="text"
+            :disabled="loading" required />
+
+
 
           <DropdownField v-model="newBooking.serviceTypes" :items="serviceTypes" label="Select Services" multiple chips
             required />
-          <v-radio-group v-model="useCurrentLocation" row>
-            <v-radio label="Use My Current Location" :value="true" />
-            <v-radio label="Enter Location Manually" :value="false" />
-          </v-radio-group>
-          <v-alert v-if="locationError" type="warning" density="compact" class="mb-2">{{ locationError }}</v-alert>
-          <InputField v-model="newBooking.location" label="Location" type="text"
-            :disabled="loading || useCurrentLocation" :readonly="useCurrentLocation" required />
+
           <InputField v-model="formattedPrice" label="Total Price" type="text" :disabled="true" />
           <v-menu v-model="menu" :close-on-content-click="false" transition="scale-transition" offset-y
             min-width="290px">
@@ -37,7 +38,7 @@
             </template>
             <v-date-picker v-model="newBooking.date" :min="today" color="primary" @update:model-value="menu = false" />
           </v-menu>
-          <Button :label="isEditMode ? 'Update' : 'Book Now'" color="primary" @click="submitBooking" :loading="loading"
+          <Button :label="isEditMode ? 'Update' : 'Book Now'" :color="STATUS_COLORS.REJECTED" @click="submitBooking" :loading="loading"
             :disabled="loading || !isFormComplete" />
         </v-form>
       </v-card-text>
@@ -52,6 +53,7 @@ import PageContainer from "@/components/PageContainer.vue";
 import InputField from "@/components/InputField.vue";
 import DropdownField from "@/components/DropdownField.vue";
 import Button from "@/components/Button.vue";
+import { STATUS_COLORS } from "@/utils/constants";
 import apiService from "@/api/apiService";
 import { getCurrentLocationWithName } from "@/utils/helper";
 import { getSafeJson } from "@/utils/storage";
