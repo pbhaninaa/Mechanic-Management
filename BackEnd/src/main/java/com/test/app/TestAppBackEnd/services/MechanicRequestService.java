@@ -117,10 +117,8 @@ public class MechanicRequestService {
     }
 
     private String toJobDescription(MechanicRequest request) {
-        if (request.getTitle() != null && !request.getTitle().isBlank()) return request.getTitle();
         if (request.getDescription() != null && !request.getDescription().isBlank()) return request.getDescription();
-        if (request.getCategory() != null && !request.getCategory().isBlank()) return request.getCategory();
-        return "mechanic service";
+         return "mechanic service";
     }
 
     private void notifyClientRequestAccepted(MechanicRequest request) {
@@ -163,10 +161,7 @@ public class MechanicRequestService {
         existing.setStatus(updated.getStatus());
         existing.setUsername(updated.getUsername());
         existing.setMechanicId(updated.getMechanicId());
-        if (updated.getCategory() != null) existing.setCategory(updated.getCategory());
-        if (updated.getPriority() != null) existing.setPriority(updated.getPriority());
-        if (updated.getTitle() != null) existing.setTitle(updated.getTitle());
-        if (updated.getServicePrice() != null) existing.setServicePrice(updated.getServicePrice());
+         if (updated.getServicePrice() != null) existing.setServicePrice(updated.getServicePrice());
 
         MechanicRequest saved = repository.save(existing);
 

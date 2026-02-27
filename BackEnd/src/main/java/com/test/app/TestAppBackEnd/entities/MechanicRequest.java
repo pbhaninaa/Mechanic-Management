@@ -30,15 +30,15 @@ public class MechanicRequest {
     private Double latitude;
     private Double longitude;
 
+    private String carType;
+    private String carPlate;
+    private String vinNumber;
+
     @Column(nullable = false)
     private LocalDate date;
 
     @Column(nullable = false)
     private String status = "pending"; // pending, assigned, in_progress, completed, cancelled
-
-    private String category; // e.g. Battery Service, Tire Service, Engine Repair
-    private String priority = "medium"; // low, medium, high, emergency
-    private String title; // Brief service title
 
     private Double servicePrice; // Pre-defined price for the selected service(s)
 
@@ -69,24 +69,19 @@ public class MechanicRequest {
 
     public Double getLongitude() { return longitude; }
     public void setLongitude(Double longitude) { this.longitude = longitude; }
-
+public String getCarType() { return carType; }
+    public void setCarType(String carType) { this.carType = carType; }
     public LocalDate getDate() { return date; }
     public void setDate(LocalDate date) { this.date = date; }
-
+public String getCarPlate() { return carPlate; }
+    public void setCarPlate(String carPlate) { this.carPlate = carPlate; }
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
     public String getMechanicId() { return mechanicId; }
     public void setMechanicId(String mechanicId) { this.mechanicId = mechanicId; }
 
-    public String getCategory() { return category; }
-    public void setCategory(String category) { this.category = category; }
-
-    public String getPriority() { return priority; }
-    public void setPriority(String priority) { this.priority = priority; }
-
-    public String getTitle() { return title; }
-    public void setTitle(String title) { this.title = title; }
-
+public String getVinNumber() { return vinNumber; }
+    public void setVinNumber(String vinNumber) { this.vinNumber = vinNumber; }
     public Double getServicePrice() { return servicePrice; }
     public void setServicePrice(Double servicePrice) { this.servicePrice = servicePrice; }
 

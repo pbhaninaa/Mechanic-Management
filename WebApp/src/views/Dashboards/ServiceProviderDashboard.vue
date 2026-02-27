@@ -83,6 +83,7 @@ const config = computed(() => {
     pendingLabel: isMechanic ? "Pending Jobs" : "Pending Bookings",
     completedLabel: isMechanic ? "Completed Jobs" : "Completed Washes",
     activeLabel: isMechanic ? "Active Requests" : "Active Bookings",
+    revenueLabel: isMechanic ? "Total Earnings" : "Total Revenue",
   };
 });
 
@@ -127,7 +128,7 @@ const totalPaymentsAmount = computed(() =>
 const statsCards = computed(() => [
   { title: config.value.pendingLabel, value: pendingCount.value, color: COLORS.SOFT_ORANGE },
   { title: config.value.completedLabel, value: completedCount.value, color: COLORS.SOFT_GREEN_DARK },
-  { title: "Payments", value: formatCurrency(totalPaymentsAmount.value), color: COLORS.SOFT_BLUE },
+  { title: config.value.revenueLabel, value: formatCurrency(totalPaymentsAmount.value), color: COLORS.SOFT_BLUE },
   { title: config.value.activeLabel, value: activeCount.value, color: COLORS.SOFT_PURPLE },
 ]);
 
@@ -161,6 +162,8 @@ const tableHeaders = computed(() => {
     { title: "Client", value: "username" },
     { title: descTitle, value: "serviceDesc", formatter: formatServiceDesc },
     { title: "Price", value: "price", formatter: formatPrice },
+    {title:"Car Type", value:"carType"},
+    {title:'Car Plate', value:"carPlate"},
     { title: "Date", value: "date", formatter: (item: any) => formatDate(item?.date) },
     { title: "Actions", value: "actions", sortable: false },
   ];

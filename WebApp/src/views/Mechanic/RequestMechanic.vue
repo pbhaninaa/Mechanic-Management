@@ -13,17 +13,23 @@
         <InputField v-model="request.location" label="Location"
           placeholder="Please be as specific as possible ie. 123 Main St, City" :extra-rules="[rules.required]"
           :disabled="loading || request.forSelf" :readonly="request.forSelf" required />
-
+        <!-- Select Car type  -->
+        <DropdownField v-model="request.carType" :items="carOptions" label="Select Car Type"
+          placeholder="Select one or more services"   required :disabled="loading" variant="outlined"
+          :prepopulate-first="false" />
+          
         <!-- Service Description - multi-select (like Carwash: wipers, brake pads, engine, etc.) -->
         <DropdownField v-model="request.serviceTypes" :items="jobOptions" label="Select Services"
-          placeholder="Select one or more services" multiple chips required :disabled="loading"
-          variant="outlined" :prepopulate-first="false" />
+          placeholder="Select one or more services" multiple chips required :disabled="loading" variant="outlined"
+          :prepopulate-first="false" />
 
         <!-- Custom explanation if "Other" is selected -->
         <InputField v-if="request.serviceTypes?.includes('Other')" v-model="request.customDescription"
           label="Please specify (for Other)" :disabled="loading" outlined />
-
-        <!-- Total Price (pre-defined, like Carwash) -->
+<!--  Car Plate  -->
+  <InputField v-model="request.carPlate" label="Car Plate Number" placeholder="Enter your car plate number" :disabled="loading" outlined />
+       <InputField v-model="request.vinNumber" label="VIN Number" placeholder="Enter your car's VIN number" :disabled="loading" outlined /> 
+  <!-- Total Price (pre-defined, like Carwash) -->
         <InputField :model-value="formattedPrice" label="Total Price" type="text" disabled />
 
         <!-- Preferred Date -->
@@ -34,7 +40,7 @@
               :rules="[rules.required]" :disabled="loading" required />
           </template>
 
-          <v-date-picker v-model="request.date" :min="today" color="primary"  @update:model-value="menu = false" />
+          <v-date-picker v-model="request.date" :min="today" color="primary" @update:model-value="menu = false" />
         </v-menu>
 
         <!-- Submit Button -->
@@ -78,6 +84,18 @@ const jobOptions = [
   "Suspension repair",
   "Other",
 ];
+const carOptions = [
+  "Toyota Camry",
+  "Honda Accord",
+  "Ford F-150",
+  "Chevrolet Silverado",
+  "Nissan Altima",
+  "Honda Civic",
+  "Toyota Corolla",
+  "Ford Escape",
+  "Chevrolet Equinox",
+  "Nissan Rogue",
+];
 
 // Mock price map - R per service
 const mechanicServicePrices: Record<string, number> = {
@@ -97,6 +115,9 @@ const request = ref({
   serviceTypes: [] as string[],
   customDescription: "",
   location: "",
+  carPlate: "",
+  vinNumber: "",
+  carType: "",
   latitude: null,
   longitude: null,
   date: "",
@@ -205,7 +226,10 @@ const submitRequest = async () => {
       username,
       description,
       location: request.value.location,
+      carType: request.value.carType,
+      carPlate: request.value.carPlate,
       latitude: request.value.latitude,
+      vinNumber: request.value.vinNumber,
       longitude: request.value.longitude,
       date: request.value.date,
       status: JOB_STATUS.PENDING,
@@ -222,12 +246,15 @@ const submitRequest = async () => {
       serviceTypes: [],
       customDescription: "",
       location: "",
+      carPlate: "",
+      vinNumber: "",
       latitude: null,
       longitude: null,
       date: "",
+      carType: "",
     };
     form.value.resetValidation();
-    fetchCurrentLocation;
+    fetchCurrentLocation();
   } catch (err: any) {
     // Error toast shown by global axios interceptor
   } finally {
