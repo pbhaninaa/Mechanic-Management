@@ -14,8 +14,24 @@
           </template>
 
           <template #item.actions="{ item }">
-            <v-btn class="mr-4" color="primary" small :disabled="loading || createLoading || deleteAllLoading" @click="editUser(item)">Edit</v-btn>
-            <v-btn color="error" small :disabled="loading || createLoading || deleteAllLoading" @click="confirmDelete(item)">Delete</v-btn>
+            <v-tooltip text="Edit" location="top">
+              <template #activator="{ props }">
+                <v-btn v-bind="props" variant="text" size="small" color="primary" icon class="mr-1"
+                  :disabled="loading || createLoading || deleteAllLoading"
+                  @click="editUser(item)">
+                  <v-icon size="18">mdi-pencil</v-icon>
+                </v-btn>
+              </template>
+            </v-tooltip>
+            <v-tooltip text="Delete" location="top">
+              <template #activator="{ props }">
+                <v-btn v-bind="props" variant="text" size="small" color="error" icon
+                  :disabled="loading || createLoading || deleteAllLoading"
+                  @click="confirmDelete(item)">
+                  <v-icon size="18">mdi-delete</v-icon>
+                </v-btn>
+              </template>
+            </v-tooltip>
           </template>
         </TableComponent>
 

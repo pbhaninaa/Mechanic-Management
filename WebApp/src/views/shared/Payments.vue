@@ -11,18 +11,6 @@
             {{ item.status }}
           </v-chip>
         </template>
-
-        <template #item.actions="{ item }">
-          <v-btn
-            small
-            color="green"
-            :loading="actionLoadingId === item.id"
-            :disabled="item.status.toLowerCase() === 'completed' || !!actionLoadingId"
-            @click="markCompleted(item)"
-          >
-            Mark Completed
-          </v-btn>
-        </template>
       </TableComponent>
   
 
@@ -54,15 +42,13 @@ interface Payment {
 
 const { currencySymbol } = useCurrency();
 const payments = ref<Payment[]>([]);
-const actionLoadingId = ref<string | null>(null);
 
 const headers = [
   { title: "Client", value: "client" },
   { title: "Amount", value: "amount" },
-  { title: "Jod Description", value: "jobDescription" },
+  { title: "Job Description", value: "jobDescription" },
   { title: "Payment Date", value: "date", formatter: (item) => formatDateTime(item?.date) },
   { title: "Status", value: "status" },
-  { title: "Actions", value: "actions", sortable: false },
 ];
 
 
@@ -82,23 +68,6 @@ const loadPayments = async () => {
     }));
   } catch (err) {
     console.error("Failed to load payments:", err);
-  }
-};
-
-
-// Mark payment as completed
-const markCompleted = async (payment) => {
-  if (actionLoadingId.value) return;
-  actionLoadingId.value = payment.id;
-  try {
-    const job = await apiService.getMechanicRequestsById(payment.jobId);
-    const payload = { ...job, status: JOB_STATUS.COMPLETED };
-    await apiService.updateRequestMechanic(payload);
-    await loadPayments();
-  } catch (err) {
-    console.error("Failed to update payment status:", err);
-  } finally {
-    actionLoadingId.value = null;
   }
 };
 

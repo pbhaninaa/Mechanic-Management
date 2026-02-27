@@ -11,22 +11,11 @@
         <template #item.actions="{ item }">
           <v-tooltip text="Accept" location="top">
             <template #activator="{ props }">
-              <v-btn v-bind="props" variant="text" size="small" color="green" class="mr-1"
+              <v-btn v-bind="props" variant="text" size="small" color="green" icon
                 :loading="actionLoadingId === item.id"
                 :disabled="isCompleted(item) || (!isAdmin() && isStatus(item, JOB_STATUS.ACCEPTED)) || !!actionLoadingId"
                 @click="onAcceptClick(item)">
                 <v-icon size="18">mdi-check</v-icon>
-              </v-btn>
-            </template>
-          </v-tooltip>
-
-          <v-tooltip text="Decline" location="top">
-            <template #activator="{ props }">
-              <v-btn v-bind="props" variant="text" size="small" color="red"
-                :loading="actionLoadingId === item.id"
-                :disabled="isCompleted(item) || (!isAdmin() && isStatus(item, JOB_STATUS.DECLINED)) || !!actionLoadingId"
-                @click="updateJobStatus(item, JOB_STATUS.DECLINED)">
-                <v-icon size="18">mdi-close</v-icon>
               </v-btn>
             </template>
           </v-tooltip>
@@ -66,7 +55,7 @@ import { ref, computed, onMounted } from "vue";
 import PageContainer from "@/components/PageContainer.vue";
 import apiService from "@/api/apiService";
 import { JOB_STATUS } from "@/utils/constants";
-import { getStatusColor } from "@/utils/helper";
+import { getStatusColor, sortRequestsByStatus } from "@/utils/helper";
 import TableComponent from "@/components/TableComponent.vue";
 import { formatDate } from "@/composables/useDateFormat";
 import { getSafeJson } from "@/utils/storage";
@@ -182,13 +171,10 @@ const loadJobRequests = async () => {
     const role = profile?.roles?.[0]?.toLowerCase?.() ?? "";
 
     // Admin sees all; mechanic (and others) see only pending
-    if (role === "admin") {
-      jobRequests.value = allRequests;
-    } else {
-      jobRequests.value = allRequests.filter(
-        (r: JobRequest) => String(r?.status || "").toLowerCase() === "pending"
-      );
-    }
+    let list = role === "admin" ? allRequests : allRequests.filter(
+      (r: JobRequest) => String(r?.status || "").toLowerCase() === "pending"
+    );
+    jobRequests.value = sortRequestsByStatus(list);
   } catch (err: any) {
     console.error("Failed to load job requests:", err);
   }

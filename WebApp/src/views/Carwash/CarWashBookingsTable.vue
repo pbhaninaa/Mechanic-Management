@@ -24,20 +24,11 @@
         <template #item.actions="{ item }">
           <v-tooltip text="Accept" location="top">
             <template #activator="{ props }">
-              <v-btn v-bind="props" variant="text" size="small" color="green" class="mr-1"
+              <v-btn v-bind="props" variant="text" size="small" color="green" icon
                 :loading="actionLoadingId === item.id"
                 :disabled="item.status === JOB_STATUS.COMPLETED || item.status === JOB_STATUS.ACCEPTED || !!actionLoadingId"
                 @click="onAcceptClick(item)">
                 <v-icon size="18">mdi-check</v-icon>
-              </v-btn>
-            </template>
-          </v-tooltip>
-
-          <v-tooltip v-if="false" text="Decline" location="top">
-            <template #activator="{ props }">
-              <v-btn v-bind="props" variant="text" size="small" color="red"
-                @click="updateStatus(item, JOB_STATUS.DECLINED)" :disabled="item.status === JOB_STATUS.DECLINED">
-                <v-icon size="18">mdi-close</v-icon>
               </v-btn>
             </template>
           </v-tooltip>
@@ -75,7 +66,7 @@
 import { ref, onMounted } from "vue";
 import PageContainer from "@/components/PageContainer.vue";
 import apiService from "@/api/apiService";
-import { getStatusColor } from "@/utils/helper";
+import { getStatusColor, sortRequestsByStatus } from "@/utils/helper";
 import { JOB_STATUS } from "@/utils/constants";
 import TableComponent from "@/components/TableComponent.vue";
 import { getSafeJson } from "@/utils/storage";
@@ -171,18 +162,21 @@ const fetchBookings = async () => {
     const res = await apiService.getAllCarWashBookings();
     const allBookings = Array.isArray(res.data) ? res.data : [];
 
+    let list;
     if (isAdmin()) {
-      bookings.value = allBookings;
+      list = allBookings;
     } else {
       const userId = String(loggedInUser.id);
-      bookings.value = allBookings.filter(booking => {
+      list = allBookings.filter(booking => {
         const bookingCarWashId = String(booking.carWashId ?? "");
         if (booking.status === JOB_STATUS.ACCEPTED) {
           return bookingCarWashId === userId;
         }
+        
         return bookingCarWashId !== userId;
       });
     }
+    bookings.value = sortRequestsByStatus(list);
   } catch (err) {
     console.error("Failed to fetch bookings:", err);
     bookings.value = [];

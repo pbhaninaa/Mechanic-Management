@@ -264,8 +264,9 @@ function haversineDistance(coords1, coords2) {
 }
 /**
  * Status priority for sorting requests.
+ * Order: pending → accepted/assigned → paid → in progress → completed
  * @param {Array<{status?: string, date?: string}>} items
- * @param {'manage'|'default'} [order='default'] - 'manage': paid→accepted→pending→completed. 'default': pending→accepted→paid→rest
+ * @param {'manage'|'default'} [order='default'] - both use same order: pending, paid, in progress, completed
  * @returns {Array} Sorted copy of items
  */
 export const sortRequestsByStatus = (items, order = "default") => {
@@ -273,14 +274,7 @@ export const sortRequestsByStatus = (items, order = "default") => {
 
   const priority = (s) => {
     const status = String(s || "").toLowerCase();
-    if (order === "manage") {
-      if (status === "paid") return 0;
-      if (status === "accepted" || status === "assigned") return 1;
-      if (status === "pending") return 2;
-      if (status === "completed") return 3;
-      return 4;
-    }
-    // default: needs-attention first
+    // Order: pending, accepted/assigned, paid, in progress, completed
     if (status === "pending") return 0;
     if (status === "accepted" || status === "assigned") return 1;
     if (status === "paid") return 2;

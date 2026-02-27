@@ -22,13 +22,15 @@
           </v-chip>
         </template>
         <template #item.actions="{ item }">
-          <v-btn small color="green" :disabled="item.status.toLowerCase() === 'completed' || item.status.toLowerCase() !== 'accepted'" @click="payForRequest(item)">
-            Pay
-          </v-btn>
-          <v-btn v-if="false" small color="blue" :disabled="item.status.toLowerCase() !== 'accepted'"
-            @click="goToDirections(item)">
-            Directions
-          </v-btn>
+          <v-tooltip text="Pay" location="top">
+            <template #activator="{ props }">
+              <v-btn v-bind="props" variant="text" size="small" color="green" icon
+                :disabled="item.status?.toLowerCase() === 'completed' || item.status?.toLowerCase() !== 'accepted'"
+                @click="payForRequest(item)">
+                <v-icon size="18">mdi-credit-card</v-icon>
+              </v-btn>
+            </template>
+          </v-tooltip>
         </template>
 
         <template #no-data>
@@ -44,7 +46,7 @@ import { ref, onMounted } from "vue";
 import PageContainer from "@/components/PageContainer.vue";
 import { formatDate } from "@/composables/useDateFormat";
 import apiService from "@/api/apiService";
-import { getStatusColor } from "@/utils/helper";
+import { getStatusColor, sortRequestsByStatus } from "@/utils/helper";
 import { useCurrency } from "@/composables/useCurrency";
 import { useRouter } from 'vue-router'
 import TableComponent from "@/components/TableComponent.vue";
@@ -93,7 +95,8 @@ const fetchBookings = async () => {
   loading.value = true;
   try {
     const response = await apiService.getCarWashBookingsByClient(loggedInUser.username);
-    bookings.value = Array.isArray(response.data) ? response.data : [];
+    const data = Array.isArray(response.data) ? response.data : [];
+    bookings.value = sortRequestsByStatus(data);
   } catch (error) {
     console.error("Failed to fetch bookings:", error);
     bookings.value = [];

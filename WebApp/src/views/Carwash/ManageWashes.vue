@@ -19,10 +19,9 @@
 
         <!-- Actions: Update Status -->
         <template #item.actions="{ item }">
-          <!-- Start / In progress button -->
           <v-tooltip text="Start wash (client has paid)" location="top">
             <template #activator="{ props }">
-              <v-btn v-bind="props" small color="green" variant="text" class="mr-1"
+              <v-btn v-bind="props" small color="green" variant="text" icon class="mr-1"
                 :loading="actionLoadingId === item.id"
                 :disabled="item.status === JOB_STATUS.COMPLETED || item.status !== JOB_STATUS.PAID || !!actionLoadingId"
                 @click="updateStatus(item, JOB_STATUS.IN_PROGRESS)">
@@ -30,10 +29,9 @@
               </v-btn>
             </template>
           </v-tooltip>
-
           <v-tooltip text="Finish wash - you have done the work" location="top">
             <template #activator="{ props }">
-              <v-btn v-bind="props" small color="blue" variant="text" class="mr-1"
+              <v-btn v-bind="props" small color="blue" variant="text" icon
                 :loading="actionLoadingId === item.id"
                 :disabled="item.status === JOB_STATUS.COMPLETED || item.status !== JOB_STATUS.IN_PROGRESS || !!actionLoadingId"
                 @click="updateStatus(item, JOB_STATUS.COMPLETED)">

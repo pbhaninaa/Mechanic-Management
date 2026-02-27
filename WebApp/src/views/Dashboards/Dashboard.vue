@@ -15,6 +15,7 @@
         v-if="dashboardComponent"
         :is="dashboardComponent"
         :profile="profile"
+        :role="primaryRole"
       />
       <p v-else>No dashboard available for this role.</p>
     </div>
@@ -27,9 +28,8 @@ import PageContainer from "@/components/PageContainer.vue";
 import { useProfile } from "@/composables/useProfile";
 
 import ClientDashboard from "./ClientDashboard.vue";
-import MechanicDashboard from "./MechanicDashboard.vue";
+import ServiceProviderDashboard from "./ServiceProviderDashboard.vue";
 import AdminDashboard from "./AdminDashboard.vue";
-import CarWashDashbord from "./CarWashDashbord.vue";
 import { USER_ROLES } from "@/utils/constants";
 
 const { profile, loading, error, loadProfile } = useProfile();
@@ -41,11 +41,10 @@ const dashboardComponent = computed(() => {
     case USER_ROLES.CLIENT:
       return ClientDashboard;
     case USER_ROLES.MECHANIC:
-      return MechanicDashboard;
+    case USER_ROLES.CAR_WASH:
+      return ServiceProviderDashboard;
     case USER_ROLES.ADMIN:
       return AdminDashboard;
-          case USER_ROLES.CAR_WASH:
-      return CarWashDashbord;
     default:
       return null;
   }

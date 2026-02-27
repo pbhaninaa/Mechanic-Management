@@ -18,33 +18,20 @@
         <template #item.actions="{ item }">
           <v-tooltip text="Start work (client has paid)" location="top">
             <template #activator="{ props }">
-              <v-btn
-                v-bind="props"
-                size="small"
-                color="green"
-                variant="text"
-                class="mr-1"
+              <v-btn v-bind="props" size="small" color="green" variant="text" icon class="mr-1"
                 :loading="actionLoadingId === (item.id ?? item.requestId)"
                 :disabled="!canStart(item) || !!actionLoadingId"
-                @click="updateStatus(item, JOB_STATUS.IN_PROGRESS)"
-              >
+                @click="updateStatus(item, JOB_STATUS.IN_PROGRESS)">
                 <v-icon size="18">mdi-play</v-icon>
               </v-btn>
             </template>
           </v-tooltip>
-
           <v-tooltip text="Finish job - you have done the work" location="top">
             <template #activator="{ props }">
-              <v-btn
-                v-bind="props"
-                size="small"
-                color="blue"
-                variant="text"
-                class="mr-1"
+              <v-btn v-bind="props" size="small" color="blue" variant="text" icon
                 :loading="actionLoadingId === (item.id ?? item.requestId)"
                 :disabled="!canComplete(item) || !!actionLoadingId"
-                @click="updateStatus(item, JOB_STATUS.COMPLETED)"
-              >
+                @click="updateStatus(item, JOB_STATUS.COMPLETED)">
                 <v-icon size="18">mdi-check</v-icon>
               </v-btn>
             </template>

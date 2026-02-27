@@ -12,13 +12,15 @@
           </template>
 
            <template #item.actions="{ item }">
-          <v-btn small color="green" :disabled="isCompleted(item) || !canPay(item)" @click="payForRequest(item)">
-            Pay
-          </v-btn>
-          <v-btn v-if="false" small color="blue" :disabled="item.status.toLowerCase() !== 'accepted'"
-            @click="goToDirections(item)">
-            Directions
-          </v-btn>
+          <v-tooltip text="Pay" location="top">
+            <template #activator="{ props }">
+              <v-btn v-bind="props" variant="text" size="small" color="green" icon
+                :disabled="isCompleted(item) || !canPay(item)"
+                @click="payForRequest(item)">
+                <v-icon size="18">mdi-credit-card</v-icon>
+              </v-btn>
+            </template>
+          </v-tooltip>
         </template>
 
           <template #no-data>
@@ -37,7 +39,7 @@ import PageContainer from "@/components/PageContainer.vue";
 import apiService from "@/api/apiService";
 import { JOB_STATUS } from "@/utils/constants";
 import { useRouter } from 'vue-router';
-import { getStatusColor } from "../../utils/helper";
+import { getStatusColor, sortRequestsByStatus } from "../../utils/helper";
 import TableComponent from "@/components/TableComponent.vue";
 import { formatDate } from "@/composables/useDateFormat";
 import { getSafeJson } from "@/utils/storage";
@@ -91,7 +93,8 @@ const loadRequests = async () => {
 
   try {
     const response = await apiService.getUserRequestHistory(username);
-    requests.value = Array.isArray(response.data) ? response.data : [];
+    const data = Array.isArray(response.data) ? response.data : [];
+    requests.value = sortRequestsByStatus(data);
   } catch (err: any) {
     console.error(err);
     historyError.value = err.message || "Failed to load request history";
