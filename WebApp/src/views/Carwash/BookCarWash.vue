@@ -1,7 +1,6 @@
 <template>
   <PageContainer>
-    <v-alert v-if="bookingError" type="error" dismissible class="mb-4" @click:close="bookingError = ''">{{ bookingError
-    }}</v-alert>
+  
     <v-card>
       <v-card-title>Car Wash Booking</v-card-title>
       <v-card-text>

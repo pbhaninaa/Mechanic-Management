@@ -1,86 +1,64 @@
 <template>
   <PageContainer>
-    <v-card>
-      <v-card-title class="d-flex align-center">
-        <span>My Services & Prices</span>
-        <v-spacer />
-        <v-btn color="primary" prepend-icon="mdi-plus" @click="openAddDialog">
-          Add Service
-        </v-btn>
-      </v-card-title>
-      <v-card-text>
-        
-        <v-alert v-if="!providerType" type="info">
-          This page is for service providers (Mechanic or Car Wash). Your role could not be determined.
-        </v-alert>
-        <v-table v-else>
-          <thead>
-            <tr>
-              <th>Service Name</th>
-              <th>Price</th>
-              <th class="text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="item in offerings" :key="item.id">
-              <td>{{ item.serviceName }}</td>
-              <td>{{ formatCurrency(item.price) }}</td>
-              <td class="text-right">
-                <v-btn size="small" variant="text" icon @click="openEditDialog(item)">
-                  <v-icon>mdi-pencil</v-icon>
-                </v-btn>
-                <v-btn size="small" variant="text" icon color="error" @click="confirmDelete(item)">
-                  <v-icon>mdi-delete</v-icon>
-                </v-btn>
-              </td>
-            </tr>
-            <tr v-if="offerings.length === 0 && !loading && !message">
-              <td colspan="3" class="text-center text-medium-emphasis py-4">
-                No services yet. Click "Add Service" to add your first offering.
-              </td>
-            </tr>
-            <tr v-if="offerings.length === 0 && !loading && message && messageType === 'error'">
-              <td colspan="3" class="text-center py-4">
-                <v-alert type="warning" density="compact" class="mx-auto" style="max-width: 400px;">
-                  Could not load your services. Check the message above. You can still try adding a service.
-                </v-alert>
-              </td>
-            </tr>
-          </tbody>
-        </v-table>
-        <v-progress-linear v-if="loading" indeterminate color="primary" class="mt-2" />
-      </v-card-text>
-    </v-card>
+   
+    <v-alert v-if="!providerType" type="info" class="mb-3">
+      This page is for service providers (Mechanic or Car Wash). Your role could not be determined.
+    </v-alert>
+    <template v-else>
+        <v-card-title class="d-flex align-center flex-nowrap">
+          <span>My Services & Prices</span>
+          <v-spacer />
+          
+          <Button label="Add Service" color="primary" size="default" :loading="loading" @click="openAddDialog" />
+        </v-card-title>
+        <v-card-text class="my-services-card-text">
+          <TableComponent
+            title=""
+            :headers="headers"
+            :items="offerings"
+            :loading="loading"
+            :no-data-message="noDataMessage"
+          >
+            <template #item.serviceName="{ item }">
+              {{ item.serviceName }}
+            </template>
+            <template #item.price="{ item }">
+              {{ formatCurrency(item.price) }}
+            </template>
+            <template #item.actions="{ item }">
+              <v-tooltip text="Edit" location="top">
+                <template #activator="{ props }">
+                  <v-btn v-bind="props" variant="text" size="small" color="primary" icon class="mr-1"
+                    :disabled="loading" @click="openEditDialog(item)">
+                    <v-icon size="18">mdi-pencil</v-icon>
+                  </v-btn>
+                </template>
+              </v-tooltip>
+              <v-tooltip text="Delete" location="top">
+                <template #activator="{ props }">
+                  <v-btn v-bind="props" variant="text" size="small" color="error" icon
+                    :disabled="loading" @click="confirmDelete(item)">
+                    <v-icon size="18">mdi-delete</v-icon>
+                  </v-btn>
+                </template>
+              </v-tooltip>
+            </template>
+          </TableComponent>
+        </v-card-text>
+    </template>
 
     <!-- Add / Edit dialog -->
     <v-dialog v-model="dialog" max-width="500" persistent>
       <v-card>
         <v-card-title>{{ editingId ? 'Edit Service' : 'Add Service' }}</v-card-title>
         <v-card-text>
-          <v-text-field
-            v-model="form.serviceName"
-            label="Service name"
-            outlined
-            dense
-            :disabled="loading"
-          />
-          <v-text-field
-            v-model.number="form.price"
-            label="Price"
-            type="number"
-            min="0"
-            step="0.01"
-            outlined
-            dense
-            :disabled="loading"
-          />
+          <InputField v-model="form.serviceName" label="Service name" outlined :disabled="loading"  />
+          <InputField v-model.number="form.price" label="Price" type="number" :disabled="loading" outlined />
         </v-card-text>
         <v-card-actions>
           <v-spacer />
-          <v-btn variant="text" @click="dialog = false">Cancel</v-btn>
-          <v-btn color="primary" :loading="loading" @click="saveOffering">
-            {{ editingId ? 'Update' : 'Add' }}
-          </v-btn>
+          <Button label="Cancel" variant="text" @click="dialog = false" />
+          <Button :label="editingId ? 'Update' : 'Add'" color="primary" :loading="loading" @click="saveOffering" />
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -94,8 +72,8 @@
         </v-card-text>
         <v-card-actions>
           <v-spacer />
-          <v-btn variant="text" @click="deleteDialog = false">Cancel</v-btn>
-          <v-btn color="error" :loading="loading" @click="doDelete">Delete</v-btn>
+          <Button label="Cancel" variant="text" @click="deleteDialog = false" />
+          <Button label="Delete" color="error" :loading="loading" @click="doDelete" />
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -105,6 +83,9 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import PageContainer from '@/components/PageContainer.vue';
+import TableComponent from '@/components/TableComponent.vue';
+import InputField from '@/components/InputField.vue';
+import Button from '@/components/Button.vue';
 import apiService from '@/api/apiService';
 import { getSafeJson } from '@/utils/storage';
 import { useCurrency } from '@/composables/useCurrency';
@@ -124,6 +105,18 @@ const offerings = ref<any[]>([]);
 const loading = ref(false);
 const message = ref('');
 const messageType = ref<'success' | 'error'>('success');
+
+const noDataMessage = computed(() =>
+  messageType.value === 'error' && message.value
+    ? 'Could not load services. You can still try adding one.'
+    : "No services yet. Click 'Add Service' to add your first offering."
+);
+
+const headers = [
+  { title: 'Service Name', value: 'serviceName' },
+  { title: 'Price', value: 'price' },
+  { title: 'Actions', value: 'actions', sortable: false },
+];
 
 const dialog = ref(false);
 const deleteDialog = ref(false);
@@ -228,3 +221,28 @@ onMounted(() => {
   fetchOfferings();
 });
 </script>
+
+<style scoped>
+/* Hide empty title row from TableComponent when title is blank */
+.my-services-card-text > div:first-child {
+  display: none;
+}
+/* Fixed column widths: Service Name 50%, Price 30%, Actions 20% */
+.my-services-card-text :deep(.v-data-table table) {
+  table-layout: fixed;
+  width: 100%;
+}
+.my-services-card-text :deep(.v-data-table th:nth-child(1)),
+.my-services-card-text :deep(.v-data-table td:nth-child(1)) {
+  width: 50%;
+}
+.my-services-card-text :deep(.v-data-table th:nth-child(2)),
+.my-services-card-text :deep(.v-data-table td:nth-child(2)) {
+  width: 30%;
+}
+.my-services-card-text :deep(.v-data-table th:nth-child(3)),
+.my-services-card-text :deep(.v-data-table td:nth-child(3)) {
+  width: 20%;
+  min-width: 90px;
+}
+</style>
