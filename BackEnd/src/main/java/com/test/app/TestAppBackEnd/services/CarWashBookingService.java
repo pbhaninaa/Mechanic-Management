@@ -139,6 +139,9 @@ public class CarWashBookingService {
 
                 String newStatus = booking.getStatus();
                 if ("accepted".equalsIgnoreCase(newStatus)) {
+                    if(booking.isCallOutService())
+                    notificationService.notifyServiceProvider(loggedInUsername,booking.getLocation());
+
                     notificationService.notifyRequestAccepted(
                             booking.getClientUsername(), "https://172.19.80.1:3000/my-washes", "Car Wash Booking", toJobDescription(booking));
                 } else if ("completed".equalsIgnoreCase(newStatus)) {

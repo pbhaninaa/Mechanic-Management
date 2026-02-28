@@ -202,8 +202,12 @@ public class MechanicRequestService {
 
             String newStatus = existing.getStatus();
             if ("accepted".equalsIgnoreCase(newStatus) || "assigned".equalsIgnoreCase(newStatus)) {
+                if(requests.get().isCallOutService())
+                  notificationService.notifyServiceProvider(loggedInUsername,requests.get().getLocation());
+
                 notifyClientRequestAccepted(existing);
             } else if ("completed".equalsIgnoreCase(newStatus)) {
+                
                 notifyClientServiceCompleted(existing, loggedInUsername);
             } else {
                 String jobDesc = toJobDescription(existing);

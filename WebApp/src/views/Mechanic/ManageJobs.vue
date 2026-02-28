@@ -95,7 +95,7 @@ const headers = computed(() => {
     base.splice(1, 0, {
       title: "Phone",
       value: "phoneNumber",
-      formatter: (item: MechanicJob) => item?.phoneNumber || "—",
+      formatter: (item: any) => item?.phoneNumber || "—",
     });
   }
   return base;

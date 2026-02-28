@@ -1,5 +1,6 @@
 package com.test.app.TestAppBackEnd.services;
 
+import ch.qos.logback.classic.Logger;
 import com.test.app.TestAppBackEnd.entities.UserProfile;
 import com.test.app.TestAppBackEnd.repositories.UserProfileRepository;
 import org.springframework.scheduling.annotation.Async;
@@ -7,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+
 
 @Service
 public class ClientNotificationService {
@@ -109,4 +111,37 @@ public class ClientNotificationService {
             smsService.sendSms(profile.getPhoneNumber(), profile.getCountryCode(), smsBody);
         }
     }
+    @Async
+    public void notifyServiceProvider(String providerUsername, String requestLocation) {
+        UserProfile profile = getClientProfile(providerUsername);
+
+        if (profile == null) {
+            Logger log = null;
+            log.warn("No profile found for provider: {}", providerUsername);
+            return;
+        }
+
+        String encodedAddress = URLEncoder.encode(requestLocation, StandardCharsets.UTF_8);
+        String wazeLink = "https://waze.com/ul?q=" + encodedAddress + "&navigate=yes";
+        String googleLink = "https://www.google.com/maps/dir/?api=1&destination=" + encodedAddress;
+
+        String subject = "New Client Request - Directions";
+        String body = String.format(
+                "Hi %s,\n\nA client has requested your service at the following location:\n\n%s\n\n" +
+                        "You can navigate using:\nWaze: %s\nGoogle Maps: %s\n\n" +
+                        "If you have any questions, feel free to contact us.\n\nThank you for providing your service!",
+                providerUsername, requestLocation, wazeLink, googleLink
+        );
+
+        if (profile.getEmail() != null && !profile.getEmail().isBlank()) {
+            emailService.sendEmailNotification(profile.getEmail(), subject, body);
+        }
+
+        if (profile.getPhoneNumber() != null && !profile.getPhoneNumber().isBlank()) {
+            String smsBody = String.format("MechConnect: New client at %s | Waze: %s", requestLocation, wazeLink);
+            smsService.sendSms(profile.getPhoneNumber(), profile.getCountryCode(), smsBody);
+        }
+    }
+
+
 }
