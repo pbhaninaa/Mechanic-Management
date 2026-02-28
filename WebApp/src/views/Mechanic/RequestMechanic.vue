@@ -9,48 +9,43 @@
             <v-radio label="For Myself" :value="true" />
             <v-radio label="For Someone Else" :value="false" />
           </v-radio-group>
-
+          <v-btn-toggle color="primary" class="mt-3 mb-5" v-model="request.callOutService" mandatory>
+            <v-btn :value="false">In-House Service</v-btn>
+            <v-btn :value="true">Call Out Service</v-btn>
+          </v-btn-toggle>
           <v-alert v-if="locationError" type="warning" density="compact" class="mb-2">{{ locationError }}</v-alert>
 
-          <InputField
-            v-model="request.location"
-            label="Location"
-            placeholder="Enter your address"
-            :disabled="loading || request.forSelf"
-            :readonly="request.forSelf"
-            required
-          />
+          <InputField v-model="request.location" label="Location" placeholder="Enter your address"
+            :disabled="loading || request.forSelf" :readonly="request.forSelf" required />
 
           <template v-if="canShowServices">
-            <DropdownField v-if="jobOptions.length > 0"
-              v-model="request.serviceTypes"
-              :items="jobOptions"
-              label="Select Services"
-              multiple
-              chips
-              required
-              :disabled="loading || catalogLoading"
-            />
+            <DropdownField v-if="jobOptions.length > 0" v-model="request.serviceTypes" :items="jobOptions"
+              label="Select Services" multiple chips required :disabled="loading || catalogLoading" />
             <v-alert v-else-if="!catalogLoading && jobOptions.length === 0" type="info" class="mb-2">
               No mechanic services are available near this location yet. Try a different address or check back later.
             </v-alert>
           </template>
           <v-alert v-else type="info" density="compact" class="mb-2">
-            Provide your location above to see available services. If you enter an address we'll look up its coordinates to find nearby services.
+            Provide your location above to see available services. If you enter an address we'll look up its coordinates
+            to find
+            nearby services.
           </v-alert>
 
           <InputField :model-value="formattedPrice" label="Total Price" type="text" disabled />
 
-          <v-menu v-model="menu" :close-on-content-click="false" transition="scale-transition" offset-y min-width="290px">
+          <v-menu v-model="menu" :close-on-content-click="false" transition="scale-transition" offset-y
+            min-width="290px">
             <template #activator="{ props }">
-              <v-text-field v-model="request.date" label="Preferred Date" readonly v-bind="props" outlined :disabled="loading" required />
+              <v-text-field v-model="request.date" label="Preferred Date" readonly v-bind="props" outlined
+                :disabled="loading" required />
             </template>
             <v-date-picker v-model="request.date" :min="today" color="primary" @update:model-value="menu = false" />
           </v-menu>
 
-          <Button label="Request Mechanic" :color="STATUS_COLORS.REJECTED" :loading="loading" :disabled="!isFormValid || loading" @click="submitRequest" />
+          <Button label="Request Mechanic" :color="STATUS_COLORS.REJECTED" :loading="loading"
+            :disabled="!isFormValid || loading" @click="submitRequest" />
 
-          <v-alert v-if="message" :type="messageType" class="mt-3" closable @click:close="message=''">
+          <v-alert v-if="message" :type="messageType" class="mt-3" closable @click:close="message = ''">
             {{ message }}
           </v-alert>
 
@@ -83,6 +78,7 @@ const request = ref({
   location: "",
   carPlate: "",
   vinNumber: "",
+  callOutService: false,
   carType: "",
   date: "",
   servicePrice: 0,
@@ -94,7 +90,7 @@ const location = ref({ latitude: 0, longitude: 0 });
 const manualLocationCoordsSet = ref(false); // true when user typed address and we geocoded it
 const locationError = ref("");
 const message = ref("");
-const messageType = ref<"success"|"error">("success");
+const messageType = ref<"success" | "error">("success");
 const form = ref(null);
 
 const canShowServices = computed(() =>
@@ -206,7 +202,7 @@ const submitRequest = async () => {
   if (loading.value) return;
   const { valid } = await form.value.validate?.() || { valid: true };
   if (!valid) { message.value = "Please fill in all required fields"; messageType.value = "error"; return; }
-  loading.value = true; message.value="";
+  loading.value = true; message.value = "";
   try {
     const description = request.value.serviceTypes.join(", ");
     await apiService.createRequestMechanic({
@@ -216,12 +212,13 @@ const submitRequest = async () => {
       carType: request.value.carType,
       carPlate: request.value.carPlate,
       vinNumber: request.value.vinNumber,
+      callOutService: request.value.callOutService,
       date: request.value.date,
       status: JOB_STATUS.PENDING,
       servicePrice: computedPrice.value,
     });
-    setTimeout(()=>router.push({name:"RequestHistory"}),1000);
-  } catch(err:any) {}
-  finally{ loading.value=false; }
+    setTimeout(() => router.push({ name: "RequestHistory" }), 1000);
+  } catch (err: any) { }
+  finally { loading.value = false; }
 };
 </script>

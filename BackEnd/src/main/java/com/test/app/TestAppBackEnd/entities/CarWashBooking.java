@@ -21,6 +21,7 @@ public class CarWashBooking {
     private String date; // yyyy-MM-dd
     private String status; // e.g., "pending", "accepted", "completed"
     private Double servicePrice;
+    private boolean callOutService;
 
     @ElementCollection
     private List<String> serviceTypes;
@@ -34,7 +35,7 @@ public class CarWashBooking {
     }
 
     public CarWashBooking(String clientUsername, String carPlate, String carType, String carDescription,
-                          List<String> serviceTypes, Double servicePrice, String date, String location) {
+                          List<String> serviceTypes, Double servicePrice, String date, String location, boolean callOutService) {
         this.clientUsername = clientUsername;
         this.carPlate = carPlate;
         this.carType = carType;
@@ -43,6 +44,7 @@ public class CarWashBooking {
         this.servicePrice = servicePrice;
         this.date = date;
         this.location = location;
+        this.callOutService = callOutService;
         this.status = "pending";
         this.createdAt = LocalDateTime.now();
     }
@@ -77,4 +79,6 @@ public class CarWashBooking {
     public void setStatus(String status) { this.status = status; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+    public boolean isCallOutService() { return callOutService; }
+    public void setCallOutService(boolean callOutService) { this.callOutService = callOutService; }
 }

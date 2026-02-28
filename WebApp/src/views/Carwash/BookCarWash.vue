@@ -10,71 +10,57 @@
             <v-radio label="For Someone Else" :value="false" />
           </v-radio-group>
 
+
+          <v-btn-toggle color="primary" class="mt-3 mb-5" v-model="newBooking.callOutService" mandatory>
+            <v-btn :value="false">In-House Service</v-btn>
+            <v-btn :value="true">Call Out Service</v-btn>
+          </v-btn-toggle>
+
           <!-- Location errors -->
           <v-alert v-if="locationError" type="warning" density="compact" class="mb-2">{{ locationError }}</v-alert>
 
           <!-- Location input -->
-          <InputField
-            v-model="newBooking.location"
-            label="Location"
-            type="text"
-            :disabled="loading || useCurrentLocation"
-            :readonly="useCurrentLocation"
-            required
-          />
+          <InputField v-model="newBooking.location" label="Location" type="text"
+            :disabled="loading || useCurrentLocation" :readonly="useCurrentLocation" required />
 
           <!-- Car details -->
           <DropdownField v-model="newBooking.carType" :items="carTypes" label="Car Type" required />
-          <InputField
-            :model-value="newBooking.carPlate"
-            @update:model-value="newBooking.carPlate = (($event) ?? '').toString().toUpperCase()"
-            label="Number plate"
-            placeholder="e.g. ABC 123 GP"
-            type="text"
-            :disabled="loading"
-            required
-          />
-          <InputField v-model="newBooking.carDescription" label="Car Description (Make/Model/Year/Color)" type="text" :disabled="loading" required />
+          <InputField :model-value="newBooking.carPlate"
+            @update:model-value="newBooking.carPlate = (($event) ?? '').toString().toUpperCase()" label="Number plate"
+            placeholder="e.g. ABC 123 GP" type="text" :disabled="loading" required />
+          <InputField v-model="newBooking.carDescription" label="Car Description (Make/Model/Year/Color)" type="text"
+            :disabled="loading" required />
 
           <!-- Services: hide until location has coords (from GPS or geocoded address) -->
           <template v-if="canShowServices">
             <v-alert v-if="!catalogLoading && serviceTypes.length === 0" type="info" density="compact" class="mb-2">
               No car wash services are available near this location yet. Try a different address or check back later.
             </v-alert>
-            <DropdownField
-              v-if="serviceTypes.length > 0"
-              v-model="newBooking.serviceTypes"
-              :items="serviceTypes"
-              label="Select Services"
-              multiple
-              chips
-              required
-              :disabled="catalogLoading"
-            />
+            <DropdownField v-if="serviceTypes.length > 0" v-model="newBooking.serviceTypes" :items="serviceTypes"
+              label="Select Services" multiple chips required :disabled="catalogLoading" />
           </template>
           <v-alert v-else type="info" density="compact" class="mb-2">
-            Provide your location above to see available services. If you enter an address we'll look up its coordinates to find nearby services.
+            Provide your location above to see available services. If you enter an address we'll look up its coordinates
+            to find
+            nearby services.
           </v-alert>
 
           <!-- Price -->
           <InputField v-model="formattedPrice" label="Total Price" type="text" :disabled="true" />
 
           <!-- Date picker -->
-          <v-menu v-model="menu" :close-on-content-click="false" transition="scale-transition" offset-y min-width="290px">
+          <v-menu v-model="menu" :close-on-content-click="false" transition="scale-transition" offset-y
+            min-width="290px">
             <template #activator="{ props }">
-              <v-text-field v-model="newBooking.date" label="Preferred Date" readonly v-bind="props" outlined :disabled="loading" required />
+              <v-text-field v-model="newBooking.date" label="Preferred Date" readonly v-bind="props" outlined
+                :disabled="loading" required />
             </template>
             <v-date-picker v-model="newBooking.date" :min="today" color="primary" @update:model-value="menu = false" />
           </v-menu>
 
           <!-- Submit -->
-          <Button
-            :label="isEditMode ? 'Update' : 'Book Now'"
-            :color="STATUS_COLORS.REJECTED"
-            @click="submitBooking"
-            :loading="loading"
-            :disabled="loading || !isFormComplete"
-          />
+          <Button :label="isEditMode ? 'Update' : 'Book Now'" :color="STATUS_COLORS.REJECTED" @click="submitBooking"
+            :loading="loading" :disabled="loading || !isFormComplete" />
         </v-form>
       </v-card-text>
     </v-card>
@@ -104,6 +90,7 @@ interface Booking {
   carDescription: string;
   serviceTypes: string[];
   servicePrice: string;
+  callOutService: boolean;
   date: string;
   location: string;
   status: string;
@@ -125,9 +112,9 @@ const canShowServices = computed(() =>
 );
 
 const carTypes = [
-  "Sedan","SUV","Hatchback","Bakkie","Van","Truck","Luxury",
-  "Coupe","Convertible","Crossover","Minivan","Pickup","Station Wagon",
-  "Electric","Hybrid","Sports Car","Microcar","Off-Road","Compact"
+  "Sedan", "SUV", "Hatchback", "Bakkie", "Van", "Truck", "Luxury",
+  "Coupe", "Convertible", "Crossover", "Minivan", "Pickup", "Station Wagon",
+  "Electric", "Hybrid", "Sports Car", "Microcar", "Off-Road", "Compact"
 ];
 
 // Services
@@ -142,6 +129,7 @@ const newBooking = ref<Booking>({
   carDescription: "",
   serviceTypes: [],
   servicePrice: "0",
+  callOutService: false,
   date: "",
   location: "",
   status: "pending",
@@ -233,12 +221,16 @@ const isFormComplete = computed(() =>
   !!newBooking.value.carPlate &&
   !!newBooking.value.carType &&
   !!newBooking.value.carDescription &&
+  !!newBooking.value.callOutService &&
   newBooking.value.serviceTypes.length > 0 &&
   !!newBooking.value.date &&
   !!newBooking.value.location
 );
 
 const submitBooking = async () => {
+  // console.log("Submitting booking:", newBooking.value);
+  // return
+
   if (!isFormComplete.value || loading.value) return;
   loading.value = true;
   try {

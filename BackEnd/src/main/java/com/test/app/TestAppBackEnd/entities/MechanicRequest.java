@@ -27,6 +27,8 @@ public class MechanicRequest {
     @Column(nullable = true, name = "MechanicId", length = 36)
     private String mechanicId;
 
+    private boolean callOutService;
+
     private String carType;
     private String carPlate;
     private String vinNumber;
@@ -46,6 +48,19 @@ public class MechanicRequest {
     @PrePersist
     public void prePersist() {
         if (id == null) id = UUID.randomUUID().toString();
+    }
+
+    public MechanicRequest() {}
+    public MechanicRequest(String username, String description, String location, String carType, LocalDate date, String carPlate, String status, String mechanicId, boolean callOutService, String vinNumber, Double servicePrice, String phoneNumber) {
+        this.username = username;
+        this.description = description;
+        this.location = location;
+        this.carType = carType;
+        this.date = date;
+        this.carPlate = carPlate;
+        this.status = status;
+        this.mechanicId = mechanicId;
+        this.callOutService = callOutService;
     }
 
     // ===== Getters & Setters =====
@@ -71,7 +86,8 @@ public String getCarPlate() { return carPlate; }
     public void setStatus(String status) { this.status = status; }
     public String getMechanicId() { return mechanicId; }
     public void setMechanicId(String mechanicId) { this.mechanicId = mechanicId; }
-
+public boolean getCallOutService() { return callOutService; }
+    public void setCallOutService(boolean callOutService) { this.callOutService = callOutService; }
 public String getVinNumber() { return vinNumber; }
     public void setVinNumber(String vinNumber) { this.vinNumber = vinNumber; }
     public Double getServicePrice() { return servicePrice; }
