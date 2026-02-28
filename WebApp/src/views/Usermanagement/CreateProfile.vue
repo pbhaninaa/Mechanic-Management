@@ -80,7 +80,7 @@
 <script setup>
 import { ref, onMounted, computed, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { emitAuthChanged, getCurrentLocationWithName, geocodeAddressToCoords } from "@/utils/helper";
+import { emitAuthChanged, getCurrentLocationWithName, geocodeAddressToCoords, ensureLocationName } from "@/utils/helper";
 import InputField from "@/components/InputField.vue";
 import Button from "@/components/Button.vue";
 import apiService from "@/api/apiService";
@@ -150,7 +150,7 @@ const fetchCurrentLocation = async () => {
     return;
   }
 
-  form.value.address = result.locationName;
+  form.value.address = ensureLocationName(result.locationName) || "Current location";
   form.value.latitude = result.latitude;
   form.value.longitude = result.longitude;
 };

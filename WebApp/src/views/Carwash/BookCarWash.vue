@@ -28,7 +28,8 @@
           <InputField
             :model-value="newBooking.carPlate"
             @update:model-value="newBooking.carPlate = (($event) ?? '').toString().toUpperCase()"
-            label="Car Plate Number"
+            label="Number plate"
+            placeholder="e.g. ABC 123 GP"
             type="text"
             :disabled="loading"
             required
@@ -89,7 +90,7 @@ import DropdownField from "@/components/DropdownField.vue";
 import Button from "@/components/Button.vue";
 import { STATUS_COLORS } from "@/utils/constants";
 import apiService from "@/api/apiService";
-import { getCurrentLocationWithName, geocodeAddressToCoords } from "@/utils/helper";
+import { getCurrentLocationWithName, geocodeAddressToCoords, ensureLocationName } from "@/utils/helper";
 import { getSafeJson } from "@/utils/storage";
 import { useCurrency } from "@/composables/useCurrency";
 
@@ -162,7 +163,7 @@ const fetchCurrentLocation = async () => {
     return;
   }
   location.value = { latitude: result.latitude, longitude: result.longitude };
-  newBooking.value.location = result.locationName;
+  newBooking.value.location = ensureLocationName(result.locationName) || "Current location";
 };
 
 async function loadNearbyServices() {
@@ -241,7 +242,7 @@ const submitBooking = async () => {
   if (!isFormComplete.value || loading.value) return;
   loading.value = true;
   try {
-    const payload = { ...newBooking.value, servicePrice: Number(newBooking.value.servicePrice) || computedPrice.value };
+    const payload = { ...newBooking.value, servicePrice: Number(newBooking.value.servicePrice) || computedPrice.value, location: ensureLocationName(newBooking.value.location) };
     await apiService.createCarWashBooking(payload);
     router.push({ name: "MyWashes" });
   } catch (err: any) { locationError.value = err?.message || "Booking failed"; }

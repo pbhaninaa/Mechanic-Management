@@ -69,7 +69,7 @@ import Button from "@/components/Button.vue";
 import apiService from "@/api/apiService";
 import { STATUS_COLORS, JOB_STATUS } from "@/utils/constants";
 import { useRouter } from "vue-router";
-import { getCurrentLocationWithName, geocodeAddressToCoords } from "@/utils/helper";
+import { getCurrentLocationWithName, geocodeAddressToCoords, ensureLocationName } from "@/utils/helper";
 import { getSafeJson } from "@/utils/storage";
 import { useCurrency } from "@/composables/useCurrency";
 
@@ -125,7 +125,7 @@ const fetchCurrentLocation = async () => {
     return;
   }
   location.value = { latitude: result.latitude, longitude: result.longitude };
-  request.value.location = result.locationName;
+  request.value.location = ensureLocationName(result.locationName) || "Current location";
 };
 
 watch(() => request.value.forSelf, async val => {
@@ -212,7 +212,7 @@ const submitRequest = async () => {
     await apiService.createRequestMechanic({
       username,
       description,
-      location: request.value.location,
+      location: ensureLocationName(request.value.location),
       carType: request.value.carType,
       carPlate: request.value.carPlate,
       vinNumber: request.value.vinNumber,

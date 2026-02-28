@@ -145,25 +145,72 @@ export const countries = [
 ];
 
 
+const NOMINATIM_HEADERS = {
+  Accept: "application/json",
+  "Accept-Language": "en",
+  "User-Agent": "MechConnectWebApp/1.0 (https://github.com/mechanic-app)",
+};
+
+const delay = (ms) => new Promise((r) => setTimeout(r, ms));
+
+async function nominatimSearch(query, countrycodes = null) {
+  const url = new URL("https://nominatim.openstreetmap.org/search");
+  url.searchParams.set("q", query);
+  url.searchParams.set("format", "json");
+  url.searchParams.set("limit", "5");
+  if (countrycodes) url.searchParams.set("countrycodes", countrycodes);
+  const response = await fetch(url.toString(), { headers: NOMINATIM_HEADERS });
+  const data = await response.json();
+  if (!data || data.length === 0) return null;
+  return { latitude: parseFloat(data[0].lat), longitude: parseFloat(data[0].lon) };
+}
+
+/** Photon (Komoot) – good for addresses Google users paste; no API key */
+async function photonSearch(query) {
+  const url = `https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=3`;
+  const response = await fetch(url);
+  const data = await response.json();
+  const feat = data?.features?.[0];
+  if (!feat?.geometry?.coordinates?.length) return null;
+  const [lon, lat] = feat.geometry.coordinates;
+  return { latitude: lat, longitude: lon };
+}
+
 /**
  * Geocode an address string to coordinates (for use with nearby services).
- * @param {string} address - e.g. "123 Main St, City"
+ * Tries Nominatim first (with SA bias), then without country filter, then Photon, so addresses
+ * from Google (e.g. "2 Middelvlei Street, Hurlingham, Sandton") resolve when one source has them.
+ * @param {string} address - e.g. "2 Middelvlei Street, Hurlingham, Sandton"
  * @returns {Promise<{ latitude: number, longitude: number } | null>} coords or null if not found
  */
 export const geocodeAddressToCoords = async (address) => {
   if (!address || !String(address).trim()) return null;
+  const raw = address.trim();
+  const hasCountry = /\b(South Africa|ZA|RSA)\b/i.test(raw);
+  const query = hasCountry ? raw : `${raw}, South Africa`;
+
   try {
-    const response = await fetch(
-      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
-        address.trim()
-      )}&format=json&limit=1`
-    );
-    const data = await response.json();
-    if (!data || data.length === 0) return null;
-    return {
-      latitude: parseFloat(data[0].lat),
-      longitude: parseFloat(data[0].lon),
-    };
+    // 1) Nominatim with SA only
+    if (!hasCountry) {
+      const r = await nominatimSearch(query, "za");
+      if (r) return r;
+      await delay(1100); // Nominatim: max 1 req/s
+    }
+    // 2) Nominatim without country filter (in case OSM has it but not tagged)
+    const r2 = await nominatimSearch(query, null);
+    if (r2) return r2;
+    await delay(1100);
+    // 3) Photon – often finds addresses that Nominatim misses (e.g. from Google)
+    const r3 = await photonSearch(query);
+    if (r3) return r3;
+    // 4) Fallback: try suburb/city only (e.g. "Hurlingham, Sandton, South Africa") for area center
+    const parts = raw.split(",").map((p) => p.trim()).filter(Boolean);
+    if (parts.length >= 2) {
+      const areaQuery = parts.slice(-2).join(", ") + (hasCountry ? "" : ", South Africa");
+      const r4 = await nominatimSearch(areaQuery, hasCountry ? null : "za");
+      if (r4) return r4;
+    }
+    return null;
   } catch (err) {
     console.error("Geocode error:", err);
     return null;
@@ -214,6 +261,20 @@ export const getDistanceToLocation = async (locationName) => {
     return { success: false, message: err.message };
   }
 };
+
+/** True if the string looks like "lat, lng" (coords). Coords stay in the background, never as location name. */
+export function looksLikeCoordString(s) {
+  if (s == null || typeof s !== "string") return false;
+  return /^-?\d+\.?\d*\s*,\s*-?\d+\.?\d*$/.test(s.trim());
+}
+
+/** Ensure the value is a location name for display/API. Never return raw coords. */
+export function ensureLocationName(value) {
+  if (value == null || value === "") return value ?? "";
+  const str = String(value).trim();
+  return looksLikeCoordString(str) ? "Current location" : str;
+}
+
 export const getCurrentLocationWithName = async () => {
   if (!navigator.geolocation) {
     return {
@@ -231,27 +292,35 @@ export const getCurrentLocationWithName = async () => {
     const latitude = position.coords.latitude;
     const longitude = position.coords.longitude;
 
-    // 2️⃣ Reverse geocode to get location name
-    let locationName = `${latitude}, ${longitude}`;
-const carOptions = [
-  "Sedan", "SUV", "Hatchback", "Bakkie", "Van", "Truck", "Luxury",
-  "Coupe", "Convertible", "Crossover", "Minivan", "Pickup",
-  "Station Wagon", "Electric", "Hybrid", "Sports Car",
-  "Microcar", "Off-Road", "Compact"
-];
+    // 2️⃣ Reverse geocode to get exact location name for the box (never use raw coords)
+    let locationName = null;
     try {
       const response = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`
+        `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`,
+        { headers: { "Accept-Language": "en", "User-Agent": "MechConnectWebApp/1.0 (https://github.com/mechanic-app)" } }
       );
       const data = await response.json();
-
       if (data?.display_name) {
         locationName = data.display_name;
       }
     } catch (e) {
-      // fallback already handled
-      console.warn("Reverse geocoding failed, using coords only");
+      console.warn("Nominatim reverse failed");
     }
+    if (!locationName) {
+      try {
+        const rev = await fetch(`https://photon.komoot.io/reverse?lon=${longitude}&lat=${latitude}`);
+        const geo = await rev.json();
+        const f = geo?.features?.[0];
+        const p = f?.properties;
+        if (p) {
+          const parts = [p.name, p.street, p.city, p.district, p.state, p.country].filter(Boolean);
+          locationName = [...new Set(parts)].join(", ") || null;
+        }
+      } catch (e2) {
+        console.warn("Photon reverse failed");
+      }
+    }
+    if (!locationName) locationName = "Current location";
 
     // 3️⃣ Return JSON (latitude/longitude at top level for view compatibility)
     return {
