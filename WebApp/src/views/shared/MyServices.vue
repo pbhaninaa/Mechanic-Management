@@ -123,7 +123,10 @@ const deleteDialog = ref(false);
 const editingId = ref<string | null>(null);
 const itemToDelete = ref<any>(null);
 
-const form = ref({ serviceName: '', price: 0 });
+const form = ref({
+   serviceName: '',
+    price: 0
+   });
 
 function openAddDialog() {
   editingId.value = null;
