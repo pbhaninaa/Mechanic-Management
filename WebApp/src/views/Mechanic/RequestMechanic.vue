@@ -18,9 +18,13 @@
           <InputField v-model="request.location" label="Location" placeholder="Enter your address"
             :disabled="loading || request.forSelf" :readonly="request.forSelf" required />
 
-          <DropdoawnField v-model="request.carType" :items="carsList" label="Select Car Brand" multiple chips required :disabled="loading"/>
-          <InputField v-model="request.carPlate" label="Car Plate" placeholder="Car Plate" :disabled="loading" required/>
-          <InputField v-model="request.vinNumber" label="VIN Number" placeholder="VIN Number" :disabled="loading" required/>
+          <v-divider class="my-4" />
+          <div class="text-subtitle-2 text-medium-emphasis mb-2">Vehicle details</div>
+          <DropdownField v-model="request.carType" :items="carsList" label="Car brand" placeholder="Select car brand (e.g. Toyota, Ford)"
+            :disabled="loading" required />
+          <InputField v-model="request.carPlate" label="Car plate" placeholder="e.g. ABC 123 GP" :disabled="loading" required />
+          <InputField v-model="request.vinNumber" label="VIN number" placeholder="Vehicle identification number" :disabled="loading" required />
+          <v-divider class="my-4" />
 
           
           <template v-if="canShowServices">
@@ -47,6 +51,9 @@
             <v-date-picker v-model="request.date" :min="today" color="primary" @update:model-value="menu = false" />
           </v-menu>
 
+          <v-alert v-if="!loading && missingFields.length > 0" type="info" density="compact" class="mb-3">
+            To enable the button, complete: {{ missingFields.join(", ") }}.
+          </v-alert>
           <Button label="Request Mechanic" :color="STATUS_COLORS.REJECTED" :loading="loading"
             :disabled="!isFormValid || loading" @click="submitRequest" />
 
@@ -103,19 +110,52 @@ const canShowServices = computed(() =>
   (request.value.forSelf && request.value.location) ||
   (!request.value.forSelf && manualLocationCoordsSet.value)
 );
-const carsList=[""]
+
 const { formatCurrency } = useCurrency();
 const computedPrice = computed(() => request.value.serviceTypes.reduce((total, s) => total + (mechanicServicePrices.value[s] ?? 0), 0));
 const formattedPrice = computed(() => formatCurrency(computedPrice.value));
 watch(computedPrice, (v) => request.value.servicePrice = v, { immediate: true });
 
+const hasValidDate = computed(() => {
+  const d = request.value.date;
+  if (d == null) return false;
+  if (typeof d === "string") return d.trim() !== "";
+  if (d instanceof Date && !isNaN(d.getTime())) return true;
+  return true; // other truthy (e.g. date object from picker)
+});
+
+const hasValidCarType = computed(() => {
+  const ct = request.value.carType;
+  if (Array.isArray(ct)) return ct.length > 0;
+  if (ct != null && typeof ct === "string") return ct.trim() !== "";
+  return false;
+});
+
 const isFormValid = computed(() =>
-  request.value.serviceTypes.length > 0 &&
-  !!request.value.location &&
-  !!request.value.date
+  (request.value.serviceTypes?.length ?? 0) > 0 &&
+  !!request.value.location?.trim() &&
+  hasValidDate.value &&
+  hasValidCarType.value &&
+  !!request.value.carPlate?.trim() &&
+  !!request.value.vinNumber?.trim()
 );
-const loggedInUser=getSafeJson("profile", {}) || getSafeJson("userProfile", {});
-const username = getSafeJson("profile", {})?.username || getSafeJson("userProfile", {})?.username;
+
+const missingFields = computed(() => {
+  const m: string[] = [];
+  if (!request.value.serviceTypes?.length) m.push("at least one service");
+  if (!request.value.location?.trim()) m.push("location");
+  if (!hasValidDate.value) m.push("preferred date");
+  if (!hasValidCarType.value) m.push("car brand");
+  if (!request.value.carPlate?.trim()) m.push("car plate");
+  if (!request.value.vinNumber?.trim()) m.push("VIN number");
+  return m;
+});
+// Prefer full userProfile (username, phoneNumber); fallback to profile (may only have username after login)
+const loggedInUser = computed(() => {
+  const profile = getSafeJson("userProfile", {}) || getSafeJson("profile", {});
+  return profile;
+});
+const username = computed(() => loggedInUser.value?.username ?? getSafeJson("profile", {})?.username ?? "");
 
 const fetchCurrentLocation = async () => {
   locationError.value = "";
@@ -212,8 +252,8 @@ const submitRequest = async () => {
   try {
     const description = request.value.serviceTypes.join(", ");
     await apiService.createRequestMechanic({
-      username: loggedInUser.username || "",
-      phone: loggedInUser.phone || "",
+      username: loggedInUser.value?.username ?? "",
+      phoneNumber: loggedInUser.value?.phoneNumber ?? loggedInUser.value?.phone ?? "",
       description,
       location: ensureLocationName(request.value.location),
       callOutService: request.value.callOutService,
