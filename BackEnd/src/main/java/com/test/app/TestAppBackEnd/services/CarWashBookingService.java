@@ -53,8 +53,7 @@ public class CarWashBookingService {
 
     // ================= CREATE =================
     public CarWashBooking createBooking(CarWashBooking booking) {
-        String normalizedDate = DateFormatUtil.normalizeToIsoDate(booking.getDate());
-        if (normalizedDate != null) booking.setDate(normalizedDate);
+
         return repository.save(booking);
     }
 
@@ -123,8 +122,8 @@ public class CarWashBookingService {
             }
 
             // Update all booking fields (date saved as yyyy-MM-dd for range search)
-            String normalizedDate = DateFormatUtil.normalizeToIsoDate(updatedBooking.getDate());
-            if (normalizedDate != null) booking.setDate(normalizedDate);
+
+             booking.setDate(updatedBooking.getDate());
             booking.setCarPlate(updatedBooking.getCarPlate());
             booking.setCarType(updatedBooking.getCarType());
             booking.setCarDescription(updatedBooking.getCarDescription());

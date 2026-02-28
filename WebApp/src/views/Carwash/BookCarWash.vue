@@ -79,6 +79,7 @@ import apiService from "@/api/apiService";
 import { getCurrentLocationWithName, geocodeAddressToCoords, ensureLocationName } from "@/utils/helper";
 import { getSafeJson } from "@/utils/storage";
 import { useCurrency } from "@/composables/useCurrency";
+import { toLocalDateString } from "@/composables/useDateFormat";
 
 const loggedInUser = getSafeJson("userProfile", {});
 const router = useRouter();
@@ -228,13 +229,15 @@ const isFormComplete = computed(() =>
 );
 
 const submitBooking = async () => {
-  // console.log("Submitting booking:", newBooking.value);
-  // return
-
   if (!isFormComplete.value || loading.value) return;
   loading.value = true;
   try {
-    const payload = { ...newBooking.value, servicePrice: Number(newBooking.value.servicePrice) || computedPrice.value, location: ensureLocationName(newBooking.value.location) };
+    const payload = {
+      ...newBooking.value,
+      date: toLocalDateString(newBooking.value.date),
+      servicePrice: Number(newBooking.value.servicePrice) || computedPrice.value,
+      location: ensureLocationName(newBooking.value.location),
+    };
     await apiService.createCarWashBooking(payload);
     router.push({ name: "MyWashes" });
   } catch (err: any) { locationError.value = err?.message || "Booking failed"; }

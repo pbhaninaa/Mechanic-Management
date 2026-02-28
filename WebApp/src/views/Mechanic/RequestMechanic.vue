@@ -18,6 +18,11 @@
           <InputField v-model="request.location" label="Location" placeholder="Enter your address"
             :disabled="loading || request.forSelf" :readonly="request.forSelf" required />
 
+          <DropdoawnField v-model="request.carType" :items="carsList" label="Select Car Brand" multiple chips required :disabled="loading"/>
+          <InputField v-model="request.carPlate" label="Car Plate" placeholder="Car Plate" :disabled="loading" required/>
+          <InputField v-model="request.vinNumber" label="VIN Number" placeholder="VIN Number" :disabled="loading" required/>
+
+          
           <template v-if="canShowServices">
             <DropdownField v-if="jobOptions.length > 0" v-model="request.serviceTypes" :items="jobOptions"
               label="Select Services" multiple chips required :disabled="loading || catalogLoading" />
@@ -64,9 +69,10 @@ import Button from "@/components/Button.vue";
 import apiService from "@/api/apiService";
 import { STATUS_COLORS, JOB_STATUS } from "@/utils/constants";
 import { useRouter } from "vue-router";
-import { getCurrentLocationWithName, geocodeAddressToCoords, ensureLocationName } from "@/utils/helper";
+import { getCurrentLocationWithName, geocodeAddressToCoords, ensureLocationName, carsList } from "@/utils/helper";
 import { getSafeJson } from "@/utils/storage";
 import { useCurrency } from "@/composables/useCurrency";
+import { toLocalDateString } from "@/composables/useDateFormat";
 
 const router = useRouter();
 const today = new Date().toISOString().split('T')[0];
@@ -87,7 +93,7 @@ const jobOptions = ref<string[]>([]);
 const mechanicServicePrices = ref<Record<string, number>>({});
 const catalogLoading = ref(true);
 const location = ref({ latitude: 0, longitude: 0 });
-const manualLocationCoordsSet = ref(false); // true when user typed address and we geocoded it
+const manualLocationCoordsSet = ref(false); 
 const locationError = ref("");
 const message = ref("");
 const messageType = ref<"success" | "error">("success");
@@ -97,7 +103,7 @@ const canShowServices = computed(() =>
   (request.value.forSelf && request.value.location) ||
   (!request.value.forSelf && manualLocationCoordsSet.value)
 );
-
+const carsList=[""]
 const { formatCurrency } = useCurrency();
 const computedPrice = computed(() => request.value.serviceTypes.reduce((total, s) => total + (mechanicServicePrices.value[s] ?? 0), 0));
 const formattedPrice = computed(() => formatCurrency(computedPrice.value));
@@ -108,7 +114,7 @@ const isFormValid = computed(() =>
   !!request.value.location &&
   !!request.value.date
 );
-
+const loggedInUser=getSafeJson("profile", {}) || getSafeJson("userProfile", {});
 const username = getSafeJson("profile", {})?.username || getSafeJson("userProfile", {})?.username;
 
 const fetchCurrentLocation = async () => {
@@ -206,16 +212,19 @@ const submitRequest = async () => {
   try {
     const description = request.value.serviceTypes.join(", ");
     await apiService.createRequestMechanic({
-      username,
+      username: loggedInUser.username || "",
+      phone: loggedInUser.phone || "",
       description,
       location: ensureLocationName(request.value.location),
+      callOutService: request.value.callOutService,
+      date: toLocalDateString(request.value.date),
+       status: JOB_STATUS.PENDING,
+       servicePrice: computedPrice.value,       
       carType: request.value.carType,
       carPlate: request.value.carPlate,
       vinNumber: request.value.vinNumber,
-      callOutService: request.value.callOutService,
-      date: request.value.date,
-      status: JOB_STATUS.PENDING,
-      servicePrice: computedPrice.value,
+      
+    
     });
     setTimeout(() => router.push({ name: "RequestHistory" }), 1000);
   } catch (err: any) { }

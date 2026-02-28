@@ -64,7 +64,7 @@ public class ReportService {
             String services = b.getServiceTypes() != null ? String.join("; ", b.getServiceTypes()) : "";
             String price = b.getServicePrice() != null ? b.getServicePrice().toString() : "";
             String loc = escapeCsv(b.getLocation());
-            w.println(escapeCsv(b.getCarPlate()) + "," + escapeCsv(services) + "," + escapeCsv(b.getDate()) + "," + price + "," + escapeCsv(b.getStatus()) + "," + loc);
+            w.println(escapeCsv(b.getCarPlate()) + "," + escapeCsv(services) + "," + escapeCsv(String.valueOf(b.getDate())) + "," + price + "," + escapeCsv(b.getStatus()) + "," + loc);
         }
         w.flush();
         return baos.toByteArray();
@@ -209,7 +209,7 @@ public class ReportService {
         for (CarWashBooking b : jobs) {
             String services = b.getServiceTypes() != null ? String.join("; ", b.getServiceTypes()) : "";
             String price = b.getServicePrice() != null ? b.getServicePrice().toString() : "";
-            w.println(escapeCsv(b.getCarPlate()) + "," + escapeCsv(services) + "," + escapeCsv(b.getDate()) + "," + price + "," + escapeCsv(b.getStatus()) + "," + escapeCsv(b.getLocation()) + "," + escapeCsv(b.getClientUsername()));
+            w.println(escapeCsv(b.getCarPlate()) + "," + escapeCsv(services) + "," + escapeCsv(String.valueOf(b.getDate())) + "," + price + "," + escapeCsv(b.getStatus()) + "," + escapeCsv(b.getLocation()) + "," + escapeCsv(b.getClientUsername()));
         }
         w.flush();
         return baos.toByteArray();

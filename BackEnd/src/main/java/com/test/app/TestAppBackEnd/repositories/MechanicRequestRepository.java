@@ -17,7 +17,8 @@ public interface MechanicRequestRepository extends JpaRepository<MechanicRequest
     @Query("SELECT m FROM MechanicRequest m WHERE m.username = :username AND (:q IS NULL OR :q = '' OR " +
             "LOWER(COALESCE(m.description, '')) LIKE LOWER(CONCAT('%', :q, '%')) OR LOWER(COALESCE(m.location, '')) LIKE LOWER(CONCAT('%', :q, '%')) OR " +
             "LOWER(m.status) LIKE LOWER(CONCAT('%', :q, '%')) OR LOWER(COALESCE(m.username, '')) LIKE LOWER(CONCAT('%', :q, '%')) OR " +
-            "LOWER(COALESCE(m.carPlate, '')) LIKE LOWER(CONCAT('%', :q, '%')) OR LOWER(COALESCE(m.carType, '')) LIKE LOWER(CONCAT('%', :q, '%'))) ORDER BY m.date DESC")
+            "LOWER(COALESCE(m.carPlate, '')) LIKE LOWER(CONCAT('%', :q, '%')) OR LOWER(COALESCE(m.carType, '')) LIKE LOWER(CONCAT('%', :q, '%'))) " +
+            "ORDER BY m.date DESC")
     List<MechanicRequest> findByUsernameWithSearch(@Param("username") String username, @Param("q") String q);
 
     @Query("SELECT m FROM MechanicRequest m WHERE m.mechanicId = :mechanicId AND (:q IS NULL OR :q = '' OR " +

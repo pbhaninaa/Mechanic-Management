@@ -1,72 +1,54 @@
 package com.test.app.TestAppBackEnd.entities;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import java.util.UUID;
 
 @Entity
 @Table(name = "provider_service_offering")
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class ProviderServiceOffering {
 
+    // ================== PRIMARY KEY ==================
     @Id
     @Column(length = 36, updatable = false, nullable = false)
     private String id;
 
-    @Column(nullable = false)
+    // ================== PROVIDER INFO ==================
+    @Column(nullable = false, name = "provider_username")
     private String providerUsername;
 
     /** "mechanic" or "carwash" */
-    @Column(nullable = false, length = 20)
+    @Column(nullable = false, length = 20, name = "provider_type")
     private String providerType;
 
-    @Column(nullable = false)
-    private String serviceName;
-
-    @Column(nullable = false)
+    @Column(nullable = false, name = "provider_id")
     private String providerId;
+
+    // ================== SERVICE INFO ==================
+    @Column(nullable = false, name = "service_name")
+    private String serviceName;
 
     @Column(nullable = false)
     private Double price;
 
+    // ================== LOCATION INFO ==================
     @Column(nullable = false)
     private String latitude;
 
     @Column(nullable = false)
     private String longitude;
 
-
-    public ProviderServiceOffering() {}
-
-
-
-    public ProviderServiceOffering(String latitude, String longitude    ,String providerUsername, String providerType, String serviceName, Double price, String providerId) {
-        this.providerUsername = providerUsername;
-        this.providerType = providerType;
-        this.serviceName = serviceName;
-        this.price = price;
-        this.providerId = providerId;
-        this.latitude = latitude;
-        this.longitude = longitude;
-    }
-
+    // ================== AUTO GENERATE ID ==================
     @PrePersist
     public void prePersist() {
-        if (id == null) id = UUID.randomUUID().toString();
+        if (id == null) {
+            id = UUID.randomUUID().toString();
+        }
     }
-
-    public String getId() { return id; }
-    public void setId(String id) { this.id = id; }
-    public String getProviderUsername() { return providerUsername; }
-    public void setProviderUsername(String providerUsername) { this.providerUsername = providerUsername; }
-    public String getProviderType() { return providerType; }
-    public void setProviderType(String providerType) { this.providerType = providerType; }
-    public String getServiceName() { return serviceName; }
-    public void setServiceName(String serviceName) { this.serviceName = serviceName; }
-    public Double getPrice() { return price; }
-    public void setPrice(Double price) { this.price = price; }
-    public String getLatitude() { return latitude; }
-    public void setLatitude(String latitude) { this.latitude = latitude; }
-    public String getLongitude() { return longitude; }
-    public void setLongitude(String longitude) { this.longitude = longitude; }
-    public String getProviderId() { return providerId; }
-    public void setProviderId(String providerId) { this.providerId = providerId; }
 }

@@ -1,84 +1,81 @@
 package com.test.app.TestAppBackEnd.entities;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
 @Entity
+@Table(name = "car_wash_booking")
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class CarWashBooking {
 
+    // ================== PRIMARY KEY ==================
     @Id
     @Column(length = 36, updatable = false, nullable = false)
     private String id;
 
+    // ================== CLIENT INFO ==================
+    @Column(nullable = false, name = "client_username")
     private String clientUsername;
-    private String carWashId; // initially null, set when a carwash takes the request
-    private String carPlate;
-    private String carType;
-    private String carDescription;
-    private String location;
-    private String date; // yyyy-MM-dd
-    private String status; // e.g., "pending", "accepted", "completed"
-    private Double servicePrice;
-    private boolean callOutService;
 
+    // ================== CAR WASH INFO ==================
+    @Column(name = "car_wash_id")
+    private String carWashId; // null until accepted
+
+    // ================== VEHICLE INFO ==================
+    @Column(nullable = false, name = "car_plate")
+    private String carPlate;
+
+    @Column(nullable = false, name = "car_type")
+    private String carType;
+
+    @Column(name = "car_description")
+    private String carDescription;
+
+    // ================== SERVICE DETAILS ==================
     @ElementCollection
+    @CollectionTable(name = "car_wash_services", joinColumns = @JoinColumn(name = "booking_id"))
+    @Column(name = "service_type")
     private List<String> serviceTypes;
 
+    @Column(nullable = false, name = "service_price")
+    private Double servicePrice;
+
+    @Column(nullable = false)
+    private boolean callOutService;
+
+    // ================== BOOKING DETAILS ==================
+    @Column(nullable = false)
+    private LocalDate date;   // Better than String
+
+    @Column(nullable = false)
+    private String location;
+
+    @Column(nullable = false)
+    private String status = "pending";
+
+    @Column(nullable = false, name = "created_at")
     private LocalDateTime createdAt;
 
-    // Constructors
-    public CarWashBooking() {
-        this.createdAt = LocalDateTime.now();
-        this.status = "pending";
-    }
-
-    public CarWashBooking(String clientUsername, String carPlate, String carType, String carDescription,
-                          List<String> serviceTypes, Double servicePrice, String date, String location, boolean callOutService) {
-        this.clientUsername = clientUsername;
-        this.carPlate = carPlate;
-        this.carType = carType;
-        this.carDescription = carDescription;
-        this.serviceTypes = serviceTypes;
-        this.servicePrice = servicePrice;
-        this.date = date;
-        this.location = location;
-        this.callOutService = callOutService;
-        this.status = "pending";
-        this.createdAt = LocalDateTime.now();
-    }
-
+    // ================== AUTO FIELDS ==================
     @PrePersist
     public void prePersist() {
-        if (id == null) id = UUID.randomUUID().toString();
+        if (id == null) {
+            id = UUID.randomUUID().toString();
+        }
+        if (createdAt == null) {
+            createdAt = LocalDateTime.now();
+        }
+        if (status == null) {
+            status = "pending";
+        }
     }
-
-    // Getters & Setters
-    public String getId() { return id; }
-    public void setId(String id) { this.id = id; }
-    public String getClientUsername() { return clientUsername; }
-    public void setClientUsername(String clientUsername) { this.clientUsername = clientUsername; }
-    public String getCarWashId() { return carWashId; }
-    public void setCarWashId(String carWashId) { this.carWashId = carWashId; }
-    public String getCarPlate() { return carPlate; }
-    public void setCarPlate(String carPlate) { this.carPlate = carPlate; }
-    public String getCarType() { return carType; }
-    public void setCarType(String carType) { this.carType = carType; }
-    public String getCarDescription() { return carDescription; }
-    public void setCarDescription(String carDescription) { this.carDescription = carDescription; }
-    public List<String> getServiceTypes() { return serviceTypes; }
-    public void setServiceTypes(List<String> serviceTypes) { this.serviceTypes = serviceTypes; }
-    public Double getServicePrice() { return servicePrice; }
-    public void setServicePrice(Double servicePrice) { this.servicePrice = servicePrice; }
-    public String getDate() { return date; }
-    public void setDate(String date) { this.date = date; }
-    public String getLocation() { return location; }
-    public void setLocation(String location) { this.location = location; }
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
-    public boolean isCallOutService() { return callOutService; }
-    public void setCallOutService(boolean callOutService) { this.callOutService = callOutService; }
 }
