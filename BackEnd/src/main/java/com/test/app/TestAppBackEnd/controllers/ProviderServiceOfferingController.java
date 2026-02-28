@@ -1,23 +1,28 @@
 package com.test.app.TestAppBackEnd.controllers;
 
 import com.test.app.TestAppBackEnd.entities.ProviderServiceOffering;
+import com.test.app.TestAppBackEnd.entities.UserProfile;
 import com.test.app.TestAppBackEnd.models.ApiResponse;
+import com.test.app.TestAppBackEnd.repositories.UserProfileRepository;
 import com.test.app.TestAppBackEnd.services.ProviderServiceOfferingService;
+import com.test.app.TestAppBackEnd.services.UserProfileService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/provider-services")
 public class ProviderServiceOfferingController {
 
     private final ProviderServiceOfferingService service;
-
-    public ProviderServiceOfferingController(ProviderServiceOfferingService service) {
+private final UserProfileService userProfileService;
+    public ProviderServiceOfferingController(ProviderServiceOfferingService service, UserProfileService userProfileService) {
         this.service = service;
+        this.userProfileService = userProfileService;
     }
 
     @GetMapping
@@ -32,7 +37,24 @@ public class ProviderServiceOfferingController {
         List<ProviderServiceOffering> list = service.getMyOfferings(username, providerType);
         return ResponseEntity.ok(new ApiResponse<>("OK", HttpStatus.OK.value(), list));
     }
+    @GetMapping("/nearby")
+    public ResponseEntity<List<ProviderServiceOffering>> getNearbyOfferings(
+            @RequestParam String offeringType,
+            @RequestParam double lat,
+            @RequestParam double lng,
+            @RequestParam(defaultValue = "15") double radiusKm
+    ) {
 
+        List<ProviderServiceOffering> results =
+                service.getNearbyByOfferingType(
+                        offeringType,
+                        lat,
+                        lng,
+                        radiusKm
+                );
+
+        return ResponseEntity.ok(results);
+    }
     /** Catalog for clients: all services and prices by provider type (no auth filter) */
     @GetMapping("/catalog")
     public ResponseEntity<ApiResponse<List<ProviderServiceOffering>>> getCatalog(@RequestParam String providerType) {
@@ -45,12 +67,14 @@ public class ProviderServiceOfferingController {
             @RequestParam String providerType,
             @RequestBody ProviderServiceOffering offering,
             Authentication auth) {
+
         String username = auth != null ? auth.getName() : null;
         if (username == null || username.isBlank()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(new ApiResponse<>("Unauthorized", HttpStatus.UNAUTHORIZED.value(), null));
         }
-        ProviderServiceOffering saved = service.create(username, providerType, offering);
+        UserProfile providerProfile = userProfileService.getProfile(username);
+        ProviderServiceOffering saved = service.create(providerProfile, providerType, offering);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(new ApiResponse<>("Service offering created", HttpStatus.CREATED.value(), saved));
     }
