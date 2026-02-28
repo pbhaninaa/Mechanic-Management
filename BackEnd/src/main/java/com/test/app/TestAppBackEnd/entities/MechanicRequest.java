@@ -39,6 +39,9 @@ public class MechanicRequest {
     @Column(nullable = false, name = "Call Out Service")
     private boolean callOutService;
 
+    @Column(nullable = false, name = "Towing")
+    private boolean towing;
+
     @Column(nullable = false, name = "Date")
     private LocalDate date;
 

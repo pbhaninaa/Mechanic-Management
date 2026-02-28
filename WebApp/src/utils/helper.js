@@ -82,6 +82,10 @@ export const logoutUser = () => {
 export const goToSignup = () => {
   router.push("/signup");
 };
+export const additionalFees = {
+  callOut: 300,
+  towing: 1500
+}
  export  const carsList = [
   "Toyota",
   "Honda",

@@ -60,6 +60,7 @@ import TableComponent from "@/components/TableComponent.vue";
 import { formatDate } from "@/composables/useDateFormat";
 import { getSafeJson } from "@/utils/storage";
 import { useCurrency } from "@/composables/useCurrency";
+import { an } from "vue-router/dist/router-CWoNjPRp.mjs";
 interface JobRequest {
   id: string;
   username: string;
@@ -101,15 +102,18 @@ const headers = computed(() => {
     { title: "Client", value: "username" },
     { title: "Description", value: "description" },
     { title: "Price", value: "price", formatter: formatPrice },
+
     { title: "Date", value: "date", formatter: (item) => formatDate(item?.date) },
-    { title: "Status", value: "status" },
-    { title: "Actions", value: "actions", sortable: false },
+    
+      {title:"Call Out Service",color: "primary", value:"callOut", formatter: (item: any) => item?.callOutService ? "Yes" : "No"},
+    {title:"Includes Towing", value:"towing", formatter: (item: any) => item?.towing ? "Yes" : "No"},
+ { title: "Status", value: "status" },     { title: "Actions", value: "actions", sortable: false },
   ];
   if (isAdmin()) {
     base.splice(1, 0, {
       title: "Phone",
       value: "phoneNumber",
-      formatter: (item: JobRequest) => item?.phoneNumber || "—",
+      formatter: (item: any) => item?.phoneNumber || "—",
     });
   }
   return base;

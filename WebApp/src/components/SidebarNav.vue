@@ -163,7 +163,7 @@ const navigationItems = [
   { title: 'Help', icon: 'mdi-help', to: '/help-page', roles: ['client'] },
   { title: 'Job Requests', icon: 'mdi-briefcase', to: '/jobs', roles: ['mechanic'] },
   { title: 'Manage Jobs', icon: 'mdi-wrench', to: '/manage-jobs', roles: ['mechanic', 'admin'] },
-  { title: 'My Services', icon: 'mdi-format-list-bulleted-type', to: '/my-services', roles: ['mechanic', 'carwash'] },
+
   { title: 'User Management', icon: 'mdi-account-multiple', to: '/users', roles: ['admin'] },
   {
     title: 'Manage Payments',
@@ -178,7 +178,7 @@ const navigationItems = [
     icon: 'mdi-clipboard-list',
     roles: ['admin'],
     children: [
-      { title: 'Carwash management', icon: 'mdi-shower', to: '/car-wash-bookings' },
+      { title: 'Carwash management', icon: 'mdi-car-wash', to: '/car-wash-bookings' },
       { title: 'Mechanic management', icon: 'mdi-car-wrench', to: '/jobs' }
     ]
   },
@@ -186,8 +186,9 @@ const navigationItems = [
 
 
   { title: 'Bookings', icon: 'mdi-calendar-check', to: '/car-wash-bookings', roles: ['carwash'] },
-  { title: 'Manage Washes', icon: 'mdi-shower', to: '/manage-washes', roles: ['carwash'] },
-  { title: 'Earnings', icon: 'mdi-currency-usd', to: '/earnings', roles: ['carwash', 'mechanic'] }
+  { title: 'Manage Washes', icon: 'mdi-car-wash', to: '/manage-washes', roles: ['carwash'] },
+  { title: 'Earnings', icon: 'mdi-currency-usd', to: '/earnings', roles: ['carwash', 'mechanic'] },
+    { title: 'My Services', icon: 'mdi-format-list-bulleted-type', to: '/my-services', roles: ['mechanic', 'carwash'] }
 ]
 
 // Filtered by role

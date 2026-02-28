@@ -157,16 +157,21 @@ const formatServiceDesc = (item: any) => {
 };
 
 const tableHeaders = computed(() => {
-  const descTitle = role.value === USER_ROLES.MECHANIC ? "Request Description" : "Booking Description";
-  const base = [
-    { title: "Client", value: "username" },
-    { title: descTitle, value: "serviceDesc", formatter: formatServiceDesc },
-    { title: "Price", value: "price", formatter: formatPrice },
-    {title:"Car Type", value:"carType"},
-    {title:'Car Plate', value:"carPlate"},
-    { title: "Date", value: "date", formatter: (item: any) => formatDate(item?.date) },
-    { title: "Actions", value: "actions", sortable: false },
-  ];
+  const descTitle = role.value === USER_ROLES.MECHANIC
+  ? "Request Description"
+  : "Booking Description";
+
+const base = [
+  { title: "Client", value: "username" },
+  { title: descTitle, value: "serviceDesc", formatter: formatServiceDesc },
+  { title: "Price", value: "price", formatter: formatPrice },  
+  { title: "Car Type", value: "carType" },
+  { title: "Car Plate", value: "carPlate" },
+  { title: "Date", value: "date", formatter: (item: any) => formatDate(item?.date) },
+  { title: "Call Out Service",     value: "callOut",     formatter: (item: any) => item?.callOutService ? "Yes" : "No"   },
+  role.value === USER_ROLES.MECHANIC ? {title:"Includes Towing",value:"towing",formatter: (item: any) => item?.towing ? "Yes" : "No"} : null,
+  { title: "Actions", value: "actions", sortable: false },
+].filter(Boolean); // removes the null for non-mechanic roles
   if (isAdmin) {
     base.splice(4, 0, {
       title: "Phone",

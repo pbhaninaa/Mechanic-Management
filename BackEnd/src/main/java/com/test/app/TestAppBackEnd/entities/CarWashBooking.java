@@ -49,7 +49,7 @@ public class CarWashBooking {
     @Column(nullable = false, name = "service_price")
     private Double servicePrice;
 
-    @Column(nullable = false)
+    @Column(nullable = false, name = "Call Out Service")
     private boolean callOutService;
 
     // ================== BOOKING DETAILS ==================

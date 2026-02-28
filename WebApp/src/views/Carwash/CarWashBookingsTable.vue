@@ -79,7 +79,7 @@ import { JOB_STATUS } from "@/utils/constants";
 import TableComponent from "@/components/TableComponent.vue";
 import { getSafeJson } from "@/utils/storage";
 import { formatDate } from "@/composables/useDateFormat";
-
+import { useCurrency } from "@/composables/useCurrency";
 interface Booking {
   id: number;
   clientUsername: string;
@@ -108,16 +108,21 @@ const bookingToAssign = ref<Booking | null>(null);
 const selectedCarWashId = ref<string | number | null>(null);
 const carWashesLoading = ref(false);
 const carWashOptions = ref<{ id: string; label: string }[]>([]);
-
+const { formatCurrency } = useCurrency();
+const formatPrice = (item: any) =>
+  item?.servicePrice != null && !isNaN(item.servicePrice)
+    ? formatCurrency(item.servicePrice)
+    : "—";
 const headers = [
   { title: "Client Username", value: "clientUsername" },
   { title: "Car Plate", value: "carPlate" },
   { title: "Car Type", value: "carType" },
   { title: "Car Description", value: "carDescription" },
+{title:"Price", value:"servicePrice",formatter: formatPrice},
   { title: "Service Types", value: "serviceTypes" },
   { title: "Date", value: "date" },
-  { title: "Status", value: "status" },
-  { title: "Actions", value: "actions", sortable: false },
+  { title: "Call Out Service", value: "callOut", formatter: (item: any) => item?.callOutService ? "Yes" : "No" },
+  { title: "Status", value: "status" },  { title: "Actions", value: "actions", sortable: false },
 ];
 
 const fetchCarWashes = async () => {

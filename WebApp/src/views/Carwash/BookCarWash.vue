@@ -10,11 +10,16 @@
             <v-radio label="For Someone Else" :value="false" />
           </v-radio-group>
 
-
+          <!-- Call Out Service -->
           <v-btn-toggle color="primary" class="mt-3 mb-5" v-model="newBooking.callOutService" mandatory>
             <v-btn :value="false">In-House Service</v-btn>
             <v-btn :value="true">Call Out Service</v-btn>
           </v-btn-toggle>
+
+          <v-alert v-if="newBooking.callOutService" type="info" class="mb-2">
+            A call-out service includes an additional fee of R{{ additionalFees.callOut }}.
+            The total price above includes selected services plus the call-out fee.
+          </v-alert>
 
           <!-- Location errors -->
           <v-alert v-if="locationError" type="warning" density="compact" class="mb-2">{{ locationError }}</v-alert>
@@ -31,7 +36,7 @@
           <InputField v-model="newBooking.carDescription" label="Car Description (Make/Model/Year/Color)" type="text"
             :disabled="loading" required />
 
-          <!-- Services: hide until location has coords (from GPS or geocoded address) -->
+          <!-- Services -->
           <template v-if="canShowServices">
             <v-alert v-if="!catalogLoading && serviceTypes.length === 0" type="info" density="compact" class="mb-2">
               No car wash services are available near this location yet. Try a different address or check back later.
@@ -41,8 +46,7 @@
           </template>
           <v-alert v-else type="info" density="compact" class="mb-2">
             Provide your location above to see available services. If you enter an address we'll look up its coordinates
-            to find
-            nearby services.
+            to find nearby services.
           </v-alert>
 
           <!-- Price -->
@@ -107,15 +111,14 @@ const location = ref({ latitude: 0, longitude: 0 });
 const locationError = ref("");
 const manualLocationCoordsSet = ref(false);
 
-const canShowServices = computed(() =>
-  (useCurrentLocation.value && newBooking.value.location) ||
-  (!useCurrentLocation.value && manualLocationCoordsSet.value)
-);
+// Call-out fee
+const additionalFees = { callOut: 500 };
 
+// Car types
 const carTypes = [
-  "Sedan", "SUV", "Hatchback", "Bakkie", "Van", "Truck", "Luxury",
-  "Coupe", "Convertible", "Crossover", "Minivan", "Pickup", "Station Wagon",
-  "Electric", "Hybrid", "Sports Car", "Microcar", "Off-Road", "Compact"
+  "Sedan","SUV","Hatchback","Bakkie","Van","Truck","Luxury",
+  "Coupe","Convertible","Crossover","Minivan","Pickup","Station Wagon",
+  "Electric","Hybrid","Sports Car","Microcar","Off-Road","Compact"
 ];
 
 // Services
@@ -123,6 +126,7 @@ const serviceTypes = ref<string[]>([]);
 const catalogPriceMap = ref<Record<string, number>>({});
 const catalogLoading = ref(true);
 
+// Booking state
 const newBooking = ref<Booking>({
   clientUsername: loggedInUser.username || "",
   carPlate: "",
@@ -136,11 +140,24 @@ const newBooking = ref<Booking>({
   status: "pending",
 });
 
-// Computed price
+// Computed price including call-out
 const { formatCurrency } = useCurrency();
-const computedPrice = computed(() => newBooking.value.serviceTypes.reduce((total, s) => total + (catalogPriceMap.value[s] || 0), 0));
+const computedPrice = computed(() => {
+  const serviceTotal = newBooking.value.serviceTypes.reduce(
+    (total, s) => total + (catalogPriceMap.value[s] || 0),
+    0
+  );
+  const callOutFee = newBooking.value.callOutService ? additionalFees.callOut : 0;
+  return serviceTotal + callOutFee;
+});
 watch(computedPrice, (newPrice) => newBooking.value.servicePrice = newPrice.toFixed(2));
 const formattedPrice = computed(() => formatCurrency(computedPrice.value));
+
+// Show services only if location has coords
+const canShowServices = computed(() =>
+  (useCurrentLocation.value && newBooking.value.location) ||
+  (!useCurrentLocation.value && manualLocationCoordsSet.value)
+);
 
 // Fetch current location
 const fetchCurrentLocation = async () => {
@@ -155,69 +172,56 @@ const fetchCurrentLocation = async () => {
   newBooking.value.location = ensureLocationName(result.locationName) || "Current location";
 };
 
+// Load nearby services
 async function loadNearbyServices() {
   if (location.value.latitude === 0 && location.value.longitude === 0) return;
   catalogLoading.value = true;
   try {
     const res = await apiService.getNearbyServiceOfferings("carwash", location.value.latitude, location.value.longitude, 50);
-    // Nearby API returns the array directly (no .data wrapper)
     const list = Array.isArray(res) ? res : (res?.data ?? []);
     const names = [...new Set(list.map((o: any) => o.serviceName ?? o.service_name).filter(Boolean))].sort();
     serviceTypes.value = names;
     const priceMap: Record<string, number> = {};
-    list.forEach((o: any) => { const n = o.serviceName ?? o.service_name; if (!n) return; const p = Number(o.price); if (!isNaN(p) && (priceMap[n] == null || p < priceMap[n])) priceMap[n] = p; });
+    list.forEach((o: any) => {
+      const n = o.serviceName ?? o.service_name;
+      if (!n) return;
+      const p = Number(o.price);
+      if (!isNaN(p) && (priceMap[n] == null || p < priceMap[n])) priceMap[n] = p;
+    });
     catalogPriceMap.value = priceMap;
     if (names.length && newBooking.value.serviceTypes.length === 0) newBooking.value.serviceTypes = [names[0]];
   } catch (_) { serviceTypes.value = []; catalogPriceMap.value = {}; }
   finally { catalogLoading.value = false; }
 }
 
-// When location changes: for "Myself" we have coords from fetchCurrentLocation; for "Someone Else" geocode then load
+// Handle location changes
 watch(() => newBooking.value.location, async (loc) => {
-  if (!loc) {
-    locationError.value = "";
-    serviceTypes.value = [];
-    catalogPriceMap.value = {};
-    catalogLoading.value = false;
-    manualLocationCoordsSet.value = false;
-    return;
-  }
-  if (useCurrentLocation.value) {
-    loadNearbyServices();
-    return;
-  }
-  locationError.value = ""; // clear previous error while we try to geocode
+  if (!loc) return;
+  if (useCurrentLocation.value) { loadNearbyServices(); return; }
+
+  locationError.value = "";
   const coords = await geocodeAddressToCoords(loc);
   if (!coords) {
-    locationError.value = "We couldn't find coordinates for this address. Please try a more specific address or use 'For Myself' to use your current location.";
+    locationError.value = "Could not find coordinates. Try a more specific address or use 'For Myself'.";
     serviceTypes.value = [];
     catalogPriceMap.value = {};
     manualLocationCoordsSet.value = false;
     catalogLoading.value = false;
     return;
   }
-  locationError.value = "";
   location.value = { latitude: coords.latitude, longitude: coords.longitude };
   manualLocationCoordsSet.value = true;
   await loadNearbyServices();
 });
 
 watch(useCurrentLocation, async (val) => {
-  if (val) {
-    locationError.value = "";
-    await fetchCurrentLocation();
-    manualLocationCoordsSet.value = false;
-  } else {
-    newBooking.value.location = "";
-    manualLocationCoordsSet.value = false;
-    locationError.value = "";
-    serviceTypes.value = [];
-    catalogPriceMap.value = {};
-  }
+  if (val) { locationError.value = ""; await fetchCurrentLocation(); manualLocationCoordsSet.value = false; }
+  else { newBooking.value.location = ""; manualLocationCoordsSet.value = false; locationError.value = ""; serviceTypes.value = []; catalogPriceMap.value = {}; }
 });
+
 onMounted(() => { fetchCurrentLocation(); });
 
-// Form completeness (callOutService can be true or false - both are valid selections)
+// Form completeness
 const isFormComplete = computed(() =>
   !!newBooking.value.carPlate &&
   !!newBooking.value.carType &&
@@ -228,6 +232,7 @@ const isFormComplete = computed(() =>
   !!newBooking.value.location
 );
 
+// Submit booking
 const submitBooking = async () => {
   if (!isFormComplete.value || loading.value) return;
   loading.value = true;
