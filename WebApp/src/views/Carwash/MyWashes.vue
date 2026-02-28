@@ -1,55 +1,7 @@
 <template>
   <PageContainer>
     <v-card-text>
-      <v-row class="mb-4" align="center">
-        <v-col cols="12" sm="auto">
-          <span class="text-subtitle-2 mr-2">Date range:</span>
-        </v-col>
-        <v-col cols="12" sm="2">
-          <v-text-field
-            v-model="reportStartDate"
-            type="date"
-            label="From"
-            density="compact"
-            hide-details
-            variant="outlined"
-          />
-        </v-col>
-        <v-col cols="12" sm="2">
-          <v-text-field
-            v-model="reportEndDate"
-            type="date"
-            label="To"
-            density="compact"
-            hide-details
-            variant="outlined"
-          />
-        </v-col>
-        <v-col cols="12" sm="auto">
-          <v-btn
-            color="primary"
-            variant="tonal"
-            :loading="exportLoading"
-            :disabled="!reportStartDate || !reportEndDate"
-            @click="exportCarWashReport"
-          >
-            <v-icon start size="18">mdi-download</v-icon>
-            Export CSV
-          </v-btn>
-        </v-col>
-        <v-col cols="12" sm="auto">
-          <v-btn
-            color="primary"
-            variant="tonal"
-            :loading="emailReportLoading"
-            :disabled="!reportStartDate || !reportEndDate"
-            @click="emailCarWashReport"
-          >
-            <v-icon start size="18">mdi-email</v-icon>
-            Email report
-          </v-btn>
-        </v-col>
-      </v-row>
+    
       <TableComponent
         title="My Car Wash History"
         :headers="headers"
@@ -93,12 +45,36 @@
           You have no past car washes.
         </template>
       </TableComponent>
+
+      <v-row class="mt-4" justify="end" align="center">
+        <v-col cols="12" class="d-flex justify-end flex-wrap gap-2 py-0">
+          <v-btn
+            color="primary"
+            variant="tonal"
+            class="mr-3"
+            :loading="exportLoading"
+            @click="exportCarWashReport"
+          >
+            <v-icon start size="18">mdi-download</v-icon>
+            Export CSV
+          </v-btn>
+          <v-btn
+            color="primary"
+            variant="tonal"
+            :loading="emailReportLoading"
+            @click="emailCarWashReport"
+          >
+            <v-icon start size="18">mdi-email</v-icon>
+            Email report
+          </v-btn>
+        </v-col>
+      </v-row>
     </v-card-text>
   </PageContainer>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch } from "vue";
+import { ref, computed, onMounted, watch } from "vue";
 import PageContainer from "@/components/PageContainer.vue";
 import { formatDate } from "@/composables/useDateFormat";
 import apiService from "@/api/apiService";
@@ -147,25 +123,27 @@ import { getSafeJson } from "@/utils/storage";
 import API from "@/api/axios";
 import { API_ENDPOINTS } from "@/utils/constants";
 import { toast } from "@/utils/toast";
-const loggedInUser = getSafeJson("userProfile", {});
+const loggedInUser = computed(() => getSafeJson("userProfile", {}));
 
-// Report date range (default last 30 days)
-const defaultStart = () => {
+// Report dates: profile creation date → today (no date range picker)
+const reportStartDate = computed(() => {
+  const createdAt = loggedInUser.value?.createdAt;
+  if (createdAt) {
+    const d = new Date(createdAt);
+    if (!isNaN(d.getTime())) return d.toISOString().slice(0, 10);
+  }
   const d = new Date();
   d.setDate(d.getDate() - 30);
   return d.toISOString().slice(0, 10);
-};
-const defaultEnd = () => new Date().toISOString().slice(0, 10);
-const reportStartDate = ref(defaultStart());
-const reportEndDate = ref(defaultEnd());
+});
+const reportEndDate = computed(() => new Date().toISOString().slice(0, 10));
 const exportLoading = ref(false);
 const emailReportLoading = ref(false);
 
 function exportCarWashReport() {
-  if (!reportStartDate.value || !reportEndDate.value) return;
   exportLoading.value = true;
   API.get(API_ENDPOINTS.REPORTS_CARWASH_EXPORT, {
-    params: { username: loggedInUser.username, startDate: reportStartDate.value, endDate: reportEndDate.value },
+    params: { username: loggedInUser.value?.username, startDate: reportStartDate.value, endDate: reportEndDate.value },
     responseType: "blob",
   })
     .then((res) => {
@@ -183,11 +161,10 @@ function exportCarWashReport() {
 }
 
 function emailCarWashReport() {
-  if (!reportStartDate.value || !reportEndDate.value) return;
   emailReportLoading.value = true;
   apiService
     .emailCarWashReport({
-      username: loggedInUser.username,
+      username: loggedInUser.value?.username,
       startDate: reportStartDate.value,
       endDate: reportEndDate.value,
     })
@@ -204,7 +181,7 @@ const fetchBookings = async () => {
   loading.value = true;
   try {
     const params = searchQuery.value ? { search: searchQuery.value } : {};
-    const response = await apiService.getCarWashBookingsByClient(loggedInUser.username, params);
+    const response = await apiService.getCarWashBookingsByClient(loggedInUser.value?.username, params);
     const data = Array.isArray(response.data) ? response.data : [];
     bookings.value = sortRequestsByStatus(data);
   } catch (error) {

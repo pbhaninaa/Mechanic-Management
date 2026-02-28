@@ -1,55 +1,7 @@
 <template>
   <PageContainer>
     <v-card-text>
-      <v-row v-if="!historyError" class="mb-4" align="center">
-        <v-col cols="12" sm="auto">
-          <span class="text-subtitle-2 mr-2">Date range:</span>
-        </v-col>
-        <v-col cols="12" sm="2">
-          <v-text-field
-            v-model="reportStartDate"
-            type="date"
-            label="From"
-            density="compact"
-            hide-details
-            variant="outlined"
-          />
-        </v-col>
-        <v-col cols="12" sm="2">
-          <v-text-field
-            v-model="reportEndDate"
-            type="date"
-            label="To"
-            density="compact"
-            hide-details
-            variant="outlined"
-          />
-        </v-col>
-        <v-col cols="12" sm="auto">
-          <v-btn
-            color="primary"
-            variant="tonal"
-            :loading="exportLoading"
-            :disabled="!reportStartDate || !reportEndDate"
-            @click="exportMechanicRequestsReport"
-          >
-            <v-icon start size="18">mdi-download</v-icon>
-            Export CSV
-          </v-btn>
-        </v-col>
-        <v-col cols="12" sm="auto">
-          <v-btn
-            color="primary"
-            variant="tonal"
-            :loading="emailReportLoading"
-            :disabled="!reportStartDate || !reportEndDate"
-            @click="emailMechanicRequestsReport"
-          >
-            <v-icon start size="18">mdi-email</v-icon>
-            Email report
-          </v-btn>
-        </v-col>
-      </v-row>
+     
       <div v-if="historyLoading">Loading your requests...</div>
       <div v-else-if="historyError" class="error">{{ historyError }}</div>
       <div v-else>
@@ -87,12 +39,34 @@
         </TableComponent>
       </div>
 
+      <v-row v-if="!historyError" class="mt-4" justify="end" align="center">
+        <v-col cols="12" class="d-flex justify-end flex-wrap gap-2 py-0">
+          <v-btn
+            color="primary"
+            variant="tonal"  class="mr-3"
+            :loading="exportLoading"
+            @click="exportMechanicRequestsReport"
+          >
+            <v-icon start size="18">mdi-download</v-icon>
+            Export CSV
+          </v-btn>
+          <v-btn
+            color="primary"
+            variant="tonal"
+            :loading="emailReportLoading"
+            @click="emailMechanicRequestsReport"
+          >
+            <v-icon start size="18">mdi-email</v-icon>
+            Email report
+          </v-btn>
+        </v-col>
+      </v-row>
     </v-card-text>
   </PageContainer>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch } from "vue";
+import { ref, computed, onMounted, watch } from "vue";
 import PageContainer from "@/components/PageContainer.vue";
 import apiService from "@/api/apiService";
 import { JOB_STATUS } from "@/utils/constants";
@@ -134,25 +108,27 @@ const requests = ref<RequestHistory[]>([]);
 const historyLoading = ref(false);
 const historyError = ref<string | null>(null);
 
-// Report date range (default last 30 days)
-const defaultStart = () => {
+// Report dates: profile creation date → today (no date range picker)
+const profile = computed(() => getSafeJson("userProfile", {}) || getSafeJson("profile", {}));
+const reportStartDate = computed(() => {
+  const createdAt = profile.value?.createdAt;
+  if (createdAt) {
+    const d = new Date(createdAt);
+    if (!isNaN(d.getTime())) return d.toISOString().slice(0, 10);
+  }
   const d = new Date();
   d.setDate(d.getDate() - 30);
   return d.toISOString().slice(0, 10);
-};
-const defaultEnd = () => new Date().toISOString().slice(0, 10);
-const reportStartDate = ref(defaultStart());
-const reportEndDate = ref(defaultEnd());
+});
+const reportEndDate = computed(() => new Date().toISOString().slice(0, 10));
 const exportLoading = ref(false);
 const emailReportLoading = ref(false);
 
 function exportMechanicRequestsReport() {
-  if (!reportStartDate.value || !reportEndDate.value) return;
-  const profile = getSafeJson("userProfile", {}) || getSafeJson("profile", {});
   exportLoading.value = true;
   API.get(API_ENDPOINTS.REPORTS_MECHANIC_REQUESTS_EXPORT, {
     params: {
-      username: profile?.username,
+      username: profile.value?.username,
       startDate: reportStartDate.value,
       endDate: reportEndDate.value,
     },
@@ -173,12 +149,10 @@ function exportMechanicRequestsReport() {
 }
 
 function emailMechanicRequestsReport() {
-  if (!reportStartDate.value || !reportEndDate.value) return;
-  const profile = getSafeJson("userProfile", {}) || getSafeJson("profile", {});
   emailReportLoading.value = true;
   apiService
     .emailMechanicRequestsReport({
-      username: profile?.username,
+      username: profile.value?.username,
       startDate: reportStartDate.value,
       endDate: reportEndDate.value,
     })
@@ -203,8 +177,7 @@ function onSearch(q) {
   searchQuery.value = q;
 }
 const loadRequests = async () => {
-  const profile = getSafeJson("userProfile", {}) || getSafeJson("profile", {});
-  const username = profile?.username;
+  const username = profile.value?.username;
   historyLoading.value = true;
   historyError.value = null;
   try {

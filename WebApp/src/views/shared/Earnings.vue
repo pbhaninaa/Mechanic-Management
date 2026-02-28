@@ -1,80 +1,7 @@
 <template>
   <PageContainer>
     <v-card-text>
-      <!-- Date range + Export (service providers only) -->
-      <v-row v-if="isServiceProvider" class="mb-4" align="center">
-        <v-col cols="12" sm="auto">
-          <span class="text-subtitle-2 mr-2">Date range:</span>
-        </v-col>
-        <v-col cols="12" sm="2">
-          <v-text-field
-            v-model="reportStartDate"
-            type="date"
-            label="From"
-            density="compact"
-            hide-details
-            variant="outlined"
-          />
-        </v-col>
-        <v-col cols="12" sm="2">
-          <v-text-field
-            v-model="reportEndDate"
-            type="date"
-            label="To"
-            density="compact"
-            hide-details
-            variant="outlined"
-          />
-        </v-col>
-        <v-col cols="12" sm="auto">
-          <v-btn
-            color="primary"
-            variant="tonal"
-            :loading="exportEarningsLoading"
-            :disabled="!reportStartDate || !reportEndDate"
-            @click="exportEarnings"
-          >
-            <v-icon start size="18">mdi-download</v-icon>
-            Export earnings
-          </v-btn>
-        </v-col>
-        <v-col cols="12" sm="auto">
-          <v-btn
-            color="primary"
-            variant="tonal"
-            :loading="exportJobsLoading"
-            :disabled="!reportStartDate || !reportEndDate"
-            @click="exportCompletedJobs"
-          >
-            <v-icon start size="18">mdi-briefcase-check</v-icon>
-            Export completed jobs
-          </v-btn>
-        </v-col>
-        <v-col cols="12" sm="auto">
-          <v-btn
-            color="primary"
-            variant="tonal"
-            :loading="emailEarningsLoading"
-            :disabled="!reportStartDate || !reportEndDate"
-            @click="emailEarningsReport"
-          >
-            <v-icon start size="18">mdi-email</v-icon>
-            Email earnings report
-          </v-btn>
-        </v-col>
-        <v-col cols="12" sm="auto">
-          <v-btn
-            color="primary"
-            variant="tonal"
-            :loading="emailJobsLoading"
-            :disabled="!reportStartDate || !reportEndDate"
-            @click="emailCompletedJobsReport"
-          >
-            <v-icon start size="18">mdi-email</v-icon>
-            Email completed jobs
-          </v-btn>
-        </v-col>
-      </v-row>
+     
       <!-- Earnings Table -->
       <TableComponent
         title="Earnings"
@@ -111,12 +38,39 @@
           No earnings found.
         </template>
       </TableComponent>
+
+      <v-row v-if="isServiceProvider" class="mt-4" justify="end" align="center">
+        <v-col cols="12" class="d-flex justify-end flex-wrap gap-2 py-0">
+          <v-btn
+            color="primary"
+            variant="tonal"
+              class="mr-3"
+            :loading="exportEarningsLoading"
+            @click="exportEarnings"
+          >
+            <v-icon start size="18">mdi-download</v-icon>
+            Export earnings
+          </v-btn>
+         
+          <v-btn
+            color="primary"
+              class="mr-3"
+            variant="tonal"
+            :loading="emailEarningsLoading"
+            @click="emailEarningsReport"
+          >
+            <v-icon start size="18">mdi-email</v-icon>
+            Email earnings report
+          </v-btn>
+         
+        </v-col>
+      </v-row>
     </v-card-text>
   </PageContainer>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch } from "vue";
+import { ref, computed, onMounted, watch } from "vue";
 import PageContainer from "@/components/PageContainer.vue";
 import apiService from "@/api/apiService";
 import { getSafeJson } from "@/utils/storage";
@@ -136,30 +90,30 @@ const loggedInUser = getSafeJson("userProfile", {}) || {};
 const role = loggedInUser.roles?.[0];
 const isServiceProvider = role === USER_ROLES.MECHANIC || role === USER_ROLES.CAR_WASH;
 
-// Report date range (default last 30 days)
-const defaultStart = () => {
+// Report dates: profile creation date → today (no date range picker)
+const reportStartDate = computed(() => {
+  const createdAt = loggedInUser.createdAt;
+  if (createdAt) {
+    const d = new Date(createdAt);
+    if (!isNaN(d.getTime())) return d.toISOString().slice(0, 10);
+  }
   const d = new Date();
   d.setDate(d.getDate() - 30);
   return d.toISOString().slice(0, 10);
-};
-const defaultEnd = () => new Date().toISOString().slice(0, 10);
-const reportStartDate = ref(defaultStart());
-const reportEndDate = ref(defaultEnd());
+});
+const reportEndDate = computed(() => new Date().toISOString().slice(0, 10));
 const exportEarningsLoading = ref(false);
 const exportJobsLoading = ref(false);
 const emailEarningsLoading = ref(false);
 const emailJobsLoading = ref(false);
 
 function providerParams() {
-  const start = reportStartDate.value;
-  const end = reportEndDate.value;
   const mechanicId = role === USER_ROLES.MECHANIC ? loggedInUser.id : undefined;
   const carWashId = role === USER_ROLES.CAR_WASH ? loggedInUser.id : undefined;
-  return { mechanicId, carWashId, startDate: start, endDate: end };
+  return { mechanicId, carWashId, startDate: reportStartDate.value, endDate: reportEndDate.value };
 }
 
 function exportEarnings() {
-  if (!reportStartDate.value || !reportEndDate.value) return;
   const { mechanicId, carWashId, startDate, endDate } = providerParams();
   exportEarningsLoading.value = true;
   API.get(API_ENDPOINTS.REPORTS_EARNINGS_EXPORT, {
@@ -181,7 +135,6 @@ function exportEarnings() {
 }
 
 function exportCompletedJobs() {
-  if (!reportStartDate.value || !reportEndDate.value) return;
   const { mechanicId, carWashId, startDate, endDate } = providerParams();
   exportJobsLoading.value = true;
   API.get(API_ENDPOINTS.REPORTS_COMPLETED_JOBS_EXPORT, {
@@ -203,14 +156,12 @@ function exportCompletedJobs() {
 }
 
 function emailEarningsReport() {
-  if (!reportStartDate.value || !reportEndDate.value) return;
   emailEarningsLoading.value = true;
   const payload = { ...providerParams() };
   apiService.emailEarningsReport(payload).then(() => {}).catch(() => toast.error("Failed to send email.")).finally(() => { emailEarningsLoading.value = false; });
 }
 
 function emailCompletedJobsReport() {
-  if (!reportStartDate.value || !reportEndDate.value) return;
   emailJobsLoading.value = true;
   const payload = { ...providerParams() };
   apiService.emailCompletedJobsReport(payload).then(() => {}).catch(() => toast.error("Failed to send email.")).finally(() => { emailJobsLoading.value = false; });
