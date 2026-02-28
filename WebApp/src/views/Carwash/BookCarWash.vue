@@ -217,12 +217,12 @@ watch(useCurrentLocation, async (val) => {
 });
 onMounted(() => { fetchCurrentLocation(); });
 
-// Form completeness
+// Form completeness (callOutService can be true or false - both are valid selections)
 const isFormComplete = computed(() =>
   !!newBooking.value.carPlate &&
   !!newBooking.value.carType &&
   !!newBooking.value.carDescription &&
-  !!newBooking.value.callOutService &&
+  (newBooking.value.callOutService === true || newBooking.value.callOutService === false) &&
   newBooking.value.serviceTypes.length > 0 &&
   !!newBooking.value.date &&
   !!newBooking.value.location
