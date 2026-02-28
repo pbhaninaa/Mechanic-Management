@@ -38,7 +38,7 @@
           <!-- Services: hide until location has coords (from GPS or geocoded address) -->
           <template v-if="canShowServices">
             <v-alert v-if="!catalogLoading && serviceTypes.length === 0" type="info" density="compact" class="mb-2">
-              No car wash services in the catalog yet. Providers can add services under "My Services".
+              No car wash services are available near this location yet. Try a different address or check back later.
             </v-alert>
             <DropdownField
               v-if="serviceTypes.length > 0"

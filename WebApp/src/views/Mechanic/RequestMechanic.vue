@@ -32,7 +32,7 @@
               :disabled="loading || catalogLoading"
             />
             <v-alert v-else-if="!catalogLoading && jobOptions.length === 0" type="info" class="mb-2">
-              No mechanic services in the catalog yet. Providers can add services under "My Services".
+              No mechanic services are available near this location yet. Try a different address or check back later.
             </v-alert>
           </template>
           <v-alert v-else type="info" density="compact" class="mb-2">
