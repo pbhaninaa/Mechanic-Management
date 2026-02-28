@@ -1,45 +1,79 @@
 <template>
   <PageContainer>
-  
     <v-card>
       <v-card-title>Car Wash Booking</v-card-title>
       <v-card-text>
         <v-form ref="form" v-model="formValid" lazy-validation>
+          <!-- Self or Other -->
           <v-radio-group v-model="useCurrentLocation" row>
             <v-radio label="For Myself" :value="true" />
             <v-radio label="For Someone Else" :value="false" />
           </v-radio-group>
+
+          <!-- Location errors -->
           <v-alert v-if="locationError" type="warning" density="compact" class="mb-2">{{ locationError }}</v-alert>
 
-          <InputField v-model="newBooking.location" label="Location" type="text"
-            :disabled="loading || useCurrentLocation" :readonly="useCurrentLocation" required />
+          <!-- Location input -->
+          <InputField
+            v-model="newBooking.location"
+            label="Location"
+            type="text"
+            :disabled="loading || useCurrentLocation"
+            :readonly="useCurrentLocation"
+            required
+          />
 
+          <!-- Car details -->
           <DropdownField v-model="newBooking.carType" :items="carTypes" label="Car Type" required />
-          <InputField :model-value="newBooking.carPlate"
+          <InputField
+            :model-value="newBooking.carPlate"
             @update:model-value="newBooking.carPlate = (($event) ?? '').toString().toUpperCase()"
-            label="Car Plate Number" type="text" :disabled="loading" required />
+            label="Car Plate Number"
+            type="text"
+            :disabled="loading"
+            required
+          />
+          <InputField v-model="newBooking.carDescription" label="Car Description (Make/Model/Year/Color)" type="text" :disabled="loading" required />
 
-
-          <InputField v-model="newBooking.carDescription" label="Car Description (Make/Model/Year/Color)" type="text"
-            :disabled="loading" required />
-
-          <v-alert v-if="!catalogLoading && serviceTypes.length === 0" type="info" density="compact" class="mb-2">
-            No car wash services in the catalog yet. Providers can add services under "My Services".
+          <!-- Services: hide until location has coords (from GPS or geocoded address) -->
+          <template v-if="canShowServices">
+            <v-alert v-if="!catalogLoading && serviceTypes.length === 0" type="info" density="compact" class="mb-2">
+              No car wash services in the catalog yet. Providers can add services under "My Services".
+            </v-alert>
+            <DropdownField
+              v-if="serviceTypes.length > 0"
+              v-model="newBooking.serviceTypes"
+              :items="serviceTypes"
+              label="Select Services"
+              multiple
+              chips
+              required
+              :disabled="catalogLoading"
+            />
+          </template>
+          <v-alert v-else type="info" density="compact" class="mb-2">
+            Provide your location above to see available services. If you enter an address we'll look up its coordinates to find nearby services.
           </v-alert>
-          <DropdownField v-model="newBooking.serviceTypes" :items="serviceTypes" label="Select Services" multiple chips
-            required :disabled="catalogLoading" />
 
+          <!-- Price -->
           <InputField v-model="formattedPrice" label="Total Price" type="text" :disabled="true" />
-          <v-menu v-model="menu" :close-on-content-click="false" transition="scale-transition" offset-y
-            min-width="290px">
+
+          <!-- Date picker -->
+          <v-menu v-model="menu" :close-on-content-click="false" transition="scale-transition" offset-y min-width="290px">
             <template #activator="{ props }">
-              <v-text-field v-model="newBooking.date" label="Preferred Date" readonly v-bind="props" outlined
-                :disabled="loading" required />
+              <v-text-field v-model="newBooking.date" label="Preferred Date" readonly v-bind="props" outlined :disabled="loading" required />
             </template>
             <v-date-picker v-model="newBooking.date" :min="today" color="primary" @update:model-value="menu = false" />
           </v-menu>
-          <Button :label="isEditMode ? 'Update' : 'Book Now'" :color="STATUS_COLORS.REJECTED" @click="submitBooking" :loading="loading"
-            :disabled="loading || !isFormComplete" />
+
+          <!-- Submit -->
+          <Button
+            :label="isEditMode ? 'Update' : 'Book Now'"
+            :color="STATUS_COLORS.REJECTED"
+            @click="submitBooking"
+            :loading="loading"
+            :disabled="loading || !isFormComplete"
+          />
         </v-form>
       </v-card-text>
     </v-card>
@@ -55,11 +89,12 @@ import DropdownField from "@/components/DropdownField.vue";
 import Button from "@/components/Button.vue";
 import { STATUS_COLORS } from "@/utils/constants";
 import apiService from "@/api/apiService";
-import { getCurrentLocationWithName } from "@/utils/helper";
+import { getCurrentLocationWithName, geocodeAddressToCoords } from "@/utils/helper";
 import { getSafeJson } from "@/utils/storage";
 import { useCurrency } from "@/composables/useCurrency";
 
 const loggedInUser = getSafeJson("userProfile", {});
+const router = useRouter();
 
 interface Booking {
   clientUsername: string;
@@ -73,21 +108,28 @@ interface Booking {
   status: string;
 }
 
-const router = useRouter();
 const loading = ref(false);
 const formValid = ref(false);
 const isEditMode = ref(false);
 const menu = ref(false);
 const today = new Date().toISOString().split('T')[0];
 const useCurrentLocation = ref(true);
+const location = ref({ latitude: 0, longitude: 0 });
+const locationError = ref("");
+const manualLocationCoordsSet = ref(false);
+
+const canShowServices = computed(() =>
+  (useCurrentLocation.value && newBooking.value.location) ||
+  (!useCurrentLocation.value && manualLocationCoordsSet.value)
+);
 
 const carTypes = [
-  "Sedan", "SUV", "Hatchback", "Bakkie", "Van", "Truck", "Luxury",
-  "Coupe", "Convertible", "Crossover", "Minivan", "Pickup", "Station Wagon",
-  "Electric", "Hybrid", "Sports Car", "Microcar", "Off-Road", "Compact"
+  "Sedan","SUV","Hatchback","Bakkie","Van","Truck","Luxury",
+  "Coupe","Convertible","Crossover","Minivan","Pickup","Station Wagon",
+  "Electric","Hybrid","Sports Car","Microcar","Off-Road","Compact"
 ];
 
-// Services and prices from DB catalog (loaded on mount)
+// Services
 const serviceTypes = ref<string[]>([]);
 const catalogPriceMap = ref<Record<string, number>>({});
 const catalogLoading = ref(true);
@@ -97,83 +139,90 @@ const newBooking = ref<Booking>({
   carPlate: "",
   carType: carTypes[0],
   carDescription: "",
-  serviceTypes: [] as string[],
+  serviceTypes: [],
   servicePrice: "0",
   date: "",
   location: "",
   status: "pending",
 });
 
-// Computed price from DB catalog
-const computedPrice = computed(() => {
-  const selected = newBooking.value.serviceTypes || [];
-  const prices = catalogPriceMap.value;
-  if (selected.length === 0) return 0;
-  return selected.reduce((total, service) => total + (prices[service] ?? 0), 0);
-});
-
-// Update servicePrice whenever computedPrice changes
-watch(computedPrice, (newPrice) => {
-  newBooking.value.servicePrice = newPrice.toFixed(2);
-});
-
+// Computed price
 const { formatCurrency } = useCurrency();
+const computedPrice = computed(() => newBooking.value.serviceTypes.reduce((total, s) => total + (catalogPriceMap.value[s] || 0), 0));
+watch(computedPrice, (newPrice) => newBooking.value.servicePrice = newPrice.toFixed(2));
 const formattedPrice = computed(() => formatCurrency(computedPrice.value));
 
-const locationError = ref("");
+// Fetch current location
 const fetchCurrentLocation = async () => {
   locationError.value = "";
   const result = await getCurrentLocationWithName();
-
   if (!result.success) {
     locationError.value = result.message || "Failed to get location. Enter address manually.";
     useCurrentLocation.value = false;
     return;
   }
-
+  location.value = { latitude: result.latitude, longitude: result.longitude };
   newBooking.value.location = result.locationName;
 };
-watch(useCurrentLocation, async (val) => {
-  if (val) {
-    await fetchCurrentLocation();
-  } else {
-    newBooking.value.location = "";
-  }
-});
-fetchCurrentLocation();
 
-// Load car wash services catalog from DB (for clients)
-async function loadCarwashCatalog() {
+async function loadNearbyServices() {
+  if (location.value.latitude === 0 && location.value.longitude === 0) return;
   catalogLoading.value = true;
   try {
-    const res = await apiService.getServiceCatalog("carwash");
+    const res = await apiService.getNearbyServiceOfferings("carwash", location.value.latitude, location.value.longitude, 50);
     const list = res?.data ?? [];
     const names = [...new Set(list.map((o: any) => o.serviceName).filter(Boolean))].sort();
     serviceTypes.value = names;
     const priceMap: Record<string, number> = {};
-    list.forEach((o: any) => {
-      const name = o.serviceName;
-      if (!name) return;
-      const p = Number(o.price);
-      if (!Number.isNaN(p) && (priceMap[name] == null || p < priceMap[name])) priceMap[name] = p;
-    });
+    list.forEach((o: any) => { const n = o.serviceName; if (!n) return; const p = Number(o.price); if (!isNaN(p) && (priceMap[n] == null || p < priceMap[n])) priceMap[n] = p; });
     catalogPriceMap.value = priceMap;
-    if (names.length && newBooking.value.serviceTypes.length === 0) {
-      newBooking.value.serviceTypes = [names[0]];
-    }
-  } catch (_) {
-    serviceTypes.value = [];
-    catalogPriceMap.value = {};
-  } finally {
-    catalogLoading.value = false;
-  }
+    if (names.length && newBooking.value.serviceTypes.length === 0) newBooking.value.serviceTypes = [names[0]];
+  } catch (_) { serviceTypes.value = []; catalogPriceMap.value = {}; }
+  finally { catalogLoading.value = false; }
 }
 
-onMounted(() => {
-  loadCarwashCatalog();
+// When location changes: for "Myself" we have coords from fetchCurrentLocation; for "Someone Else" geocode then load
+watch(() => newBooking.value.location, async (loc) => {
+  if (!loc) {
+    serviceTypes.value = [];
+    catalogPriceMap.value = {};
+    catalogLoading.value = false;
+    manualLocationCoordsSet.value = false;
+    return;
+  }
+  if (useCurrentLocation.value) {
+    loadNearbyServices();
+    return;
+  }
+  const coords = await geocodeAddressToCoords(loc);
+  if (!coords) {
+    locationError.value = "We couldn't find coordinates for this address. Please try a more specific address or use 'For Myself' to use your current location.";
+    serviceTypes.value = [];
+    catalogPriceMap.value = {};
+    manualLocationCoordsSet.value = false;
+    catalogLoading.value = false;
+    return;
+  }
+  locationError.value = "";
+  location.value = { latitude: coords.latitude, longitude: coords.longitude };
+  manualLocationCoordsSet.value = true;
+  await loadNearbyServices();
 });
 
-// Form validation
+watch(useCurrentLocation, async (val) => {
+  if (val) {
+    await fetchCurrentLocation();
+    manualLocationCoordsSet.value = false;
+  } else {
+    newBooking.value.location = "";
+    manualLocationCoordsSet.value = false;
+    serviceTypes.value = [];
+    catalogPriceMap.value = {};
+  }
+});
+onMounted(() => { fetchCurrentLocation(); });
+
+// Form completeness
 const isFormComplete = computed(() =>
   !!newBooking.value.carPlate &&
   !!newBooking.value.carType &&
@@ -183,25 +232,14 @@ const isFormComplete = computed(() =>
   !!newBooking.value.location
 );
 
-const bookingError = ref("");
 const submitBooking = async () => {
-  if (!isFormComplete.value || loading.value) return; // prevent double submit
-  bookingError.value = "";
+  if (!isFormComplete.value || loading.value) return;
   loading.value = true;
   try {
-    const payload = {
-      ...newBooking.value,
-      servicePrice: Number(newBooking.value.servicePrice) || computedPrice.value,
-    };
+    const payload = { ...newBooking.value, servicePrice: Number(newBooking.value.servicePrice) || computedPrice.value };
     await apiService.createCarWashBooking(payload);
     router.push({ name: "MyWashes" });
-  } catch (error) {
-    const msg = error?.message || "Booking failed. Please try again.";
-    bookingError.value = msg;
-  } finally {
-    loading.value = false;
-  }
+  } catch (err: any) { locationError.value = err?.message || "Booking failed"; }
+  finally { loading.value = false; }
 };
-
-
 </script>

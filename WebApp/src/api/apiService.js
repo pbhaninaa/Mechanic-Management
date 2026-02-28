@@ -362,6 +362,10 @@ async deleteCarWashBooking(id) {
   async getServiceCatalog(providerType) {
     return this.get(API_ENDPOINTS.PROVIDER_SERVICES_CATALOG, { params: { providerType } });
   }
+  async getNearbyServiceOfferings(providerType, latitude, longitude, radiusKm ) {
+    return this.get(API_ENDPOINTS.NEARVY_PROVIDER_SERVICES, { params: { providerType, latitude, longitude, radiusKm } });
+  }
+
 
   async createServiceOffering(providerType, data) {
     return this.post(`${API_ENDPOINTS.PROVIDER_SERVICES}?providerType=${encodeURIComponent(providerType)}`, data);

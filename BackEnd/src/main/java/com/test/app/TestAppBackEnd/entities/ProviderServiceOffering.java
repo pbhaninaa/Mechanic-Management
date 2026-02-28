@@ -22,15 +22,30 @@ public class ProviderServiceOffering {
     private String serviceName;
 
     @Column(nullable = false)
+    private String providerId;
+
+    @Column(nullable = false)
     private Double price;
+
+    @Column(nullable = false)
+    private String latitude;
+
+    @Column(nullable = false)
+    private String longitude;
+
 
     public ProviderServiceOffering() {}
 
-    public ProviderServiceOffering(String providerUsername, String providerType, String serviceName, Double price) {
+
+
+    public ProviderServiceOffering(String latitude, String longitude    ,String providerUsername, String providerType, String serviceName, Double price, String providerId) {
         this.providerUsername = providerUsername;
         this.providerType = providerType;
         this.serviceName = serviceName;
         this.price = price;
+        this.providerId = providerId;
+        this.latitude = latitude;
+        this.longitude = longitude;
     }
 
     @PrePersist
@@ -48,4 +63,10 @@ public class ProviderServiceOffering {
     public void setServiceName(String serviceName) { this.serviceName = serviceName; }
     public Double getPrice() { return price; }
     public void setPrice(Double price) { this.price = price; }
+    public String getLatitude() { return latitude; }
+    public void setLatitude(String latitude) { this.latitude = latitude; }
+    public String getLongitude() { return longitude; }
+    public void setLongitude(String longitude) { this.longitude = longitude; }
+    public String getProviderId() { return providerId; }
+    public void setProviderId(String providerId) { this.providerId = providerId; }
 }

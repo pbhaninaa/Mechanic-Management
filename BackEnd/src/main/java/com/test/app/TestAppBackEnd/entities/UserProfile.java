@@ -30,6 +30,9 @@ public class UserProfile {
     private String lastName;
     private String phoneNumber;
     private String countryCode; // e.g. "+27", "+1" - determines currency for the user
+
+    private String latitude;
+    private String longitude;
     private String address;
 
     // Roles stored as Enum values
@@ -38,6 +41,8 @@ public class UserProfile {
     @Column(name = "role", nullable = false)
     @Enumerated(EnumType.STRING)
     private Set<Role> roles = new HashSet<>();
+
+
 
     // Timestamps
     private LocalDateTime createdAt;
@@ -93,6 +98,10 @@ public class UserProfile {
 
     public String getAddress() { return address; }
     public void setAddress(String address) { this.address = address; }
+    public String getLatitude() { return latitude; }
+    public void setLatitude(String latitude) { this.latitude = latitude; }
+    public String getLongitude() { return longitude; }
+    public void setLongitude(String longitude) { this.longitude = longitude; }
 
     public Set<Role> getRoles() { return roles; }
     public void setRoles(Set<Role> roles) { this.roles = roles; }

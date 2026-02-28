@@ -1,6 +1,7 @@
 package com.test.app.TestAppBackEnd.services;
 
 import com.test.app.TestAppBackEnd.entities.ProviderServiceOffering;
+import com.test.app.TestAppBackEnd.entities.UserProfile;
 import com.test.app.TestAppBackEnd.repositories.ProviderServiceOfferingRepository;
 import org.springframework.stereotype.Service;
 
@@ -24,10 +25,29 @@ public class ProviderServiceOfferingService {
     public List<ProviderServiceOffering> getCatalog(String providerType) {
         return repository.findByProviderTypeOrderByServiceNameAsc(providerType);
     }
+    public List<ProviderServiceOffering> getNearbyByOfferingType(
+            String offeringType,
+            double latitude,
+            double longitude,
+            double radiusKm
+    ) {
 
-    public ProviderServiceOffering create(String username, String providerType, ProviderServiceOffering offering) {
+        double radiusMeters = radiusKm * 1000;
+
+        return repository.findNearbyByOfferingType(
+                offeringType,
+                latitude,
+                longitude,
+                radiusMeters
+        );
+    }
+
+    public ProviderServiceOffering create(UserProfile providerProfile, String providerType, ProviderServiceOffering offering) {
         offering.setId(null);
-        offering.setProviderUsername(username);
+        offering.setProviderUsername(providerProfile.getUsername());
+        offering.setLongitude(providerProfile.getLongitude());
+        offering.setLatitude(providerProfile.getLatitude());
+        offering.setProviderId(providerProfile.getId());
         offering.setProviderType(providerType);
         return repository.save(offering);
     }

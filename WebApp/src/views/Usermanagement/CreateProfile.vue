@@ -1,41 +1,76 @@
 <template>
   <PageContainer>
     <v-card-title>{{ isEditMode ? "Edit Profile" : "Create Profile" }}</v-card-title>
+
     <v-card-text>
       <InputField v-model="form.firstName" label="First Name" type="text" :disabled="loading" required />
       <InputField v-model="form.lastName" label="Last Name" type="text" :disabled="loading" required />
       <InputField v-model="form.username" label="Username" type="text" :disabled="true" required />
       <InputField v-model="form.email" label="Email" type="email" :disabled="loading || isEditMode" required />
-      <PhoneNumberInput v-model="form.phoneNumber" :initial-value="form.phoneNumber" :initial-country-code="form.countryCode"
-        @update:countryCode="form.countryCode = $event" @valid="isPhoneValid = $event" :disabled="loading" />
-           
-      <div v-if="form.roles[0] !== USER_ROLES.ADMIN" class="address-field-wrapper">
+
+      <PhoneNumberInput
+        v-model="form.phoneNumber"
+        :initial-value="form.phoneNumber"
+        :initial-country-code="form.countryCode"
+        @update:countryCode="form.countryCode = $event"
+        @valid="isPhoneValid = $event"
+        :disabled="loading"
+      />
+
+      <!-- Address Section -->
+      <div v-if="form.roles[0] !== USER_ROLES.ADMIN">
         <v-radio-group v-model="useCurrentLocation" row>
           <v-radio label="Use My Current Location" :value="true" />
           <v-radio label="Enter Address Manually" :value="false" />
         </v-radio-group>
-        <v-alert v-if="locationError" type="warning" density="compact" class="mb-2">{{ locationError }}</v-alert>
-        <InputField v-model="form.address" label="Address" type="text"
+
+        <v-alert v-if="locationError" type="warning" density="compact" class="mb-2">
+          {{ locationError }}
+        </v-alert>
+
+        <InputField
+          v-model="form.address"
+          label="Address"
+          type="text"
           :disabled="loading || useCurrentLocation"
           :readonly="useCurrentLocation"
-          :hint="addressHint" :persistent-hint="!!addressHint" />
+        />
       </div>
-      <InputField v-else v-model="form.address" label="Address" type="text"
-        :disabled="true" />
-      <v-select v-model="form.roles" :items="roles" label="Role" chips :multiple="false"
-        :disabled="loading || !canEditRole" required variant="outlined" />
-      <Button :label="isEditMode ? 'Update' : 'Save'" color="primary" :disabled="
-        loading ||
-        !form.firstName ||
-        !form.lastName ||
-        !form.username ||
-        !form.email ||
-        !form.phoneNumber ||
-        !isPhoneValid ||
-        !isAddressValid
-      "
-      :loading="loading" @click="saveProfile" />
-      <v-alert v-if="message" :type="messageType" class="mt-3" closable @click:close="message = ''">
+
+      <InputField
+        v-else
+        v-model="form.address"
+        label="Address"
+        type="text"
+        :disabled="true"
+      />
+
+      <v-select
+        v-model="form.roles"
+        :items="roles"
+        label="Role"
+        chips
+        :multiple="false"
+        :disabled="loading || !canEditRole"
+        required
+        variant="outlined"
+      />
+
+      <Button
+        :label="isEditMode ? 'Update' : 'Save'"
+        color="primary"
+        :disabled="isSaveDisabled"
+        :loading="loading"
+        @click="saveProfile"
+      />
+
+      <v-alert
+        v-if="message"
+        :type="messageType"
+        class="mt-3"
+        closable
+        @click:close="message = ''"
+      >
         {{ message }}
       </v-alert>
     </v-card-text>
@@ -45,44 +80,22 @@
 <script setup>
 import { ref, onMounted, computed, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { emitAuthChanged } from "@/utils/helper";
+import { emitAuthChanged, getCurrentLocationWithName } from "@/utils/helper";
 import InputField from "@/components/InputField.vue";
 import Button from "@/components/Button.vue";
 import apiService from "@/api/apiService";
 import PageContainer from "@/components/PageContainer.vue";
 import { USER_ROLES } from "@/utils/constants";
 import PhoneNumberInput from "@/components/PhoneNumberInput.vue";
-import { countries } from "@/utils/helper";
 import { getSafeJson } from "@/utils/storage";
-import { getCurrentLocationWithName } from "@/utils/helper";
 
 const route = useRoute();
 const router = useRouter();
 
-const propsProfile = ref(
-  route.query.profile
-    ? (() => { try { return JSON.parse(route.query.profile); } catch { return {}; } })()
-    : getSafeJson("profile", {})
-);
-const roles = [USER_ROLES.CLIENT, USER_ROLES.MECHANIC, USER_ROLES.CAR_WASH, USER_ROLES.ADMIN];
-const isEditMode = computed(() => !!propsProfile.value?.firstName || !!propsProfile.value?.lastName);
+/* =============================
+   FORM STATE
+============================= */
 
-// Address required for MECHANIC and CAR_WASH (used for collection directions in completion emails)
-const addressHint = computed(() => {
-  const role = form.value?.roles?.[0];
-  if (role === USER_ROLES.MECHANIC || role === USER_ROLES.CAR_WASH) {
-    return "Your workshop/car wash address — clients will receive directions here when services are completed";
-  }
-  return "";
-});
-
-const isAddressValid = computed(() => {
-  const role = form.value?.roles?.[0];
-  if (role === USER_ROLES.MECHANIC || role === USER_ROLES.CAR_WASH) {
-    return !!form.value?.address?.trim();
-  }
-  return true;
-});
 const form = ref({
   firstName: "",
   lastName: "",
@@ -91,24 +104,37 @@ const form = ref({
   countryCode: localStorage.getItem("phoneCountryCode") || "+27",
   phoneNumber: "",
   address: "",
-  roles: [USER_ROLES.CLIENT] // prepopulate with first role
+  latitude: null,
+  longitude: null,
+  roles: [USER_ROLES.CLIENT]
 });
-const selectedCountry = computed(() =>
-  countries.find(c => c.code === form.value.countryCode)
+
+const roles = [
+  USER_ROLES.CLIENT,
+  USER_ROLES.MECHANIC,
+  USER_ROLES.CAR_WASH,
+  USER_ROLES.ADMIN
+];
+
+const propsProfile = ref(
+  route.query.profile
+    ? JSON.parse(route.query.profile)
+    : getSafeJson("profile", {})
 );
 
-const requiredPhoneLength = computed(() =>
-  selectedCountry.value?.maxLength ?? 9
-);
+const isEditMode = computed(() => !!propsProfile.value?.username);
 
+const currentUser = ref(getSafeJson("userProfile", {}));
 
-const isPhoneValid = ref(false);
+const canEditRole = computed(() => {
+  if (!isEditMode.value) return true;
+  return currentUser.value.roles?.includes(USER_ROLES.ADMIN);
+});
 
+/* =============================
+   LOCATION HANDLING
+============================= */
 
-// Loading and feedback
-const loading = ref(false);
-const message = ref("");
-const messageType = ref("success");
 const useCurrentLocation = ref(true);
 const locationError = ref("");
 
@@ -117,12 +143,14 @@ const fetchCurrentLocation = async () => {
   const result = await getCurrentLocationWithName();
 
   if (!result.success) {
-    locationError.value = result.message || "Failed to get location. Enter address manually.";
+    locationError.value = result.message || "Location failed.";
     useCurrentLocation.value = false;
     return;
   }
 
   form.value.address = result.locationName;
+  form.value.latitude = result.latitude;
+  form.value.longitude = result.longitude;
 };
 
 watch(useCurrentLocation, async (val) => {
@@ -130,86 +158,78 @@ watch(useCurrentLocation, async (val) => {
     await fetchCurrentLocation();
   } else {
     form.value.address = "";
+    form.value.latitude = null;
+    form.value.longitude = null;
   }
 });
 
-// Current logged-in user
-const currentUser = ref(getSafeJson("userProfile", {}));
+/* =============================
+   VALIDATION
+============================= */
 
-// Determine if the logged-in user can edit roles
-const canEditRole = computed(() => {
-  // If creating profile → everyone can choose role
-  if (!isEditMode.value) return true;
+const isPhoneValid = ref(false);
 
-  // If editing → only ADMIN can edit role
-  return currentUser.value.roles?.includes(USER_ROLES.ADMIN);
+const requiresCoordinates = computed(() => {
+  const role = form.value.roles?.[0];
+  return role === USER_ROLES.MECHANIC || role === USER_ROLES.CAR_WASH;
 });
 
+const isSaveDisabled = computed(() => {
+  return (
+    loading.value ||
+    !form.value.firstName ||
+    !form.value.lastName ||
+    !form.value.username ||
+    !form.value.email ||
+    !form.value.phoneNumber ||
+    !isPhoneValid.value ||
+    (requiresCoordinates.value &&
+      (!form.value.latitude || !form.value.longitude))
+  );
+});
 
-// Fill form if editing
+/* =============================
+   LOAD EDIT DATA
+============================= */
+
 onMounted(async () => {
-  if (propsProfile.value) {
-    const profile = propsProfile.value;
-
-    let phone = profile.phoneNumber || "";
-    const countryCode = profile.countryCode || "+27";
-
-    // Strip country code if backend stored full number
-    if (phone.startsWith(countryCode)) {
-      phone = phone.slice(countryCode.length);
-    }
-
+  if (propsProfile.value?.username) {
     form.value = {
       ...form.value,
-      ...profile,
-      phoneNumber: phone,
-      countryCode,
-      roles: profile.roles ? [...profile.roles] : []
+      ...propsProfile.value,
+      latitude: propsProfile.value.latitude ?? null,
+      longitude: propsProfile.value.longitude ?? null,
+      roles: propsProfile.value.roles ?? []
     };
 
-    // When editing with existing address, use manual entry
-    if (profile.address?.trim()) {
+    if (propsProfile.value.address) {
       useCurrentLocation.value = false;
     }
-
-    // Mark phone as valid immediately if it matches length
-    const digitsOnly = phone.replace(/\D/g, "");
-    isPhoneValid.value = digitsOnly.length === requiredPhoneLength.value;
   }
 
-  // When address block is shown and "Use current location" selected, fetch
-  if (form.value.roles?.[0] !== USER_ROLES.ADMIN && useCurrentLocation.value) {
+  if (useCurrentLocation.value) {
     await fetchCurrentLocation();
   }
 });
 
+/* =============================
+   SAVE PROFILE
+============================= */
 
+const loading = ref(false);
+const message = ref("");
+const messageType = ref("success");
 
-// Save or update profile
 const saveProfile = async () => {
   if (!isPhoneValid.value) {
-    message.value = "Please enter a valid phone number.";
+    message.value = "Invalid phone number.";
     messageType.value = "error";
     return;
   }
 
-  // Lock roles for non-admins
-  if (!canEditRole.value) {
-    form.value.roles = propsProfile.value.roles
-      ? [...propsProfile.value.roles]
-      : [];
-  }
-
   loading.value = true;
-  message.value = "";
 
   try {
-    // Persist country + currency
-    if (selectedCountry.value) {
-      localStorage.setItem("phoneCountryCode", selectedCountry.value.code);
-      localStorage.setItem("currencySymbol", selectedCountry.value.currency);
-    }
-
     if (!Array.isArray(form.value.roles)) {
       form.value.roles = [form.value.roles];
     }
@@ -218,19 +238,18 @@ const saveProfile = async () => {
       ? await apiService.updateUserProfile(form.value)
       : await apiService.createUserProfile(form.value);
 
-    // ApiResponse wraps data in .data; support both structures
     const profileData = res?.data ?? res;
+
     localStorage.setItem("userProfile", JSON.stringify(profileData));
-    if (profileData?.roles?.[0]) {
-      localStorage.setItem("role", profileData.roles[0].toLowerCase());
-    }
+    localStorage.setItem("role", profileData.roles[0].toLowerCase());
+
     emitAuthChanged();
     router.push("/dashboard");
   } catch (err) {
-    // Error toast shown by global axios interceptor
+    message.value = "Failed to save profile.";
+    messageType.value = "error";
   } finally {
     loading.value = false;
   }
 };
-
 </script>

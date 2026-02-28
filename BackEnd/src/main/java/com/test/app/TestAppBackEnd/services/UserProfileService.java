@@ -69,6 +69,10 @@ public class UserProfileService {
     public Optional<UserProfile> getProfileByUsername(String username) {
         return repository.findByUsername(username);
     }
+    public UserProfile getProfile(String username) {
+        return repository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found: " + username));
+    }
 
     public List<UserProfile> getProfilesByRole(Role role) {
         return repository.findByRoles(role);

@@ -9,25 +9,30 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
-
 @Repository
 public interface UserProfileRepository extends JpaRepository<UserProfile, String> {
+
     Optional<UserProfile> findByUsername(String username);
+
     Optional<UserProfile> findByEmail(String email);
+
     boolean existsByUsername(String username);
+
     boolean existsByEmail(String email);
+
     List<UserProfile> findByRoles(Role role);
+
     void deleteByUsername(String username);
 
     @Query("""
-SELECT u FROM UserProfile u
-WHERE (:q IS NULL OR :q = ''
-   OR LOWER(u.username) LIKE LOWER(CONCAT('%', :q, '%'))
-   OR LOWER(u.email) LIKE LOWER(CONCAT('%', :q, '%'))
-   OR LOWER(u.firstName) LIKE LOWER(CONCAT('%', :q, '%'))
-   OR LOWER(u.lastName) LIKE LOWER(CONCAT('%', :q, '%'))
-   OR LOWER(u.phoneNumber) LIKE LOWER(CONCAT('%', :q, '%'))
-)
-""")
+        SELECT u FROM UserProfile u
+        WHERE (:q IS NULL OR :q = ''
+           OR LOWER(u.username) LIKE LOWER(CONCAT('%', :q, '%'))
+           OR LOWER(u.email) LIKE LOWER(CONCAT('%', :q, '%'))
+           OR LOWER(u.firstName) LIKE LOWER(CONCAT('%', :q, '%'))
+           OR LOWER(u.lastName) LIKE LOWER(CONCAT('%', :q, '%'))
+           OR LOWER(u.phoneNumber) LIKE LOWER(CONCAT('%', :q, '%'))
+        )
+    """)
     List<UserProfile> findAllWithSearch(@Param("q") String q);
 }

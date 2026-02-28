@@ -145,6 +145,31 @@ export const countries = [
 ];
 
 
+/**
+ * Geocode an address string to coordinates (for use with nearby services).
+ * @param {string} address - e.g. "123 Main St, City"
+ * @returns {Promise<{ latitude: number, longitude: number } | null>} coords or null if not found
+ */
+export const geocodeAddressToCoords = async (address) => {
+  if (!address || !String(address).trim()) return null;
+  try {
+    const response = await fetch(
+      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
+        address.trim()
+      )}&format=json&limit=1`
+    );
+    const data = await response.json();
+    if (!data || data.length === 0) return null;
+    return {
+      latitude: parseFloat(data[0].lat),
+      longitude: parseFloat(data[0].lon),
+    };
+  } catch (err) {
+    console.error("Geocode error:", err);
+    return null;
+  }
+};
+
 export const getDistanceToLocation = async (locationName) => {
   try {
     const currentPosition = await new Promise((resolve, reject) => {
@@ -208,7 +233,12 @@ export const getCurrentLocationWithName = async () => {
 
     // 2️⃣ Reverse geocode to get location name
     let locationName = `${latitude}, ${longitude}`;
-
+const carOptions = [
+  "Sedan", "SUV", "Hatchback", "Bakkie", "Van", "Truck", "Luxury",
+  "Coupe", "Convertible", "Crossover", "Minivan", "Pickup",
+  "Station Wagon", "Electric", "Hybrid", "Sports Car",
+  "Microcar", "Off-Road", "Compact"
+];
     try {
       const response = await fetch(
         `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`
@@ -223,13 +253,12 @@ export const getCurrentLocationWithName = async () => {
       console.warn("Reverse geocoding failed, using coords only");
     }
 
-    // 3️⃣ Return JSON
+    // 3️⃣ Return JSON (latitude/longitude at top level for view compatibility)
     return {
       success: true,
-      coords: {
-        latitude,
-        longitude,
-      },
+      coords: { latitude, longitude },
+      latitude,
+      longitude,
       locationName,
     };
   } catch (err) {

@@ -58,6 +58,7 @@ export const API_ENDPOINTS = {
   DEV_RESET_DB: '/users/reset-db',
   // Provider services (mechanic/carwash offerings)
   PROVIDER_SERVICES: '/provider-services',
+  NEARVY_PROVIDER_SERVICES: '/provider-services/nearby',
   PROVIDER_SERVICE_BY_ID: (id) => `/provider-services/${id}`,
   PROVIDER_SERVICES_CATALOG: '/provider-services/catalog'
 };
