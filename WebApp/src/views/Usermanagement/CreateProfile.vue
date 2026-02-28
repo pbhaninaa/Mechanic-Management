@@ -80,7 +80,7 @@
 <script setup>
 import { ref, onMounted, computed, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { emitAuthChanged, getCurrentLocationWithName } from "@/utils/helper";
+import { emitAuthChanged, getCurrentLocationWithName, geocodeAddressToCoords } from "@/utils/helper";
 import InputField from "@/components/InputField.vue";
 import Button from "@/components/Button.vue";
 import apiService from "@/api/apiService";
@@ -122,13 +122,15 @@ const propsProfile = ref(
     : getSafeJson("profile", {})
 );
 
-const isEditMode = computed(() => !!propsProfile.value?.username);
+// Edit mode only when we have a full existing profile (with id). Login sets "profile" to { username }
+// for first-time create, which has no id — so that stays create mode.
+const isEditMode = computed(() => !!propsProfile.value?.id);
 
 const currentUser = ref(getSafeJson("userProfile", {}));
 
 const canEditRole = computed(() => {
   if (!isEditMode.value) return true;
-  return currentUser.value.roles?.includes(USER_ROLES.ADMIN);
+  return currentUser.value.roles?.includes(USER_ROLES.ADMIN) || isEditMode;
 });
 
 /* =============================
@@ -163,6 +165,23 @@ watch(useCurrentLocation, async (val) => {
   }
 });
 
+// When address is entered manually and role needs coords, geocode so Save can enable
+watch(
+  () => [form.value.address, useCurrentLocation.value, form.value.roles?.[0]],
+  async ([address, useCurrent, role]) => {
+    if (useCurrent || !address?.trim()) return;
+    if (role !== USER_ROLES.MECHANIC && role !== USER_ROLES.CAR_WASH) return;
+    const coords = await geocodeAddressToCoords(address.trim());
+    if (coords) {
+      form.value.latitude = String(coords.latitude);
+      form.value.longitude = String(coords.longitude);
+      locationError.value = "";
+    } else {
+      locationError.value = "Could not find coordinates for this address. Try a more specific address or use current location.";
+    }
+  },
+);
+
 /* =============================
    VALIDATION
 ============================= */
@@ -174,15 +193,22 @@ const requiresCoordinates = computed(() => {
   return role === USER_ROLES.MECHANIC || role === USER_ROLES.CAR_WASH;
 });
 
+// Phone is acceptable if component says valid, or if we have at least 9 digits (avoids strict length blocking save)
+const isPhoneAcceptable = computed(() => {
+  if (isPhoneValid.value) return true;
+  const digits = (form.value.phoneNumber || "").replace(/\D/g, "");
+  return digits.length >= 9;
+});
+
 const isSaveDisabled = computed(() => {
   return (
     loading.value ||
-    !form.value.firstName ||
-    !form.value.lastName ||
-    !form.value.username ||
-    !form.value.email ||
-    !form.value.phoneNumber ||
-    !isPhoneValid.value ||
+    !form.value.firstName?.trim() ||
+    !form.value.lastName?.trim() ||
+    !form.value.username?.trim() ||
+    !form.value.email?.trim() ||
+    !form.value.phoneNumber?.trim() ||
+    !isPhoneAcceptable.value ||
     (requiresCoordinates.value &&
       (!form.value.latitude || !form.value.longitude))
   );
@@ -221,8 +247,8 @@ const message = ref("");
 const messageType = ref("success");
 
 const saveProfile = async () => {
-  if (!isPhoneValid.value) {
-    message.value = "Invalid phone number.";
+  if (!isPhoneAcceptable.value) {
+    message.value = "Please enter a valid phone number (at least 9 digits).";
     messageType.value = "error";
     return;
   }

@@ -18,15 +18,15 @@ List<ProviderServiceOffering> findByProviderId(String providerId);
 @Query(value = """
     SELECT *
     FROM provider_service_offering p
-    WHERE p.offering_type = :offeringType
+    WHERE p.provider_type = :providerType
     AND ST_Distance_Sphere(
-            point(p.longitude, p.latitude),
-    point(:lng, :lat)
-) <= :radiusMeters
+            point(CAST(p.longitude AS DECIMAL(12,8)), CAST(p.latitude AS DECIMAL(12,8))),
+            point(:lng, :lat)
+    ) <= :radiusMeters
     ORDER BY p.service_name ASC
 """, nativeQuery = true)
 List<ProviderServiceOffering> findNearbyByOfferingType(
-        @Param("offeringType") String offeringType,
+        @Param("providerType") String providerType,
         @Param("lat") double lat,
         @Param("lng") double lng,
         @Param("radiusMeters") double radiusMeters

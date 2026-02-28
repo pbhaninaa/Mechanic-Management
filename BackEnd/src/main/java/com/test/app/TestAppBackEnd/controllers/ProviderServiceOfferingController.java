@@ -39,17 +39,16 @@ private final UserProfileService userProfileService;
     }
     @GetMapping("/nearby")
     public ResponseEntity<List<ProviderServiceOffering>> getNearbyOfferings(
-            @RequestParam String offeringType,
-            @RequestParam double lat,
-            @RequestParam double lng,
-            @RequestParam(defaultValue = "15") double radiusKm
+            @RequestParam(name = "providerType") String providerType,
+            @RequestParam(name = "latitude") double latitude,
+            @RequestParam(name = "longitude") double longitude,
+            @RequestParam(name = "radiusKm", defaultValue = "15") double radiusKm
     ) {
-
         List<ProviderServiceOffering> results =
                 service.getNearbyByOfferingType(
-                        offeringType,
-                        lat,
-                        lng,
+                        providerType,
+                        latitude,
+                        longitude,
                         radiusKm
                 );
 

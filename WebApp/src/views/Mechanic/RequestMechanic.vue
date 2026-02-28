@@ -10,6 +10,8 @@
             <v-radio label="For Someone Else" :value="false" />
           </v-radio-group>
 
+          <v-alert v-if="locationError" type="warning" density="compact" class="mb-2">{{ locationError }}</v-alert>
+
           <InputField
             v-model="request.location"
             label="Location"
@@ -32,13 +34,6 @@
             <v-alert v-else-if="!catalogLoading && jobOptions.length === 0" type="info" class="mb-2">
               No mechanic services in the catalog yet. Providers can add services under "My Services".
             </v-alert>
-            <InputField
-              v-if="request.serviceTypes?.includes('Other')"
-              v-model="request.customDescription"
-              label="Please specify (for Other)"
-              :disabled="loading"
-              outlined
-            />
           </template>
           <v-alert v-else type="info" density="compact" class="mb-2">
             Provide your location above to see available services. If you enter an address we'll look up its coordinates to find nearby services.
@@ -85,7 +80,6 @@ const menu = ref(false);
 const request = ref({
   forSelf: true,
   serviceTypes: [] as string[],
-  customDescription: "",
   location: "",
   carPlate: "",
   vinNumber: "",
@@ -98,6 +92,7 @@ const mechanicServicePrices = ref<Record<string, number>>({});
 const catalogLoading = ref(true);
 const location = ref({ latitude: 0, longitude: 0 });
 const manualLocationCoordsSet = ref(false); // true when user typed address and we geocoded it
+const locationError = ref("");
 const message = ref("");
 const messageType = ref<"success"|"error">("success");
 const form = ref(null);
@@ -108,13 +103,12 @@ const canShowServices = computed(() =>
 );
 
 const { formatCurrency } = useCurrency();
-const computedPrice = computed(() => request.value.serviceTypes.reduce((total, s) => total + (mechanicServicePrices.value[s] || mechanicServicePrices.value["Other"] || 0), 0));
+const computedPrice = computed(() => request.value.serviceTypes.reduce((total, s) => total + (mechanicServicePrices.value[s] ?? 0), 0));
 const formattedPrice = computed(() => formatCurrency(computedPrice.value));
 watch(computedPrice, (v) => request.value.servicePrice = v, { immediate: true });
 
 const isFormValid = computed(() =>
   request.value.serviceTypes.length > 0 &&
-  (!request.value.serviceTypes.includes("Other") || !!request.value.customDescription?.trim()) &&
   !!request.value.location &&
   !!request.value.date
 );
@@ -122,19 +116,28 @@ const isFormValid = computed(() =>
 const username = getSafeJson("profile", {})?.username || getSafeJson("userProfile", {})?.username;
 
 const fetchCurrentLocation = async () => {
+  locationError.value = "";
   const result = await getCurrentLocationWithName();
-  if (!result.success) { message.value = result.message || "Failed to get location"; messageType.value = "error"; request.value.forSelf = false; return; }
+  if (!result.success) {
+    locationError.value = result.message || "Failed to get location. Enter address below for someone else.";
+    messageType.value = "error";
+    request.value.forSelf = false;
+    return;
+  }
   location.value = { latitude: result.latitude, longitude: result.longitude };
   request.value.location = result.locationName;
 };
 
 watch(() => request.value.forSelf, async val => {
   if (val) {
+    message.value = "";
+    locationError.value = "";
     await fetchCurrentLocation();
     manualLocationCoordsSet.value = false;
   } else {
     request.value.location = "";
     manualLocationCoordsSet.value = false;
+    locationError.value = "";
     jobOptions.value = [];
     mechanicServicePrices.value = {};
   }
@@ -145,22 +148,21 @@ async function loadNearbyServices() {
   catalogLoading.value = true;
   try {
     const res = await apiService.getNearbyServiceOfferings("mechanic", location.value.latitude, location.value.longitude, 50);
-    const list = res?.data ?? [];
-    const names = [...new Set(list.map((o: any) => o.serviceName).filter(Boolean))].sort();
-    jobOptions.value = names.length ? names : ["Other"];
-    if (!names.includes("Other")) jobOptions.value.push("Other");
+    // Nearby API returns the array directly (no .data wrapper)
+    const list = Array.isArray(res) ? res : (res?.data ?? []);
+    const names = [...new Set(list.map((o: any) => o.serviceName ?? o.service_name).filter(Boolean))].sort();
+    jobOptions.value = names;
     const priceMap: Record<string, number> = {};
     list.forEach(o => {
-      const n = o.serviceName;
+      const n = o.serviceName ?? o.service_name;
       if (!n) return;
       const p = Number(o.price);
       if (!isNaN(p) && (priceMap[n] == null || p < priceMap[n])) priceMap[n] = p;
     });
-    if (priceMap["Other"] == null) priceMap["Other"] = 0;
     mechanicServicePrices.value = priceMap;
   } catch (_) {
-    jobOptions.value = ["Other"];
-    mechanicServicePrices.value = { Other: 0 };
+    jobOptions.value = [];
+    mechanicServicePrices.value = {};
   } finally {
     catalogLoading.value = false;
   }
@@ -169,6 +171,7 @@ async function loadNearbyServices() {
 // When location text changes (for "Someone Else"): geocode then load services
 watch(() => request.value.location, async loc => {
   if (!loc) {
+    locationError.value = "";
     jobOptions.value = [];
     mechanicServicePrices.value = {};
     catalogLoading.value = false;
@@ -180,18 +183,18 @@ watch(() => request.value.location, async loc => {
     loadNearbyServices();
     return;
   }
-  // Manual address: geocode first
+  locationError.value = ""; // clear previous error while we geocode
+  // Manual address: geocode first to get coords (needed for nearby services)
   const coords = await geocodeAddressToCoords(loc);
   if (!coords) {
-    message.value = "We couldn't find coordinates for this address. Please try a more specific address or use 'For Myself' to use your current location.";
-    messageType.value = "error";
+    locationError.value = "We couldn't find coordinates for this address. Please try a more specific address or use 'For Myself' to use your current location.";
     jobOptions.value = [];
     mechanicServicePrices.value = {};
     manualLocationCoordsSet.value = false;
     catalogLoading.value = false;
     return;
   }
-  message.value = "";
+  locationError.value = "";
   location.value = { latitude: coords.latitude, longitude: coords.longitude };
   manualLocationCoordsSet.value = true;
   await loadNearbyServices();
@@ -205,9 +208,7 @@ const submitRequest = async () => {
   if (!valid) { message.value = "Please fill in all required fields"; messageType.value = "error"; return; }
   loading.value = true; message.value="";
   try {
-    const services = request.value.serviceTypes.filter(s=>s!=="Other");
-    if(request.value.serviceTypes.includes("Other") && request.value.customDescription?.trim()) services.push(`Other: ${request.value.customDescription.trim()}`);
-    const description = services.length>0?services.join(", "):request.value.customDescription||"Other";
+    const description = request.value.serviceTypes.join(", ");
     await apiService.createRequestMechanic({
       username,
       description,

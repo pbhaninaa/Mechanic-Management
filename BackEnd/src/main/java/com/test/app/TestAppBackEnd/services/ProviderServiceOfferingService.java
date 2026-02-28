@@ -43,10 +43,16 @@ public class ProviderServiceOfferingService {
     }
 
     public ProviderServiceOffering create(UserProfile providerProfile, String providerType, ProviderServiceOffering offering) {
+        String lat = providerProfile.getLatitude();
+        String lng = providerProfile.getLongitude();
+        if (lat == null || lat.isBlank() || lng == null || lng.isBlank()) {
+            throw new IllegalArgumentException(
+                "Please set your location in your profile before adding services. Update your profile with your address or location.");
+        }
         offering.setId(null);
         offering.setProviderUsername(providerProfile.getUsername());
-        offering.setLongitude(providerProfile.getLongitude());
-        offering.setLatitude(providerProfile.getLatitude());
+        offering.setLatitude(lat);
+        offering.setLongitude(lng);
         offering.setProviderId(providerProfile.getId());
         offering.setProviderType(providerType);
         return repository.save(offering);

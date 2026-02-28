@@ -170,11 +170,12 @@ async function loadNearbyServices() {
   catalogLoading.value = true;
   try {
     const res = await apiService.getNearbyServiceOfferings("carwash", location.value.latitude, location.value.longitude, 50);
-    const list = res?.data ?? [];
-    const names = [...new Set(list.map((o: any) => o.serviceName).filter(Boolean))].sort();
+    // Nearby API returns the array directly (no .data wrapper)
+    const list = Array.isArray(res) ? res : (res?.data ?? []);
+    const names = [...new Set(list.map((o: any) => o.serviceName ?? o.service_name).filter(Boolean))].sort();
     serviceTypes.value = names;
     const priceMap: Record<string, number> = {};
-    list.forEach((o: any) => { const n = o.serviceName; if (!n) return; const p = Number(o.price); if (!isNaN(p) && (priceMap[n] == null || p < priceMap[n])) priceMap[n] = p; });
+    list.forEach((o: any) => { const n = o.serviceName ?? o.service_name; if (!n) return; const p = Number(o.price); if (!isNaN(p) && (priceMap[n] == null || p < priceMap[n])) priceMap[n] = p; });
     catalogPriceMap.value = priceMap;
     if (names.length && newBooking.value.serviceTypes.length === 0) newBooking.value.serviceTypes = [names[0]];
   } catch (_) { serviceTypes.value = []; catalogPriceMap.value = {}; }
@@ -184,6 +185,7 @@ async function loadNearbyServices() {
 // When location changes: for "Myself" we have coords from fetchCurrentLocation; for "Someone Else" geocode then load
 watch(() => newBooking.value.location, async (loc) => {
   if (!loc) {
+    locationError.value = "";
     serviceTypes.value = [];
     catalogPriceMap.value = {};
     catalogLoading.value = false;
@@ -194,6 +196,7 @@ watch(() => newBooking.value.location, async (loc) => {
     loadNearbyServices();
     return;
   }
+  locationError.value = ""; // clear previous error while we try to geocode
   const coords = await geocodeAddressToCoords(loc);
   if (!coords) {
     locationError.value = "We couldn't find coordinates for this address. Please try a more specific address or use 'For Myself' to use your current location.";
@@ -211,11 +214,13 @@ watch(() => newBooking.value.location, async (loc) => {
 
 watch(useCurrentLocation, async (val) => {
   if (val) {
+    locationError.value = "";
     await fetchCurrentLocation();
     manualLocationCoordsSet.value = false;
   } else {
     newBooking.value.location = "";
     manualLocationCoordsSet.value = false;
+    locationError.value = "";
     serviceTypes.value = [];
     catalogPriceMap.value = {};
   }
