@@ -40,6 +40,24 @@
               </v-btn>
             </template>
           </v-tooltip>
+          <template v-if="isAdmin()">
+            <v-tooltip text="Edit" location="top">
+              <template #activator="{ props }">
+                <v-btn v-bind="props" variant="text" size="small" color="primary" icon
+                  :disabled="!!actionLoadingId" @click="openEditBooking(item)">
+                  <v-icon size="18">mdi-pencil</v-icon>
+                </v-btn>
+              </template>
+            </v-tooltip>
+            <v-tooltip text="Delete" location="top">
+              <template #activator="{ props }">
+                <v-btn v-bind="props" variant="text" size="small" color="error" icon
+                  :disabled="!!actionLoadingId" @click="confirmDeleteBooking(item)">
+                  <v-icon size="18">mdi-delete</v-icon>
+                </v-btn>
+              </template>
+            </v-tooltip>
+          </template>
         </template>
       </TableComponent>
     </v-card-text>
@@ -56,6 +74,40 @@
           <v-spacer />
           <v-btn variant="text" @click="cancelCalloutConfirm">Cancel</v-btn>
           <v-btn color="primary" :loading="calloutConfirmLoading" @click="proceedAfterCalloutConfirm">Yes, I can do this</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <!-- Admin: Edit booking dialog -->
+    <v-dialog v-model="editBookingDialog" max-width="560" persistent>
+      <v-card>
+        <v-card-title>Edit booking</v-card-title>
+        <v-card-text>
+          <InputField v-model="editForm.status" label="Status" />
+          <InputField v-model="editForm.date" label="Date" type="date" />
+          <InputField v-model="editForm.carPlate" label="Car plate" />
+          <InputField v-model="editForm.carType" label="Car type" />
+          <InputField v-model="editForm.location" label="Location" />
+          <InputField v-model.number="editForm.servicePrice" label="Service price" type="number" min="0" step="0.01" />
+          <v-checkbox v-model="editForm.callOutService" label="Call-out service" hide-details class="mt-2" />
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn variant="text" @click="editBookingDialog = false">Cancel</v-btn>
+          <v-btn color="primary" :loading="editSaveLoading" @click="saveEditBooking">Save</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <!-- Admin: Delete booking confirmation -->
+    <v-dialog v-model="deleteBookingDialog" max-width="400" persistent>
+      <v-card>
+        <v-card-title>Delete booking?</v-card-title>
+        <v-card-text>This cannot be undone. The booking will be removed.</v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn variant="text" @click="deleteBookingDialog = false; bookingToDelete = null">Cancel</v-btn>
+          <v-btn color="error" :loading="deleteLoading" @click="doDeleteBooking">Delete</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -89,6 +141,7 @@
 <script setup lang="ts">
 import { ref, onMounted, watch } from "vue";
 import PageContainer from "@/components/PageContainer.vue";
+import InputField from "@/components/InputField.vue";
 import apiService from "@/api/apiService";
 import { getStatusColor, sortRequestsByStatus } from "@/utils/helper";
 import { JOB_STATUS } from "@/utils/constants";
@@ -125,6 +178,26 @@ const bookingToAssign = ref<Booking | null>(null);
 const selectedCarWashId = ref<string | number | null>(null);
 const carWashesLoading = ref(false);
 const carWashOptions = ref<{ id: string; label: string }[]>([]);
+
+// Admin: Edit booking
+const editBookingDialog = ref(false);
+const editSaveLoading = ref(false);
+const editForm = ref({
+  id: "" as string | number,
+  status: "",
+  date: "",
+  carPlate: "",
+  carType: "",
+  location: "",
+  servicePrice: 0,
+  callOutService: false,
+});
+
+// Admin: Delete booking
+const deleteBookingDialog = ref(false);
+const deleteLoading = ref(false);
+const bookingToDelete = ref<Booking | null>(null);
+
 const { formatCurrency } = useCurrency();
 const formatPrice = (item: any) =>
   item?.servicePrice != null && !isNaN(item.servicePrice)
@@ -286,7 +359,67 @@ const updateStatus = async (booking: Booking, status: string, carWashIdOverride?
   }
 };
 
+function openEditBooking(booking: Booking) {
+  editForm.value = {
+    id: booking.id,
+    status: booking.status ?? "",
+    date: booking.date ?? "",
+    carPlate: booking.carPlate ?? "",
+    carType: booking.carType ?? "",
+    location: booking.location ?? "",
+    servicePrice: Number(booking.servicePrice) || 0,
+    callOutService: !!booking.callOutService,
+  };
+  editBookingDialog.value = true;
+}
 
+async function saveEditBooking() {
+  const id = editForm.value.id;
+  const b = bookings.value.find((x) => String(x.id) === String(id));
+  if (!b) return;
+  editSaveLoading.value = true;
+  try {
+    const payload = {
+      ...b,
+      status: editForm.value.status,
+      date: editForm.value.date,
+      carPlate: editForm.value.carPlate,
+      carType: editForm.value.carType,
+      location: editForm.value.location,
+      servicePrice: editForm.value.servicePrice,
+      callOutService: editForm.value.callOutService,
+    };
+    await apiService.updateCarWashBooking(b.id, payload);
+    Object.assign(b, payload);
+    editBookingDialog.value = false;
+    fetchBookings();
+  } catch (err) {
+    console.error("Failed to update booking:", err);
+  } finally {
+    editSaveLoading.value = false;
+  }
+}
+
+function confirmDeleteBooking(booking: Booking) {
+  bookingToDelete.value = booking;
+  deleteBookingDialog.value = true;
+}
+
+async function doDeleteBooking() {
+  const b = bookingToDelete.value;
+  if (!b) return;
+  deleteLoading.value = true;
+  try {
+    await apiService.deleteCarWashBooking(b.id);
+    deleteBookingDialog.value = false;
+    bookingToDelete.value = null;
+    fetchBookings();
+  } catch (err) {
+    console.error("Failed to delete booking:", err);
+  } finally {
+    deleteLoading.value = false;
+  }
+}
 
 onMounted(fetchBookings);
 </script>

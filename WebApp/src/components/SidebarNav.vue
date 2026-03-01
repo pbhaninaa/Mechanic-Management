@@ -162,7 +162,7 @@ const navigationItems = [
   { title: 'Payments', icon: 'mdi-credit-card', to: '/payments', roles: ['client'] },
   { title: 'Help', icon: 'mdi-help', to: '/help-page', roles: ['client'] },
   { title: 'Job Requests', icon: 'mdi-briefcase', to: '/jobs', roles: ['mechanic'] },
-  { title: 'Manage Jobs', icon: 'mdi-wrench', to: '/manage-jobs', roles: ['mechanic', 'admin'] },
+  { title: 'Manage Jobs', icon: 'mdi-wrench', to: '/manage-jobs', roles: ['mechanic'] },
 
   { title: 'User Management', icon: 'mdi-account-multiple', to: '/users', roles: ['admin'] },
   { title: 'Additional Fees', icon: 'mdi-cash-plus', to: '/additional-fees', roles: ['admin'] },

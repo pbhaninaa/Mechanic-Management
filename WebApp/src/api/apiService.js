@@ -234,6 +234,11 @@ async sendEmail(emailData) {
     return this.delete(API_ENDPOINTS.REQUEST_MECHANIC_BY_USER(username));
   }
 
+  /** Delete a single mechanic request by ID (admin). */
+  async deleteMechanicRequestById(id) {
+    return this.delete(API_ENDPOINTS.REQUEST_MECHANIC_BY_ID(id));
+  }
+
   /** Alias */
   async deleteMechanicRequest(username) {
     return this.deleteMechanicRequestsByCustomer(username);

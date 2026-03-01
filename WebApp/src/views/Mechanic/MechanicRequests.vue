@@ -19,6 +19,24 @@
               </v-btn>
             </template>
           </v-tooltip>
+          <template v-if="isAdmin()">
+            <v-tooltip text="Edit" location="top">
+              <template #activator="{ props }">
+                <v-btn v-bind="props" variant="text" size="small" color="primary" icon
+                  :disabled="!!actionLoadingId" @click="openEditJob(item)">
+                  <v-icon size="18">mdi-pencil</v-icon>
+                </v-btn>
+              </template>
+            </v-tooltip>
+            <v-tooltip text="Delete" location="top">
+              <template #activator="{ props }">
+                <v-btn v-bind="props" variant="text" size="small" color="error" icon
+                  :disabled="!!actionLoadingId" @click="confirmDeleteJob(item)">
+                  <v-icon size="18">mdi-delete</v-icon>
+                </v-btn>
+              </template>
+            </v-tooltip>
+          </template>
         </template>
       </TableComponent>
     </v-card-text>
@@ -35,6 +53,43 @@
           <v-spacer />
           <v-btn variant="text" @click="cancelCalloutConfirm">Cancel</v-btn>
           <v-btn color="primary" :loading="calloutConfirmLoading" @click="proceedAfterCalloutConfirm">Yes, I can do this</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <!-- Admin: Edit job request dialog -->
+    <v-dialog v-model="editJobDialog" max-width="560" persistent>
+      <v-card>
+        <v-card-title>Edit job request</v-card-title>
+        <v-card-text>
+          <InputField v-model="editForm.status" label="Status" />
+          <InputField v-model="editForm.date" label="Date" type="date" />
+          <InputField v-model="editForm.description" label="Description" />
+          <InputField v-model="editForm.location" label="Location" />
+          <InputField v-model.number="editForm.servicePrice" label="Service price" type="number" min="0" step="0.01" />
+          <v-checkbox v-model="editForm.callOutService" label="Call-out service" hide-details class="mt-2" />
+          <v-checkbox v-model="editForm.towing" label="Towing" hide-details />
+          <InputField v-model="editForm.carType" label="Car type" />
+          <InputField v-model="editForm.carPlate" label="Car plate" />
+          <InputField v-model="editForm.vinNumber" label="VIN number" />
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn variant="text" @click="editJobDialog = false">Cancel</v-btn>
+          <v-btn color="primary" :loading="editSaveLoading" @click="saveEditJob">Save</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <!-- Admin: Delete job request confirmation -->
+    <v-dialog v-model="deleteJobDialog" max-width="400" persistent>
+      <v-card>
+        <v-card-title>Delete job request?</v-card-title>
+        <v-card-text>This cannot be undone. The request will be removed.</v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn variant="text" @click="deleteJobDialog = false; jobToDelete = null">Cancel</v-btn>
+          <v-btn color="error" :loading="deleteJobLoading" @click="doDeleteJob">Delete</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -69,6 +124,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue";
 import PageContainer from "@/components/PageContainer.vue";
+import InputField from "@/components/InputField.vue";
 import apiService from "@/api/apiService";
 import { JOB_STATUS } from "@/utils/constants";
 import { getStatusColor, sortRequestsByStatus } from "@/utils/helper";
@@ -88,6 +144,9 @@ interface JobRequest {
   servicePrice?: number;
   callOutService?: boolean;
   towing?: boolean;
+  carType?: string;
+  carPlate?: string;
+  vinNumber?: string;
 }
 
 const jobRequests = ref<JobRequest[]>([]);
@@ -108,6 +167,28 @@ const jobToAssign = ref<JobRequest | null>(null);
 const selectedMechanicId = ref<string | null>(null);
 const mechanicsLoading = ref(false);
 const mechanicOptions = ref<{ id: string; label: string }[]>([]);
+
+// Admin: Edit job request
+const editJobDialog = ref(false);
+const editSaveLoading = ref(false);
+const editForm = ref({
+  id: "",
+  status: "",
+  date: "",
+  description: "",
+  location: "",
+  servicePrice: 0,
+  callOutService: false,
+  towing: false,
+  carType: "",
+  carPlate: "",
+  vinNumber: "",
+});
+
+// Admin: Delete job request
+const deleteJobDialog = ref(false);
+const deleteJobLoading = ref(false);
+const jobToDelete = ref<JobRequest | null>(null);
 
 const { formatCurrency } = useCurrency();
 const formatPrice = (item: JobRequest) =>
@@ -284,6 +365,75 @@ const updateJobStatus = async (job: JobRequest, status: string, mechanicIdOverri
     if (!mechanicIdOverride) actionLoadingId.value = null;
   }
 };
+
+function openEditJob(job: JobRequest) {
+  editForm.value = {
+    id: job.id,
+    status: job.status ?? "",
+    date: job.date ?? "",
+    description: job.description ?? "",
+    location: job.location ?? "",
+    servicePrice: Number(job.servicePrice) || 0,
+    callOutService: !!job.callOutService,
+    towing: !!job.towing,
+    carType: job.carType ?? "",
+    carPlate: job.carPlate ?? "",
+    vinNumber: job.vinNumber ?? "",
+  };
+  editJobDialog.value = true;
+}
+
+async function saveEditJob() {
+  const j = jobRequests.value.find((x) => x.id === editForm.value.id);
+  if (!j) return;
+  editSaveLoading.value = true;
+  try {
+    const payload = {
+      ...j,
+      status: editForm.value.status,
+      date: editForm.value.date,
+      description: editForm.value.description,
+      location: editForm.value.location,
+      servicePrice: editForm.value.servicePrice,
+      callOutService: editForm.value.callOutService,
+      towing: editForm.value.towing,
+      carType: editForm.value.carType,
+      carPlate: editForm.value.carPlate,
+      vinNumber: editForm.value.vinNumber,
+    };
+    await apiService.updateRequestMechanic(payload);
+    Object.assign(j, payload);
+    editJobDialog.value = false;
+    loadJobRequests();
+  } catch (err: any) {
+    console.error("Failed to update job:", err);
+    jobStatusError.value = err?.message || "Failed to update.";
+  } finally {
+    editSaveLoading.value = false;
+  }
+}
+
+function confirmDeleteJob(job: JobRequest) {
+  jobToDelete.value = job;
+  deleteJobDialog.value = true;
+}
+
+async function doDeleteJob() {
+  const j = jobToDelete.value;
+  if (!j) return;
+  deleteJobLoading.value = true;
+  try {
+    await apiService.deleteMechanicRequestById(j.id);
+    deleteJobDialog.value = false;
+    jobToDelete.value = null;
+    loadJobRequests();
+  } catch (err: any) {
+    console.error("Failed to delete job:", err);
+    jobStatusError.value = err?.message || "Failed to delete.";
+  } finally {
+    deleteJobLoading.value = false;
+  }
+}
 
 onMounted(() => {
   loadJobRequests();
