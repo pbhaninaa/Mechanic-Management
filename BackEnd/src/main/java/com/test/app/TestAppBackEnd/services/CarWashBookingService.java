@@ -120,9 +120,7 @@ public class CarWashBookingService {
                     throw new IllegalStateException("Cannot accept more bookings. This car wash has " + paidIncompleteCount + " paid jobs not yet completed. Complete some before accepting new ones (max " + MAX_INCOMPLETE_JOBS + ").");
                 }
             }
-
             // Update all booking fields (date saved as yyyy-MM-dd for range search)
-
              booking.setDate(updatedBooking.getDate());
             booking.setCarPlate(updatedBooking.getCarPlate());
             booking.setCarType(updatedBooking.getCarType());
@@ -143,7 +141,7 @@ public class CarWashBookingService {
                     notificationService.notifyServiceProvider(loggedInUsername,booking.getLocation());
 
                     notificationService.notifyRequestAccepted(
-                            booking.getClientUsername(), "https://172.19.80.1:3000/my-washes", "Car Wash Booking", toJobDescription(booking));
+                            booking.getClientUsername(), "https://172.20.10.11:3000/my-washes", "Car Wash Booking", toJobDescription(booking));
                 } else if ("completed".equalsIgnoreCase(newStatus)) {
                     notificationService.notifyServiceCompleted(
                             booking.getClientUsername(), loggedInUsername, "car wash service", toJobDescription(booking));
@@ -158,8 +156,6 @@ public class CarWashBookingService {
                         emailService.sendEmailNotification(to, subject, body);
                     }
                 }
-
-
             return savedBooking;
         }).orElseThrow(() -> new RuntimeException("Booking not found with id: " + id));
     }

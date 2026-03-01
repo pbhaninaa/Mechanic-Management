@@ -158,7 +158,7 @@ public class MechanicRequestService {
 
     private void notifyClientRequestAccepted(MechanicRequest request) {
         notificationService.notifyRequestAccepted(
-                request.getUsername(), "https://172.19.80.1:3000/history", "Mechanic Request", toJobDescription(request));
+                request.getUsername(), "https://172.20.10.11:3000/history", "Mechanic Request", toJobDescription(request));
     }
 
     private void notifyClientServiceCompleted(MechanicRequest request, String loggedInUsername) {
@@ -207,7 +207,7 @@ public class MechanicRequestService {
 
                 notifyClientRequestAccepted(existing);
             } else if ("completed".equalsIgnoreCase(newStatus)) {
-                
+
                 notifyClientServiceCompleted(existing, loggedInUsername);
             } else {
                 String jobDesc = toJobDescription(existing);
