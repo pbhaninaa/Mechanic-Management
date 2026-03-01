@@ -25,6 +25,7 @@ import Mapview from "@/views/shared/Mapview.vue";
 import HelpPage from "@/views/Client/HelpPage.vue";
 import PaymentScreen from "@/views/shared/PaymentScreen.vue";
 import MyServices from "@/views/shared/MyServices.vue";
+import ManageAdditionalFees from "@/views/Admin/ManageAdditionalFees.vue";
 
 const routes = [
   { path: "/", redirect: "/login" },
@@ -43,6 +44,7 @@ const routes = [
   { path: "/manage-jobs", name: "ManageJobs", component: ManageJobs, meta: { requiresAuth: true } },
   { path: "/earnings", name: "Earnings", component: Earnings, meta: { requiresAuth: true } },
   { path: "/users", name: "UserManagement", component: UserManagement, meta: { requiresAuth: true } },
+  { path: "/additional-fees", name: "ManageAdditionalFees", component: ManageAdditionalFees, meta: { requiresAuth: true } },
   {path: "/car-wash-bookings", name: "CarWashBookingsTable",component:CarWashBookingsTable,  meta: { requiresAuth: true } },
   {path:"/manage-washes", name:"ManageWashes", component:ManageWashes, meta:{requiresAuth:true}},
   {path: "/book-wash", name: "BookCarWash", component: BookCarWash, meta: { requiresAuth: true } },

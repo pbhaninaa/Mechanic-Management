@@ -60,7 +60,10 @@ export const API_ENDPOINTS = {
   PROVIDER_SERVICES: '/provider-services',
   NEARVY_PROVIDER_SERVICES: '/provider-services/nearby',
   PROVIDER_SERVICE_BY_ID: (id) => `/provider-services/${id}`,
-  PROVIDER_SERVICES_CATALOG: '/provider-services/catalog'
+  PROVIDER_SERVICES_CATALOG: '/provider-services/catalog',
+  // Additional fees (admin: add/update/delete; all auth: read)
+  ADDITIONAL_FEES: '/additional-fees',
+  ADDITIONAL_FEE_BY_ID: (id) => `/additional-fees/${id}`
 };
 
 // User Roles

@@ -165,6 +165,7 @@ const navigationItems = [
   { title: 'Manage Jobs', icon: 'mdi-wrench', to: '/manage-jobs', roles: ['mechanic', 'admin'] },
 
   { title: 'User Management', icon: 'mdi-account-multiple', to: '/users', roles: ['admin'] },
+  { title: 'Additional Fees', icon: 'mdi-cash-plus', to: '/additional-fees', roles: ['admin'] },
   {
     title: 'Manage Payments',
     icon: 'mdi-credit-card',

@@ -29,8 +29,8 @@
 
           <!-- Pricing info -->
           <v-alert v-if="request.callOutService" type="info" class="mb-2">
-            A call-out service includes an additional fee of R{{additionalFees.callOut}}. 
-            If towing is required, a flat fee of R{{additionalFees.towing}} applies instead of the standard call-out fee. 
+            A call-out service includes an additional fee of R{{ additionalFees.callOut ?? 300 }}.
+            If towing is required, a flat fee of R{{ additionalFees.towing ?? 1500 }} applies instead of the standard call-out fee. 
             The final service total is calculated based on your selected services plus the applicable call-out or towing fee. 
           </v-alert>
 
@@ -134,7 +134,6 @@ import { getCurrentLocationWithName, geocodeAddressToCoords, ensureLocationName,
 import { getSafeJson } from "@/utils/storage";
 import { useCurrency } from "@/composables/useCurrency";
 import { toLocalDateString } from "@/composables/useDateFormat";
-import { additionalFees } from "@/utils/helper";
 
 const router = useRouter();
 const today = new Date().toISOString().split("T")[0];
@@ -167,6 +166,9 @@ const form = ref(null);
 
 const { formatCurrency } = useCurrency();
 
+// Additional fees from API (fallback if fetch fails)
+const additionalFees = ref<Record<string, number>>({ callOut: 300, towing: 1500 });
+
 // Show services only if location is set
 const canShowServices = computed(() =>
   (request.value.forSelf && request.value.location) ||
@@ -182,7 +184,9 @@ const computedPrice = computed(() => {
 
   let additionalFee = 0;
   if (request.value.callOutService) {
-    additionalFee = request.value.towing ? 1500 : 500;
+    additionalFee = request.value.towing
+      ? (additionalFees.value.towing ?? 1500)
+      : (additionalFees.value.callOut ?? 300);
   }
 
   return serviceTotal + additionalFee;
@@ -315,7 +319,21 @@ watch(() => request.value.location, async loc => {
   await loadNearbyServices();
 });
 
-onMounted(fetchCurrentLocation);
+async function loadAdditionalFees() {
+  try {
+    const res = await apiService.getAdditionalFees();
+    const list = res?.data ?? res ?? [];
+    if (Array.isArray(list) && list.length) {
+      const map: Record<string, number> = {};
+      list.forEach((f: { feeKey?: string; amount?: number }) => {
+        if (f?.feeKey != null && typeof f.amount === "number") map[f.feeKey] = f.amount;
+      });
+      if (Object.keys(map).length) additionalFees.value = { ...additionalFees.value, ...map };
+    }
+  } catch (_) { /* use fallback */ }
+}
+
+onMounted(() => { fetchCurrentLocation(); loadAdditionalFees(); });
 
 // --- Submit ---
 const submitRequest = async () => {

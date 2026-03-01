@@ -56,13 +56,21 @@ const JobsScreen = ({ navigation }: any) => {
   };
 
   const handleAcceptJob = async (job: any) => {
+    const isCallOutOrTowing = job?.callOutService || job?.towing;
+    const title = isCallOutOrTowing ? 'Confirm you can fulfil this request' : 'Accept Job';
+    const message = isCallOutOrTowing
+      ? (job.towing
+          ? 'This request requires towing. Only accept if you have a towing truck or the means to tow the vehicle.'
+          : 'This is a call-out job. You will need to travel to the client\'s location. Only accept if you have a vehicle and can travel to the client.')
+      : `Are you sure you want to accept this ${job.category || 'mechanic'} job?`;
+
     Alert.alert(
-      'Accept Job',
-      `Are you sure you want to accept this ${job.category} job?`,
+      title,
+      message,
       [
         { text: 'Cancel', style: 'cancel' },
         {
-          text: 'Accept',
+          text: isCallOutOrTowing ? 'Yes, I can do this' : 'Accept',
           onPress: async () => {
             try {
               await dispatch(acceptJob(job.id));

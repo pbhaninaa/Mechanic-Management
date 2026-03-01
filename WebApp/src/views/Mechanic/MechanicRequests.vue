@@ -23,6 +23,22 @@
       </TableComponent>
     </v-card-text>
 
+    <!-- Call-out / towing confirmation: service provider must confirm they can fulfil -->
+    <v-dialog v-model="calloutConfirmDialog" max-width="480" persistent>
+      <v-card>
+        <v-card-title class="text-subtitle-1">Confirm you can fulfil this request</v-card-title>
+        <v-card-text>
+          <p class="mb-2">{{ calloutConfirmMessage }}</p>
+          <p class="text-medium-emphasis text-body2">{{ calloutConfirmSubtext }}</p>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn variant="text" @click="cancelCalloutConfirm">Cancel</v-btn>
+          <v-btn color="primary" :loading="calloutConfirmLoading" @click="proceedAfterCalloutConfirm">Yes, I can do this</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
     <!-- Admin: Select mechanic popup when accepting -->
     <v-dialog v-model="assignDialog" max-width="500" persistent>
       <v-card>
@@ -70,6 +86,8 @@ interface JobRequest {
   status: string;
   mechanicId: string;
   servicePrice?: number;
+  callOutService?: boolean;
+  towing?: boolean;
 }
 
 const jobRequests = ref<JobRequest[]>([]);
@@ -142,6 +160,60 @@ const fetchMechanics = async () => {
   }
 };
 
+const needsCalloutConfirm = (job: JobRequest) =>
+  !!(job?.callOutService || job?.towing);
+
+const calloutConfirmDialog = ref(false);
+const calloutConfirmLoading = ref(false);
+const pendingAcceptJob = ref<JobRequest | null>(null);
+const pendingAssignMechanicId = ref<string | null>(null);
+
+const calloutConfirmMessage = computed(() => {
+  const j = pendingAcceptJob.value;
+  if (!j) return "";
+  if (j.towing) return "This request requires towing.";
+  if (j.callOutService) return "This is a call-out job. You will need to travel to the client's location.";
+  return "Confirm you can fulfil this request.";
+});
+
+const calloutConfirmSubtext = computed(() => {
+  const j = pendingAcceptJob.value;
+  if (!j) return "";
+  if (j.towing) return "Only accept if you have a towing truck or the means to tow the vehicle.";
+  if (j.callOutService) return "Only accept if you have a vehicle and can travel to the client's location.";
+  return "";
+});
+
+function cancelCalloutConfirm() {
+  calloutConfirmDialog.value = false;
+  pendingAcceptJob.value = null;
+  pendingAssignMechanicId.value = null;
+}
+
+async function proceedAfterCalloutConfirm() {
+  const job = pendingAcceptJob.value;
+  const mechanicId = pendingAssignMechanicId.value;
+  if (!job) {
+    cancelCalloutConfirm();
+    return;
+  }
+  calloutConfirmLoading.value = true;
+  try {
+    if (mechanicId) {
+      await updateJobStatus(job, JOB_STATUS.ACCEPTED, mechanicId);
+      assignDialog.value = false;
+      jobToAssign.value = null;
+      selectedMechanicId.value = null;
+    } else {
+      await updateJobStatus(job, JOB_STATUS.ACCEPTED);
+    }
+    loadJobRequests();
+  } finally {
+    calloutConfirmLoading.value = false;
+    cancelCalloutConfirm();
+  }
+}
+
 const onAcceptClick = (job: JobRequest) => {
   if (isAdmin()) {
     jobToAssign.value = job;
@@ -149,12 +221,24 @@ const onAcceptClick = (job: JobRequest) => {
     assignDialog.value = true;
     fetchMechanics();
   } else {
-    updateJobStatus(job, JOB_STATUS.ACCEPTED);
+    if (needsCalloutConfirm(job)) {
+      pendingAcceptJob.value = job;
+      pendingAssignMechanicId.value = null;
+      calloutConfirmDialog.value = true;
+    } else {
+      updateJobStatus(job, JOB_STATUS.ACCEPTED);
+    }
   }
 };
 
 const confirmAssign = async () => {
   if (!jobToAssign.value || !selectedMechanicId.value) return;
+  if (needsCalloutConfirm(jobToAssign.value)) {
+    pendingAcceptJob.value = jobToAssign.value;
+    pendingAssignMechanicId.value = selectedMechanicId.value;
+    calloutConfirmDialog.value = true;
+    return;
+  }
   assignLoading.value = true;
   try {
     await updateJobStatus(jobToAssign.value, JOB_STATUS.ACCEPTED, selectedMechanicId.value);

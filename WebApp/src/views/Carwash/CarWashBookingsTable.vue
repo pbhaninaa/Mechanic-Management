@@ -44,6 +44,22 @@
       </TableComponent>
     </v-card-text>
 
+    <!-- Call-out confirmation: provider must confirm they can travel to the client -->
+    <v-dialog v-model="calloutConfirmDialog" max-width="480" persistent>
+      <v-card>
+        <v-card-title class="text-subtitle-1">Confirm you can fulfil this booking</v-card-title>
+        <v-card-text>
+          <p class="mb-2">This is a call-out booking. You will need to travel to the client's location.</p>
+          <p class="text-medium-emphasis text-body2">Only accept if you have a vehicle and can travel to the client's location.</p>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn variant="text" @click="cancelCalloutConfirm">Cancel</v-btn>
+          <v-btn color="primary" :loading="calloutConfirmLoading" @click="proceedAfterCalloutConfirm">Yes, I can do this</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
     <!-- Admin: Select car wash popup when accepting -->
     <v-dialog v-model="assignDialog" max-width="500" persistent>
       <v-card>
@@ -92,6 +108,7 @@ interface Booking {
   status: string;
   servicePrice: number;
   serviceTypes: string[];
+  callOutService?: boolean;
   createdAt: string;
 }
 
@@ -144,6 +161,39 @@ const fetchCarWashes = async () => {
   }
 };
 
+const needsCalloutConfirm = (booking: Booking) => !!booking?.callOutService;
+
+const calloutConfirmDialog = ref(false);
+const calloutConfirmLoading = ref(false);
+const pendingAcceptBooking = ref<Booking | null>(null);
+const pendingAssignCarWashId = ref<string | number | null>(null);
+
+function cancelCalloutConfirm() {
+  calloutConfirmDialog.value = false;
+  pendingAcceptBooking.value = null;
+  pendingAssignCarWashId.value = null;
+}
+
+async function proceedAfterCalloutConfirm() {
+  const booking = pendingAcceptBooking.value;
+  const carWashId = pendingAssignCarWashId.value;
+  if (!booking) {
+    cancelCalloutConfirm();
+    return;
+  }
+  calloutConfirmLoading.value = true;
+  try {
+    await updateStatus(booking, JOB_STATUS.ACCEPTED, carWashId != null ? String(carWashId) : undefined);
+    assignDialog.value = false;
+    bookingToAssign.value = null;
+    selectedCarWashId.value = null;
+    fetchBookings();
+  } finally {
+    calloutConfirmLoading.value = false;
+    cancelCalloutConfirm();
+  }
+}
+
 const onAcceptClick = (booking: Booking) => {
   if (isAdmin()) {
     bookingToAssign.value = booking;
@@ -151,12 +201,24 @@ const onAcceptClick = (booking: Booking) => {
     assignDialog.value = true;
     fetchCarWashes();
   } else {
-    updateStatus(booking, JOB_STATUS.ACCEPTED);
+    if (needsCalloutConfirm(booking)) {
+      pendingAcceptBooking.value = booking;
+      pendingAssignCarWashId.value = null;
+      calloutConfirmDialog.value = true;
+    } else {
+      updateStatus(booking, JOB_STATUS.ACCEPTED);
+    }
   }
 };
 
 const confirmAssign = async () => {
   if (!bookingToAssign.value || !selectedCarWashId.value) return;
+  if (needsCalloutConfirm(bookingToAssign.value)) {
+    pendingAcceptBooking.value = bookingToAssign.value;
+    pendingAssignCarWashId.value = selectedCarWashId.value;
+    calloutConfirmDialog.value = true;
+    return;
+  }
   assignLoading.value = true;
   try {
     await updateStatus(bookingToAssign.value, JOB_STATUS.ACCEPTED, String(selectedCarWashId.value));

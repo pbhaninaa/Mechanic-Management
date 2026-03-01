@@ -378,6 +378,23 @@ async deleteCarWashBooking(id) {
   async deleteServiceOffering(id) {
     return this.delete(API_ENDPOINTS.PROVIDER_SERVICE_BY_ID(id));
   }
+
+  // ---------- Additional Fees (read: any auth; create/update/delete: admin only) ----------
+  async getAdditionalFees() {
+    return this.get(API_ENDPOINTS.ADDITIONAL_FEES);
+  }
+
+  async createAdditionalFee(data) {
+    return this.post(API_ENDPOINTS.ADDITIONAL_FEES, data);
+  }
+
+  async updateAdditionalFee(id, data) {
+    return this.put(API_ENDPOINTS.ADDITIONAL_FEE_BY_ID(id), data);
+  }
+
+  async deleteAdditionalFee(id) {
+    return this.delete(API_ENDPOINTS.ADDITIONAL_FEE_BY_ID(id));
+  }
 }
 
 // Create and export a singleton instance

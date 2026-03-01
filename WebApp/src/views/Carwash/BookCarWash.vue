@@ -17,7 +17,7 @@
           </v-btn-toggle>
 
           <v-alert v-if="newBooking.callOutService" type="info" class="mb-2">
-            A call-out service includes an additional fee of R{{ additionalFees.callOut }}.
+            A call-out service includes an additional fee of R{{ additionalFees.callOut ?? 500 }}.
             The total price above includes selected services plus the call-out fee.
           </v-alert>
 
@@ -111,8 +111,8 @@ const location = ref({ latitude: 0, longitude: 0 });
 const locationError = ref("");
 const manualLocationCoordsSet = ref(false);
 
-// Call-out fee
-const additionalFees = { callOut: 500 };
+// Additional fees from API (fallback for display/calculation if fetch fails)
+const additionalFees = ref<Record<string, number>>({ callOut: 500 });
 
 // Car types
 const carTypes = [
@@ -147,7 +147,7 @@ const computedPrice = computed(() => {
     (total, s) => total + (catalogPriceMap.value[s] || 0),
     0
   );
-  const callOutFee = newBooking.value.callOutService ? additionalFees.callOut : 0;
+  const callOutFee = newBooking.value.callOutService ? (additionalFees.value.callOut ?? 500) : 0;
   return serviceTotal + callOutFee;
 });
 watch(computedPrice, (newPrice) => newBooking.value.servicePrice = newPrice.toFixed(2));
@@ -219,7 +219,22 @@ watch(useCurrentLocation, async (val) => {
   else { newBooking.value.location = ""; manualLocationCoordsSet.value = false; locationError.value = ""; serviceTypes.value = []; catalogPriceMap.value = {}; }
 });
 
-onMounted(() => { fetchCurrentLocation(); });
+// Fetch additional fees from API
+async function loadAdditionalFees() {
+  try {
+    const res = await apiService.getAdditionalFees();
+    const list = res?.data ?? res ?? [];
+    if (Array.isArray(list) && list.length) {
+      const map: Record<string, number> = {};
+      list.forEach((f: { feeKey?: string; amount?: number }) => {
+        if (f?.feeKey != null && typeof f.amount === "number") map[f.feeKey] = f.amount;
+      });
+      if (Object.keys(map).length) additionalFees.value = { ...additionalFees.value, ...map };
+    }
+  } catch (_) { /* use fallback */ }
+}
+
+onMounted(() => { fetchCurrentLocation(); loadAdditionalFees(); });
 
 // Form completeness
 const isFormComplete = computed(() =>
