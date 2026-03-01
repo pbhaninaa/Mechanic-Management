@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,7 @@ import {
   RefreshControl,
   Alert,
   Switch,
+  Vibration,
 } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../store';
@@ -16,6 +17,28 @@ import { CONFIG } from '../../config';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 
+const POLL_INTERVAL_MS = 20000; // 20 seconds – check for new requests while online
+const NOTIFICATION_SOUND_URI = 'https://assets.mixkit.co/active_storage/sfx/2869-notification-perfect.mp3';
+
+/** Play notification sound and vibration when a new request arrives (mechanic is online). */
+async function playNewRequestAlert() {
+  try {
+    Vibration.vibrate([0, 300, 100, 300]);
+  } catch (_) {}
+  try {
+    const { Audio } = require('expo-av');
+    const { sound } = await Audio.Sound.createAsync({ uri: NOTIFICATION_SOUND_URI });
+    await sound.playAsync();
+    sound.setOnPlaybackStatusUpdate((status) => {
+      if (status?.isLoaded && status.didJustFinishAndNotLoop) {
+        sound.unloadAsync();
+      }
+    });
+  } catch (_) {
+    // expo-av not available or play failed – vibration above still ran
+  }
+}
+
 const JobsScreen = ({ navigation }: any) => {
   const dispatch = useDispatch();
   const { user } = useSelector((state: RootState) => state.auth);
@@ -23,18 +46,37 @@ const JobsScreen = ({ navigation }: any) => {
   
   const [refreshing, setRefreshing] = useState(false);
   const [isAvailable, setIsAvailable] = useState(user?.isAvailable ?? true);
+  const previousJobIds = useRef<Set<string>>(new Set());
+
+  const loadJobs = async () => {
+    try {
+      const result = await dispatch(fetchAvailableJobs());
+      // Detect new requests and alert (only after we have a previous set, i.e. not first load)
+      if (fetchAvailableJobs.fulfilled.match(result) && Array.isArray(result.payload)) {
+        const currentIds = new Set((result.payload as any[]).map((j) => String(j?.id ?? '')).filter(Boolean));
+        if (previousJobIds.current.size > 0) {
+          const hasNewRequest = [...currentIds].some((id) => !previousJobIds.current.has(id));
+          if (hasNewRequest) {
+            playNewRequestAlert();
+          }
+        }
+        previousJobIds.current = currentIds;
+      }
+    } catch (error) {
+      console.error('Failed to load jobs:', error);
+    }
+  };
 
   useEffect(() => {
     loadJobs();
   }, []);
 
-  const loadJobs = async () => {
-    try {
-      await dispatch(fetchAvailableJobs());
-    } catch (error) {
-      console.error('Failed to load jobs:', error);
-    }
-  };
+  // Poll for new requests while mechanic is available (online)
+  useEffect(() => {
+    if (!isAvailable) return;
+    const timerId = setInterval(loadJobs, POLL_INTERVAL_MS);
+    return () => clearInterval(timerId);
+  }, [isAvailable]);
 
   const onRefresh = async () => {
     setRefreshing(true);

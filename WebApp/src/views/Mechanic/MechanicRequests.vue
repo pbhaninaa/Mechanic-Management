@@ -122,7 +122,7 @@
 
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, onUnmounted } from "vue";
 import PageContainer from "@/components/PageContainer.vue";
 import InputField from "@/components/InputField.vue";
 import apiService from "@/api/apiService";
@@ -132,7 +132,7 @@ import TableComponent from "@/components/TableComponent.vue";
 import { formatDate } from "@/composables/useDateFormat";
 import { getSafeJson } from "@/utils/storage";
 import { useCurrency } from "@/composables/useCurrency";
-import { an } from "vue-router/dist/router-CWoNjPRp.mjs";
+import { useNotificationSound } from "@/composables/useNotificationSound";
 interface JobRequest {
   id: string;
   username: string;
@@ -153,6 +153,12 @@ const jobRequests = ref<JobRequest[]>([]);
 const jobStatusError = ref("");
 const actionLoadingId = ref<string | null>(null);
 const assignLoading = ref(false);
+
+// Track request IDs we've already seen so we only play sound for *new* requests
+const previousRequestIds = ref<Set<string>>(new Set());
+const pollIntervalMs = 20000; // 20 seconds
+let pollTimerId: ReturnType<typeof setInterval> | null = null;
+const { playNewRequestSound } = useNotificationSound();
 
 const profile = getSafeJson("userProfile", {});
 const isAdmin = () => (profile?.roles?.[0]?.toLowerCase?.() ?? "") === "admin";
@@ -343,7 +349,18 @@ const loadJobRequests = async () => {
     let list = role === "admin" ? allRequests : allRequests.filter(
       (r: JobRequest) => String(r?.status || "").toLowerCase() === "pending"
     );
-    jobRequests.value = sortRequestsByStatus(list);
+    const sorted = sortRequestsByStatus(list);
+    const currentIds = new Set((sorted as JobRequest[]).map((r) => String(r?.id ?? "")).filter(Boolean));
+
+    // If we have a previous set (not first load), check for new requests and play sound
+    if (previousRequestIds.value.size > 0) {
+      const hasNewRequest = [...currentIds].some((id) => !previousRequestIds.value.has(id));
+      if (hasNewRequest) {
+        playNewRequestSound();
+      }
+    }
+    previousRequestIds.value = currentIds;
+    jobRequests.value = sorted;
   } catch (err: any) {
     console.error("Failed to load job requests:", err);
   }
@@ -437,5 +454,13 @@ async function doDeleteJob() {
 
 onMounted(() => {
   loadJobRequests();
+  pollTimerId = setInterval(loadJobRequests, pollIntervalMs);
+});
+
+onUnmounted(() => {
+  if (pollTimerId != null) {
+    clearInterval(pollTimerId);
+    pollTimerId = null;
+  }
 });
 </script>

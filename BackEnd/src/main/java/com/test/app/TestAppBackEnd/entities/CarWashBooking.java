@@ -1,14 +1,13 @@
 package com.test.app.TestAppBackEnd.entities;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "car_wash_booking")
@@ -49,7 +48,7 @@ public class CarWashBooking {
     @Column(nullable = false, name = "service_price")
     private Double servicePrice;
 
-    @Column(nullable = false, name = "Call Out Service")
+    @Column(nullable = false, name = "call_out_service")
     private boolean callOutService;
 
     // ================== BOOKING DETAILS ==================
