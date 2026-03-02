@@ -69,11 +69,8 @@ toast.subscribe(({ type, message }) => {
     toastErrorVisible.value = true;
   }
 });
-const sidebarNav = ref(null);
 const windowWidth = ref(window.innerWidth);
 
-// Sidebar width
-const sidebarWidth = 256; 
 
 // Responsive
 const isMobile = computed(() => windowWidth.value < 960);
