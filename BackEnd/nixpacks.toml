@@ -1,0 +1,7 @@
+# Railway/Nixpacks: build Spring Boot fat JAR and run with correct java -jar
+# Fixes "-cp" error: -D must come before -jar
+[phases.build]
+cmds = ["./gradlew bootJar --no-daemon -x test"]
+
+[phases.run]
+cmd = "java -Dserver.port=$PORT -Dfile.encoding=UTF-8 -jar build/libs/TestAppBackEnd-0.0.1-SNAPSHOT.jar"
