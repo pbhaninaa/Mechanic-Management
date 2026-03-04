@@ -126,12 +126,8 @@ const hasExistingAdmin = ref(false);
 
 /** Role options for the dropdown: show Admin only when there are no admins yet (first user can set themselves as admin), or when editing the existing admin so their role stays valid. */
 const roles = computed(() => {
-  const base = [USER_ROLES.CLIENT, USER_ROLES.MECHANIC, USER_ROLES.CAR_WASH];
-  const showAdmin =
-    !hasExistingAdmin.value ||
-    (isEditMode.value && propsProfile.value?.roles?.includes(USER_ROLES.ADMIN));
-  if (showAdmin) base.push(USER_ROLES.ADMIN);
-  return base;
+  let usersProfiles = apiService.getAllUsers() 
+  return usersProfiles.length>1? [USER_ROLES.CLIENT, USER_ROLES.MECHANIC, USER_ROLES.CAR_WASH ]:[USER_ROLES.ADMIN];
 });
 
 const canEditRole = computed(() => {
