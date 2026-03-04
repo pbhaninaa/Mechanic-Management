@@ -126,11 +126,16 @@ const usersCount = ref(0);
 
 /** Role options: if more than 1 user, show the three roles (or include Admin when editing the existing admin); else show only Admin so the first user can set themselves as admin. */
 const roles = computed(() => {
-  if (usersCount.value > 1) {
-    const three = [USER_ROLES.CLIENT, USER_ROLES.MECHANIC, USER_ROLES.CAR_WASH];
-    const editingAdmin = isEditMode.value && propsProfile.value?.roles?.includes(USER_ROLES.ADMIN);
-    return editingAdmin ? [...three] : three;
+  // If at least one profile already exists
+  if (usersCount.value > 0) {
+    return [
+      USER_ROLES.CLIENT,
+      USER_ROLES.MECHANIC,
+      USER_ROLES.CAR_WASH
+    ];
   }
+
+  // No profiles exist → first user must be Admin
   return [USER_ROLES.ADMIN];
 });
 
