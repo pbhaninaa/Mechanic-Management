@@ -129,7 +129,7 @@ const roles = computed(() => {
   if (usersCount.value > 1) {
     const three = [USER_ROLES.CLIENT, USER_ROLES.MECHANIC, USER_ROLES.CAR_WASH];
     const editingAdmin = isEditMode.value && propsProfile.value?.roles?.includes(USER_ROLES.ADMIN);
-    return editingAdmin ? [...three, USER_ROLES.ADMIN] : three;
+    return editingAdmin ? [...three] : three;
   }
   return [USER_ROLES.ADMIN];
 });
