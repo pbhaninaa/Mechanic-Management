@@ -28,21 +28,29 @@
           <InputField v-model="newBooking.location" label="Location" type="text"
             :disabled="loading || useCurrentLocation" :readonly="useCurrentLocation" required />
 
-          <!-- Car details -->
-          <DropdownField v-model="newBooking.carType" :items="carTypes" label="Car Type" required />
+          <!-- Car details: select car type first – then Service dropdown shows only offerings for that type. -->
+          <DropdownField v-model="newBooking.carType" :items="carTypes" label="Car Type" required :prepopulate-first="false" placeholder="Select your car type" />
           <InputField :model-value="newBooking.carPlate"
             @update:model-value="newBooking.carPlate = (($event) ?? '').toString().toUpperCase()" label="Number plate"
             placeholder="e.g. ABC 123 GP" type="text" :disabled="loading" required />
           <InputField v-model="newBooking.carDescription" label="Car Description (Make/Model/Year/Color)" type="text"
             :disabled="loading" required />
 
-          <!-- Services -->
+          <!-- Services: shown only after car type is selected; list is filtered by selected car type. -->
           <template v-if="canShowServices">
-            <v-alert v-if="!catalogLoading && serviceTypes.length === 0" type="info" density="compact" class="mb-2">
-              No car wash services are available near this location yet. Try a different address or check back later.
+            <v-alert v-if="!newBooking.carType" type="info" density="compact" class="mb-2">
+              Select a car type above to see available services for your vehicle.
             </v-alert>
-            <DropdownField v-if="serviceTypes.length > 0" v-model="newBooking.serviceTypes" :items="serviceTypes"
-              label="Select Services" multiple chips required :disabled="catalogLoading" />
+            <template v-else>
+              <v-alert v-if="!catalogLoading && noProviderForCarType" type="warning" density="compact" class="mb-2">
+                We don't have a service provider for the selected car type ({{ noProviderForCarType }}) at this location. Try a different car type or address.
+              </v-alert>
+              <v-alert v-else-if="!catalogLoading && serviceTypes.length === 0" type="info" density="compact" class="mb-2">
+                No car wash services are available near this location yet. Try a different address or check back later.
+              </v-alert>
+              <DropdownField v-else-if="serviceTypes.length > 0" v-model="newBooking.serviceTypes" :items="serviceTypes"
+                label="Select Services" multiple chips required :disabled="catalogLoading" :prepopulate-first="false" />
+            </template>
           </template>
           <v-alert v-else type="info" density="compact" class="mb-2">
             Provide your location above to see available services. If you enter an address we'll look up its coordinates
@@ -116,16 +124,19 @@ const additionalFees = ref<Record<string, number>>({ callOut: 500 });
 
 const carTypes = CAR_TYPES;
 
-// Services
+// Services: load all nearby once, then filter by selected car type (no prepopulation).
+const allNearbyOfferings = ref<any[]>([]);
 const serviceTypes = ref<string[]>([]);
 const catalogPriceMap = ref<Record<string, number>>({});
 const catalogLoading = ref(true);
+/** When set: there are nearby providers but none serve the selected car type. Message is the car type label. */
+const noProviderForCarType = ref<string | null>(null);
 
-// Booking state
+// Booking state – car type not prepopulated; user must select first so Service list is filtered.
 const newBooking = ref<Booking>({
   clientUsername: loggedInUser.username || "",
   carPlate: "",
-  carType: carTypes[0],
+  carType: "",
   carDescription: "",
   serviceTypes: [],
   servicePrice: "0",
@@ -175,28 +186,51 @@ function offeringMatchesCarType(o: any, clientCarType: string): boolean {
   return types.some((t: string) => t === clientCarType);
 }
 
-// Load nearby services; filter by client car type so price matches their vehicle (e.g. bus vs sedan).
+/** Filter stored nearby offerings by selected car type and update service list and prices (no extra API call). */
+function applyCarTypeFilter() {
+  noProviderForCarType.value = null;
+  const clientCarType = newBooking.value.carType || '';
+  if (!clientCarType) {
+    serviceTypes.value = [];
+    catalogPriceMap.value = {};
+    return;
+  }
+  const list = allNearbyOfferings.value;
+  const matching = list.filter((o: any) => offeringMatchesCarType(o, clientCarType));
+  if (list.length > 0 && matching.length === 0) {
+    noProviderForCarType.value = clientCarType;
+  }
+  const names = [...new Set(matching.map((o: any) => o.serviceName ?? o.service_name).filter(Boolean))].sort();
+  serviceTypes.value = names;
+  const priceMap: Record<string, number> = {};
+  matching.forEach((o: any) => {
+    const n = o.serviceName ?? o.service_name;
+    if (!n) return;
+    const p = Number(o.price);
+    if (!isNaN(p) && (priceMap[n] == null || p < priceMap[n])) priceMap[n] = p;
+  });
+  catalogPriceMap.value = priceMap;
+  newBooking.value.serviceTypes = [];
+}
+
+// Load all nearby services once; then filter by selected car type in applyCarTypeFilter (no prepopulation).
 async function loadNearbyServices() {
   if (location.value.latitude === 0 && location.value.longitude === 0) return;
   catalogLoading.value = true;
+  noProviderForCarType.value = null;
   try {
     const res = await apiService.getNearbyServiceOfferings("carwash", location.value.latitude, location.value.longitude, 50);
     const list = Array.isArray(res) ? res : (res?.data ?? []);
-    const clientCarType = newBooking.value.carType || '';
-    const matching = clientCarType ? list.filter((o: any) => offeringMatchesCarType(o, clientCarType)) : list;
-    const names = [...new Set(matching.map((o: any) => o.serviceName ?? o.service_name).filter(Boolean))].sort();
-    serviceTypes.value = names;
-    const priceMap: Record<string, number> = {};
-    matching.forEach((o: any) => {
-      const n = o.serviceName ?? o.service_name;
-      if (!n) return;
-      const p = Number(o.price);
-      if (!isNaN(p) && (priceMap[n] == null || p < priceMap[n])) priceMap[n] = p;
-    });
-    catalogPriceMap.value = priceMap;
-    if (names.length && newBooking.value.serviceTypes.length === 0) newBooking.value.serviceTypes = [names[0]];
-  } catch (_) { serviceTypes.value = []; catalogPriceMap.value = {}; }
-  finally { catalogLoading.value = false; }
+    allNearbyOfferings.value = list;
+    applyCarTypeFilter();
+  } catch (_) {
+    allNearbyOfferings.value = [];
+    serviceTypes.value = [];
+    catalogPriceMap.value = {};
+    noProviderForCarType.value = null;
+  } finally {
+    catalogLoading.value = false;
+  }
 }
 
 // Handle location changes
@@ -208,8 +242,10 @@ watch(() => newBooking.value.location, async (loc) => {
   const coords = await geocodeAddressToCoords(loc);
   if (!coords) {
     locationError.value = "Could not find coordinates. Try a more specific address or use 'For Myself'.";
+    allNearbyOfferings.value = [];
     serviceTypes.value = [];
     catalogPriceMap.value = {};
+    noProviderForCarType.value = null;
     manualLocationCoordsSet.value = false;
     catalogLoading.value = false;
     return;
@@ -220,12 +256,12 @@ watch(() => newBooking.value.location, async (loc) => {
 });
 
 watch(useCurrentLocation, async (val) => {
-  if (val) { locationError.value = ""; await fetchCurrentLocation(); manualLocationCoordsSet.value = false; }
-  else { newBooking.value.location = ""; manualLocationCoordsSet.value = false; locationError.value = ""; serviceTypes.value = []; catalogPriceMap.value = {}; }
+  if (val) { locationError.value = ""; noProviderForCarType.value = null; await fetchCurrentLocation(); manualLocationCoordsSet.value = false; }
+  else { newBooking.value.location = ""; manualLocationCoordsSet.value = false; locationError.value = ""; allNearbyOfferings.value = []; serviceTypes.value = []; catalogPriceMap.value = {}; noProviderForCarType.value = null; }
 });
 
 watch(() => newBooking.value.carType, () => {
-  if (canShowServices.value && (location.value.latitude || location.value.longitude)) loadNearbyServices();
+  if (allNearbyOfferings.value.length > 0) applyCarTypeFilter();
 });
 
 // Fetch additional fees from API

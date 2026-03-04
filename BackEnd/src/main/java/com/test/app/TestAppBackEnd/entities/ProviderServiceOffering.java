@@ -34,12 +34,16 @@ public class ProviderServiceOffering {
     @Column(nullable = false, name = "service_name")
     private String serviceName;
 
-    @Column(nullable = false)
-    private Double price;
+    /** Car brand this offering applies to (e.g. Toyota, Ford). Empty or null = all brands. */
+    @Column(name = "car_brand", length = 100)
+    private String carBrand;
 
     /** Comma-separated car types this offering applies to (e.g. "Sedan,Hatchback"). Empty or null = all car types. */
     @Column(name = "supported_car_types", length = 500)
     private String supportedCarTypes;
+
+    @Column(nullable = false)
+    private Double price;
 
     // ================== LOCATION INFO ==================
     @Column(nullable = false)

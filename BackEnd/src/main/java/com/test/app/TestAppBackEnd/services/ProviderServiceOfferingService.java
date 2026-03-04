@@ -63,8 +63,9 @@ public class ProviderServiceOfferingService {
                 .filter(o -> username.equals(o.getProviderUsername()))
                 .map(existing -> {
                     existing.setServiceName(updated.getServiceName());
-                    existing.setPrice(updated.getPrice());
+                    existing.setCarBrand(updated.getCarBrand());
                     existing.setSupportedCarTypes(updated.getSupportedCarTypes());
+                    existing.setPrice(updated.getPrice());
                     return repository.save(existing);
                 });
     }

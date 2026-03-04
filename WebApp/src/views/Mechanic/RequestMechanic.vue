@@ -50,7 +50,7 @@
           <v-divider class="my-4" />
           <div class="text-subtitle-2 text-medium-emphasis mb-2">Vehicle details</div>
 
-          <!-- Vehicle info -->
+          <!-- Vehicle info: select car brand first – then Service dropdown shows only offerings for that brand. -->
           <DropdownField
             v-model="request.carType"
             :items="carsList"
@@ -58,27 +58,36 @@
             placeholder="Select car brand (e.g. Toyota, Ford)"
             :disabled="loading"
             required
+            :prepopulate-first="false"
           />
           <InputField v-model="request.carPlate" label="Car plate" placeholder="e.g. ABC 123 GP" :disabled="loading" required />
           <InputField v-model="request.vinNumber" label="VIN number" placeholder="Vehicle identification number" :disabled="loading" required />
-          <DropdownField v-model="request.vehicleType" :items="CAR_TYPES" label="Vehicle type (optional)" placeholder="e.g. Sedan, SUV – for accurate pricing" :disabled="loading" clearable :prepopulate-first="false" />
           <v-divider class="my-4" />
 
-          <!-- Service selection -->
+          <!-- Service selection: shown only after car brand is selected; list filtered by selected brand (no prepopulation). -->
           <template v-if="canShowServices">
-            <DropdownField
-              v-if="jobOptions.length > 0"
-              v-model="request.serviceTypes"
-              :items="jobOptions"
-              label="Select Services"
-              multiple
-              chips
-              required
-              :disabled="loading || catalogLoading"
-            />
-            <v-alert v-else-if="!catalogLoading && jobOptions.length === 0" type="info" class="mb-2">
-              No mechanic services are available near this location yet. Try a different address or check back later.
+            <v-alert v-if="!request.carType" type="info" density="compact" class="mb-2">
+              Select a car brand above to see available services for your vehicle.
             </v-alert>
+            <template v-else>
+              <v-alert v-if="!catalogLoading && noProviderForCarBrand" type="warning" density="compact" class="mb-2">
+                We don't have a service provider for the selected car brand ({{ noProviderForCarBrand }}) at this location. Try a different car brand or address.
+              </v-alert>
+              <DropdownField
+                v-else-if="jobOptions.length > 0"
+                v-model="request.serviceTypes"
+                :items="jobOptions"
+                label="Select Services"
+                multiple
+                chips
+                required
+                :disabled="loading || catalogLoading"
+                :prepopulate-first="false"
+              />
+              <v-alert v-else-if="!catalogLoading && jobOptions.length === 0" type="info" class="mb-2">
+                No mechanic services are available near this location yet. Try a different address or check back later.
+              </v-alert>
+            </template>
           </template>
           <v-alert v-else type="info" density="compact" class="mb-2">
             Provide your location above to see available services. If you enter an address we'll look up its coordinates to find nearby services.
@@ -129,7 +138,7 @@ import InputField from "@/components/InputField.vue";
 import DropdownField from "@/components/DropdownField.vue";
 import Button from "@/components/Button.vue";
 import apiService from "@/api/apiService";
-import { STATUS_COLORS, JOB_STATUS, CAR_TYPES } from "@/utils/constants";
+import { STATUS_COLORS, JOB_STATUS } from "@/utils/constants";
 import { useRouter } from "vue-router";
 import { getCurrentLocationWithName, geocodeAddressToCoords, ensureLocationName, carsList } from "@/utils/helper";
 import { getSafeJson } from "@/utils/storage";
@@ -151,14 +160,16 @@ const request = ref({
   callOutService: false,
   towing: false,
   carType: "",
-  vehicleType: "" as string, // Sedan, SUV, etc. – used to filter offerings by provider-supported car types
   date: "",
   servicePrice: 0,
 });
 
+const allNearbyOfferings = ref<any[]>([]);
 const jobOptions = ref<string[]>([]);
 const mechanicServicePrices = ref<Record<string, number>>({});
 const catalogLoading = ref(true);
+/** When set: there are nearby mechanics but none serve the selected car brand. Message is the brand name. */
+const noProviderForCarBrand = ref<string | null>(null);
 const location = ref({ latitude: 0, longitude: 0 });
 const manualLocationCoordsSet = ref(false);
 const locationError = ref("");
@@ -264,25 +275,50 @@ watch(() => request.value.forSelf, async val => {
   } else {
     request.value.location = "";
     manualLocationCoordsSet.value = false;
+    allNearbyOfferings.value = [];
     jobOptions.value = [];
     mechanicServicePrices.value = {};
   }
 });
 
-function offeringMatchesCarType(o: any, clientVehicleType: string): boolean {
-  if (!clientVehicleType?.trim()) return true;
-  const supported = o.supportedCarTypes;
-  if (!supported || (typeof supported === "string" && !supported.trim())) return true;
-  const types = typeof supported === "string" ? supported.split(",").map((s: string) => s.trim()) : Array.isArray(supported) ? supported : [];
-  if (types.length === 0) return true;
-  return types.some((t: string) => t === clientVehicleType);
+/** Mechanic offerings are filtered by car brand: show if offering has no brand (all) or matches client's brand. */
+function offeringMatchesCarBrand(o: any, clientCarBrand: string): boolean {
+  if (!clientCarBrand?.trim()) return true;
+  const brand = o.carBrand;
+  if (!brand || (typeof brand === "string" && !brand.trim())) return true;
+  return brand.trim() === clientCarBrand.trim();
 }
 
-// Load nearby services; filter by vehicle type when set so price matches (e.g. bus vs sedan).
+/** Filter stored nearby offerings by selected car brand and update service list and prices (no extra API call). */
+function applyCarBrandFilter() {
+  noProviderForCarBrand.value = null;
+  const clientCarBrand = request.value.carType || "";
+  if (!clientCarBrand) {
+    jobOptions.value = [];
+    mechanicServicePrices.value = {};
+    return;
+  }
+  const list = allNearbyOfferings.value;
+  const matching = list.filter((o: any) => offeringMatchesCarBrand(o, clientCarBrand));
+  if (list.length > 0 && matching.length === 0) {
+    noProviderForCarBrand.value = clientCarBrand;
+  }
+  jobOptions.value = [...new Set(matching.map((o: any) => o.serviceName ?? o.service_name).filter(Boolean))];
+  const priceMap: Record<string, number> = {};
+  matching.forEach((o: any) => {
+    const name = o.serviceName ?? o.service_name;
+    const price = Number(o.price);
+    if (!isNaN(price)) priceMap[name] = price;
+  });
+  mechanicServicePrices.value = priceMap;
+  request.value.serviceTypes = [];
+}
+
+// Load all nearby services once; then filter by selected car brand in applyCarBrandFilter (no prepopulation).
 async function loadNearbyServices() {
   if (!location.value.latitude) return;
   catalogLoading.value = true;
-
+  noProviderForCarBrand.value = null;
   try {
     const res = await apiService.getNearbyServiceOfferings(
       "mechanic",
@@ -290,31 +326,21 @@ async function loadNearbyServices() {
       location.value.longitude,
       50
     );
-
     const list = Array.isArray(res) ? res : (res?.data ?? []);
-    const vehicleType = request.value.vehicleType || "";
-    const matching = vehicleType ? list.filter((o: any) => offeringMatchesCarType(o, vehicleType)) : list;
-
-    jobOptions.value = [...new Set(matching.map((o: any) => o.serviceName ?? o.service_name).filter(Boolean))];
-
-    const priceMap: Record<string, number> = {};
-    matching.forEach((o: any) => {
-      const name = o.serviceName ?? o.service_name;
-      const price = Number(o.price);
-      if (!isNaN(price)) priceMap[name] = price;
-    });
-
-    mechanicServicePrices.value = priceMap;
+    allNearbyOfferings.value = list;
+    applyCarBrandFilter();
   } catch {
+    allNearbyOfferings.value = [];
     jobOptions.value = [];
     mechanicServicePrices.value = {};
+    noProviderForCarBrand.value = null;
   } finally {
     catalogLoading.value = false;
   }
 }
 
-watch(() => request.value.vehicleType, () => {
-  if (canShowServices.value && location.value.latitude) loadNearbyServices();
+watch(() => request.value.carType, () => {
+  if (allNearbyOfferings.value.length > 0) applyCarBrandFilter();
 });
 
 // Watch location for manual geocoding

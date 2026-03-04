@@ -22,11 +22,14 @@
             <template #item.serviceName="{ item }">
               {{ item.serviceName }}
             </template>
-            <template #item.price="{ item }">
-              {{ formatCurrency(item.price) }}
+            <template #item.carBrandDisplay="{ item }">
+              {{ item.carBrand || 'All' }}
             </template>
             <template #item.carTypesDisplay="{ item }">
               {{ formatCarTypes(item.supportedCarTypes) }}
+            </template>
+            <template #item.price="{ item }">
+              {{ formatCurrency(item.price) }}
             </template>
             <template #item.actions="{ item }">
               <v-tooltip text="Edit" location="top">
@@ -55,18 +58,30 @@
       <v-card>
         <v-card-title>{{ editingId ? 'Edit Service' : 'Add Service' }}</v-card-title>
         <v-card-text class="overflow-y-auto" style="max-height: 70vh;">
-          <InputField v-model="form.serviceName" label="Service name" outlined :disabled="loading"  />
-          <InputField v-model.number="form.price" label="Price" type="number" :disabled="loading" outlined />
+          <InputField v-model="form.serviceName" label="Service name" outlined :disabled="loading" required />
+          <!-- Mechanic: Car brand (specialising in e.g. Toyota). Car wash: Car type only (Sedan is Sedan regardless of brand). -->
           <DropdownField
+            v-if="providerType === 'mechanic'"
+            v-model="form.carBrand"
+            :items="carBrands"
+            label="Car brand"
+            placeholder="Leave empty for all brands"
+            :disabled="loading"
+            :prepopulate-first="false"
+            clearable
+          />
+          <DropdownField
+            v-if="providerType === 'carwash'"
             v-model="form.supportedCarTypes"
             :items="CAR_TYPES"
-            label="Car types for this service (optional)"
+            label="Car type"
             placeholder="Leave empty for all car types"
             multiple
             :disabled="loading"
             :prepopulate-first="false"
             clearable
           />
+          <InputField v-model.number="form.price" label="Price" type="number" outlined :disabled="loading" required />
         </v-card-text>
         <v-card-actions>
           <v-spacer />
@@ -104,6 +119,7 @@ import apiService from '@/api/apiService';
 import { getSafeJson } from '@/utils/storage';
 import { useCurrency } from '@/composables/useCurrency';
 import { CAR_TYPES } from '@/utils/constants';
+import { carsList } from '@/utils/helper';
 
 const { formatCurrency } = useCurrency();
 
@@ -127,22 +143,26 @@ const noDataMessage = computed(() =>
     : "No services yet. Click 'Add Service' to add your first offering."
 );
 
-const headers = [
-  { title: 'Service Name', value: 'serviceName' },
-  { title: 'Price', value: 'price' },
-  { title: 'Car types', value: 'carTypesDisplay' },
-  { title: 'Actions', value: 'actions', sortable: false },
-];
+const carBrands = carsList || [];
+
+const headers = computed(() => {
+  const base = [ { title: 'Service Name', value: 'serviceName' } ];
+  if (providerType.value === 'mechanic') base.push({ title: 'Car Brand', value: 'carBrandDisplay' });
+  if (providerType.value === 'carwash') base.push({ title: 'Car Type', value: 'carTypesDisplay' });
+  base.push({ title: 'Price', value: 'price' }, { title: 'Actions', value: 'actions', sortable: false });
+  return base;
+});
 
 const dialog = ref(false);
 const deleteDialog = ref(false);
 const editingId = ref<string | null>(null);
 const itemToDelete = ref<any>(null);
 
-const form = ref<{ serviceName: string; price: number; supportedCarTypes: string[] }>({
+const form = ref<{ serviceName: string; carBrand: string; supportedCarTypes: string[]; price: number }>({
   serviceName: '',
-  price: 0,
-  supportedCarTypes: []
+  carBrand: '',
+  supportedCarTypes: [],
+  price: 0
 });
 
 function parseSupportedCarTypes(val: string | string[] | null | undefined): string[] {
@@ -160,7 +180,7 @@ function formatCarTypes(supportedCarTypes: string | string[] | null | undefined)
 
 function openAddDialog() {
   editingId.value = null;
-  form.value = { serviceName: '', price: 0, supportedCarTypes: [] };
+  form.value = { serviceName: '', carBrand: '', supportedCarTypes: [], price: 0 };
   dialog.value = true;
 }
 
@@ -168,8 +188,9 @@ function openEditDialog(item: any) {
   editingId.value = item.id;
   form.value = {
     serviceName: item.serviceName,
-    price: item.price ?? 0,
-    supportedCarTypes: parseSupportedCarTypes(item.supportedCarTypes)
+    carBrand: item.carBrand ?? '',
+    supportedCarTypes: parseSupportedCarTypes(item.supportedCarTypes),
+    price: item.price ?? 0
   };
   dialog.value = true;
 }
@@ -215,10 +236,12 @@ async function saveOffering() {
   }
   loading.value = true;
   message.value = '';
-  const supportedCarTypes = (form.value.supportedCarTypes?.length ?? 0) > 0
+  const isMechanic = providerType.value === 'mechanic';
+  const carBrand = isMechanic ? ((form.value.carBrand || '').trim() || null) : null;
+  const supportedCarTypes = !isMechanic && (form.value.supportedCarTypes?.length ?? 0) > 0
     ? form.value.supportedCarTypes.join(',')
     : null;
-  const payload = { serviceName: name, price, supportedCarTypes };
+  const payload = { serviceName: name, carBrand, supportedCarTypes, price };
   try {
     if (editingId.value) {
       await apiService.updateServiceOffering(editingId.value, payload);
@@ -268,26 +291,17 @@ onMounted(() => {
 .my-services-card-text > div:first-child {
   display: none;
 }
-/* Fixed column widths: Service Name 50%, Price 30%, Actions 20% */
+/* Fixed column widths: Service Name, Car Brand (mechanic) or Car Type (carwash), Price, Actions */
 .my-services-card-text :deep(.v-data-table table) {
   table-layout: fixed;
   width: 100%;
 }
 .my-services-card-text :deep(.v-data-table th:nth-child(1)),
-.my-services-card-text :deep(.v-data-table td:nth-child(1)) {
-  width: 35%;
-}
+.my-services-card-text :deep(.v-data-table td:nth-child(1)) { width: 28%; }
 .my-services-card-text :deep(.v-data-table th:nth-child(2)),
-.my-services-card-text :deep(.v-data-table td:nth-child(2)) {
-  width: 15%;
-}
+.my-services-card-text :deep(.v-data-table td:nth-child(2)) { width: 28%; }
 .my-services-card-text :deep(.v-data-table th:nth-child(3)),
-.my-services-card-text :deep(.v-data-table td:nth-child(3)) {
-  width: 25%;
-}
+.my-services-card-text :deep(.v-data-table td:nth-child(3)) { width: 16%; }
 .my-services-card-text :deep(.v-data-table th:nth-child(4)),
-.my-services-card-text :deep(.v-data-table td:nth-child(4)) {
-  width: 25%;
-  min-width: 90px;
-}
+.my-services-card-text :deep(.v-data-table td:nth-child(4)) { width: 28%; min-width: 90px; }
 </style>
