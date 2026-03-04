@@ -51,10 +51,10 @@
     </template>
 
     <!-- Add / Edit dialog -->
-    <v-dialog v-model="dialog" max-width="500" persistent>
+    <v-dialog v-model="dialog" max-width="500" persistent scrollable>
       <v-card>
         <v-card-title>{{ editingId ? 'Edit Service' : 'Add Service' }}</v-card-title>
-        <v-card-text>
+        <v-card-text class="overflow-y-auto" style="max-height: 70vh;">
           <InputField v-model="form.serviceName" label="Service name" outlined :disabled="loading"  />
           <InputField v-model.number="form.price" label="Price" type="number" :disabled="loading" outlined />
           <p class="text-caption text-medium-emphasis mt-2 mb-1">Car types for this service (optional)</p>
@@ -62,12 +62,14 @@
             v-model="form.supportedCarTypes"
             :items="CAR_TYPES"
             label="Leave empty for all car types"
+            placeholder="Select car types (e.g. Sedan, SUV)"
             multiple
             chips
             closable-chips
             :disabled="loading"
             variant="outlined"
             density="compact"
+            class="my-services-car-types-select"
           />
         </v-card-text>
         <v-card-actions>
@@ -290,5 +292,15 @@ onMounted(() => {
 .my-services-card-text :deep(.v-data-table td:nth-child(4)) {
   width: 25%;
   min-width: 90px;
+}
+
+/* Ensure car types v-select is visible (multi-select can collapse when empty) */
+.my-services-car-types-select {
+  min-height: 56px;
+}
+.my-services-car-types-select :deep(.v-field) {
+  min-height: 56px;
+  align-items: flex-start;
+  padding-top: 8px;
 }
 </style>
