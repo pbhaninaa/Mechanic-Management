@@ -109,13 +109,6 @@ const form = ref({
   roles: [USER_ROLES.CLIENT]
 });
 
-const roles = [
-  USER_ROLES.CLIENT,
-  USER_ROLES.MECHANIC,
-  USER_ROLES.CAR_WASH,
-  USER_ROLES.ADMIN
-];
-
 const propsProfile = ref(
   route.query.profile
     ? JSON.parse(route.query.profile)
@@ -127,6 +120,19 @@ const propsProfile = ref(
 const isEditMode = computed(() => !!propsProfile.value?.id);
 
 const currentUser = ref(getSafeJson("userProfile", {}));
+
+/** True when there is at least one admin in the system. Used to hide Admin from role dropdown so only one user can set themselves as admin. */
+const hasExistingAdmin = ref(false);
+
+/** Role options for the dropdown: show Admin only when there are no admins yet (first user can set themselves as admin), or when editing the existing admin so their role stays valid. */
+const roles = computed(() => {
+  const base = [USER_ROLES.CLIENT, USER_ROLES.MECHANIC, USER_ROLES.CAR_WASH];
+  const showAdmin =
+    !hasExistingAdmin.value ||
+    (isEditMode.value && propsProfile.value?.roles?.includes(USER_ROLES.ADMIN));
+  if (showAdmin) base.push(USER_ROLES.ADMIN);
+  return base;
+});
 
 const canEditRole = computed(() => {
   if (!isEditMode.value) return true;
@@ -235,6 +241,15 @@ onMounted(async () => {
 
   if (useCurrentLocation.value) {
     await fetchCurrentLocation();
+  }
+
+  // Check if an admin already exists so we only show Admin role when there are none (first user can set themselves as admin).
+  try {
+    const res = await apiService.getProfilesByRole(USER_ROLES.ADMIN);
+    const list = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
+    hasExistingAdmin.value = list.length > 0;
+  } catch {
+    hasExistingAdmin.value = false;
   }
 });
 
