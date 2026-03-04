@@ -88,6 +88,7 @@ import PageContainer from "@/components/PageContainer.vue";
 import { USER_ROLES } from "@/utils/constants";
 import PhoneNumberInput from "@/components/PhoneNumberInput.vue";
 import { getSafeJson } from "@/utils/storage";
+import { closeScrollStrategy } from "vuetify/lib/components/VOverlay/scrollStrategies";
 
 const route = useRoute();
 const router = useRouter();
@@ -120,21 +121,23 @@ const propsProfile = ref(
 const isEditMode = computed(() => !!propsProfile.value?.id);
 
 const currentUser = ref(getSafeJson("userProfile", {}));
+closeScrollStrategy
+/** Number of user profiles in the system. Fetched in onMounted. If > 1, show only CLIENT/MECHANIC/CAR_WASH; else show only ADMIN (first user sets themselves as admin). */
+const usersCount = ref(0);
 
-/** Number of profiles in the system. Fetched in onMounted. No profiles → show only Admin (first user must be admin); any profiles → show three roles. Only that first admin can grant admin via User Management. */
-const profilesCount = ref(0);
-
-/** Role options: if we already have any profile, show the three roles (CLIENT, MECHANIC, CAR_WASH). If no profiles yet, show only Admin so the first user in the db is admin and can give others admin under User Management. When editing the existing admin, include Admin so the dropdown stays valid. */
+/** Role options: if more than 1 user, show the three roles (or include Admin when editing the existing admin); else show only Admin so the first user can set themselves as admin. */
 const roles = computed(() => {
-  const count = Number(profilesCount.value) || 0;
-  const hasAnyProfile = count > 0;
-  const threeRoles = [USER_ROLES.CLIENT, USER_ROLES.MECHANIC, USER_ROLES.CAR_WASH];
+  const count = Number(usersCount.value) || 0;
 
-  if (!hasAnyProfile) {
+  if (count === 0) {
     return [USER_ROLES.ADMIN];
   }
-  const editingExistingAdmin = isEditMode.value && propsProfile.value?.roles?.includes(USER_ROLES.ADMIN);
-  return editingExistingAdmin ? [...threeRoles, USER_ROLES.ADMIN] : threeRoles;
+
+  return [
+    USER_ROLES.CLIENT,
+    USER_ROLES.MECHANIC,
+    USER_ROLES.CAR_WASH
+  ];
 });
 
 const canEditRole = computed(() => {
@@ -246,13 +249,14 @@ onMounted(async () => {
     await fetchCurrentLocation();
   }
 
-  // Count profiles: no profiles → only Admin; any profiles → three roles. First user becomes admin; only that admin can grant admin via User Management.
+  // Count users: if > 1, show only CLIENT/MECHANIC/CAR_WASH; else show only ADMIN (first user can set themselves as admin).
   try {
     const res = await apiService.getAllUsers();
     const list = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
-    profilesCount.value = list.length;
+   console.log('count: %d', list.length);
+    usersCount.value = list.length;
   } catch {
-    profilesCount.value = 0;
+    usersCount.value = 0;
   }
 });
 

@@ -64,6 +64,7 @@ public class ProviderServiceOfferingService {
                 .map(existing -> {
                     existing.setServiceName(updated.getServiceName());
                     existing.setPrice(updated.getPrice());
+                    existing.setSupportedCarTypes(updated.getSupportedCarTypes());
                     return repository.save(existing);
                 });
     }

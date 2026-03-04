@@ -37,6 +37,10 @@ public class ProviderServiceOffering {
     @Column(nullable = false)
     private Double price;
 
+    /** Comma-separated car types this offering applies to (e.g. "Sedan,Hatchback"). Empty or null = all car types. */
+    @Column(name = "supported_car_types", length = 500)
+    private String supportedCarTypes;
+
     // ================== LOCATION INFO ==================
     @Column(nullable = false)
     private String latitude;

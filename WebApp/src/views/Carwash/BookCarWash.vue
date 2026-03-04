@@ -78,7 +78,7 @@ import PageContainer from "@/components/PageContainer.vue";
 import InputField from "@/components/InputField.vue";
 import DropdownField from "@/components/DropdownField.vue";
 import Button from "@/components/Button.vue";
-import { STATUS_COLORS } from "@/utils/constants";
+import { STATUS_COLORS, CAR_TYPES } from "@/utils/constants";
 import apiService from "@/api/apiService";
 import { getCurrentLocationWithName, geocodeAddressToCoords, ensureLocationName } from "@/utils/helper";
 import { getSafeJson } from "@/utils/storage";
@@ -114,12 +114,7 @@ const manualLocationCoordsSet = ref(false);
 // Additional fees from API (fallback for display/calculation if fetch fails)
 const additionalFees = ref<Record<string, number>>({ callOut: 500 });
 
-// Car types
-const carTypes = [
-  "Sedan","SUV","Hatchback","Bakkie","Van","Truck","Luxury",
-  "Coupe","Convertible","Crossover","Minivan","Pickup","Station Wagon",
-  "Electric","Hybrid","Sports Car","Microcar","Off-Road","Compact"
-];
+const carTypes = CAR_TYPES;
 
 // Services
 const serviceTypes = ref<string[]>([]);
@@ -172,17 +167,27 @@ const fetchCurrentLocation = async () => {
   newBooking.value.location = ensureLocationName(result.locationName) || "Current location";
 };
 
-// Load nearby services
+function offeringMatchesCarType(o: any, clientCarType: string): boolean {
+  const supported = o.supportedCarTypes;
+  if (!supported || (typeof supported === 'string' && !supported.trim())) return true;
+  const types = typeof supported === 'string' ? supported.split(',').map((s: string) => s.trim()) : (Array.isArray(supported) ? supported : []);
+  if (types.length === 0) return true;
+  return types.some((t: string) => t === clientCarType);
+}
+
+// Load nearby services; filter by client car type so price matches their vehicle (e.g. bus vs sedan).
 async function loadNearbyServices() {
   if (location.value.latitude === 0 && location.value.longitude === 0) return;
   catalogLoading.value = true;
   try {
     const res = await apiService.getNearbyServiceOfferings("carwash", location.value.latitude, location.value.longitude, 50);
     const list = Array.isArray(res) ? res : (res?.data ?? []);
-    const names = [...new Set(list.map((o: any) => o.serviceName ?? o.service_name).filter(Boolean))].sort();
+    const clientCarType = newBooking.value.carType || '';
+    const matching = clientCarType ? list.filter((o: any) => offeringMatchesCarType(o, clientCarType)) : list;
+    const names = [...new Set(matching.map((o: any) => o.serviceName ?? o.service_name).filter(Boolean))].sort();
     serviceTypes.value = names;
     const priceMap: Record<string, number> = {};
-    list.forEach((o: any) => {
+    matching.forEach((o: any) => {
       const n = o.serviceName ?? o.service_name;
       if (!n) return;
       const p = Number(o.price);
@@ -217,6 +222,10 @@ watch(() => newBooking.value.location, async (loc) => {
 watch(useCurrentLocation, async (val) => {
   if (val) { locationError.value = ""; await fetchCurrentLocation(); manualLocationCoordsSet.value = false; }
   else { newBooking.value.location = ""; manualLocationCoordsSet.value = false; locationError.value = ""; serviceTypes.value = []; catalogPriceMap.value = {}; }
+});
+
+watch(() => newBooking.value.carType, () => {
+  if (canShowServices.value && (location.value.latitude || location.value.longitude)) loadNearbyServices();
 });
 
 // Fetch additional fees from API

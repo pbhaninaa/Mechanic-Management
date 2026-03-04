@@ -61,6 +61,7 @@
           />
           <InputField v-model="request.carPlate" label="Car plate" placeholder="e.g. ABC 123 GP" :disabled="loading" required />
           <InputField v-model="request.vinNumber" label="VIN number" placeholder="Vehicle identification number" :disabled="loading" required />
+          <DropdownField v-model="request.vehicleType" :items="CAR_TYPES" label="Vehicle type (optional)" placeholder="e.g. Sedan, SUV – for accurate pricing" :disabled="loading" clearable :prepopulate-first="false" />
           <v-divider class="my-4" />
 
           <!-- Service selection -->
@@ -128,7 +129,7 @@ import InputField from "@/components/InputField.vue";
 import DropdownField from "@/components/DropdownField.vue";
 import Button from "@/components/Button.vue";
 import apiService from "@/api/apiService";
-import { STATUS_COLORS, JOB_STATUS } from "@/utils/constants";
+import { STATUS_COLORS, JOB_STATUS, CAR_TYPES } from "@/utils/constants";
 import { useRouter } from "vue-router";
 import { getCurrentLocationWithName, geocodeAddressToCoords, ensureLocationName, carsList } from "@/utils/helper";
 import { getSafeJson } from "@/utils/storage";
@@ -150,6 +151,7 @@ const request = ref({
   callOutService: false,
   towing: false,
   carType: "",
+  vehicleType: "" as string, // Sedan, SUV, etc. – used to filter offerings by provider-supported car types
   date: "",
   servicePrice: 0,
 });
@@ -267,7 +269,16 @@ watch(() => request.value.forSelf, async val => {
   }
 });
 
-// Load nearby services
+function offeringMatchesCarType(o: any, clientVehicleType: string): boolean {
+  if (!clientVehicleType?.trim()) return true;
+  const supported = o.supportedCarTypes;
+  if (!supported || (typeof supported === "string" && !supported.trim())) return true;
+  const types = typeof supported === "string" ? supported.split(",").map((s: string) => s.trim()) : Array.isArray(supported) ? supported : [];
+  if (types.length === 0) return true;
+  return types.some((t: string) => t === clientVehicleType);
+}
+
+// Load nearby services; filter by vehicle type when set so price matches (e.g. bus vs sedan).
 async function loadNearbyServices() {
   if (!location.value.latitude) return;
   catalogLoading.value = true;
@@ -281,11 +292,13 @@ async function loadNearbyServices() {
     );
 
     const list = Array.isArray(res) ? res : (res?.data ?? []);
+    const vehicleType = request.value.vehicleType || "";
+    const matching = vehicleType ? list.filter((o: any) => offeringMatchesCarType(o, vehicleType)) : list;
 
-    jobOptions.value = [...new Set(list.map((o: any) => o.serviceName ?? o.service_name).filter(Boolean))];
+    jobOptions.value = [...new Set(matching.map((o: any) => o.serviceName ?? o.service_name).filter(Boolean))];
 
     const priceMap: Record<string, number> = {};
-    list.forEach(o => {
+    matching.forEach((o: any) => {
       const name = o.serviceName ?? o.service_name;
       const price = Number(o.price);
       if (!isNaN(price)) priceMap[name] = price;
@@ -299,6 +312,10 @@ async function loadNearbyServices() {
     catalogLoading.value = false;
   }
 }
+
+watch(() => request.value.vehicleType, () => {
+  if (canShowServices.value && location.value.latitude) loadNearbyServices();
+});
 
 // Watch location for manual geocoding
 watch(() => request.value.location, async loc => {

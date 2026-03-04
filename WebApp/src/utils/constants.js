@@ -74,6 +74,13 @@ export const USER_ROLES = {
   CAR_WASH: 'CARWASH'
 };
 
+// Car types for service offerings (mechanic / car wash). Providers can restrict which types an offering applies to.
+export const CAR_TYPES = [
+  'Sedan', 'SUV', 'Hatchback', 'Bakkie', 'Van', 'Truck', 'Luxury',
+  'Coupe', 'Convertible', 'Crossover', 'Minivan', 'Pickup', 'Station Wagon',
+  'Electric', 'Hybrid', 'Sports Car', 'Microcar', 'Off-Road', 'Compact', 'Bus'
+];
+
 // Job Status Constants
 export const JOB_STATUS = {
   REJECTED: 'rejected',
