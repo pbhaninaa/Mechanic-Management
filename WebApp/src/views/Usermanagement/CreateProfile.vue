@@ -121,13 +121,17 @@ const isEditMode = computed(() => !!propsProfile.value?.id);
 
 const currentUser = ref(getSafeJson("userProfile", {}));
 
-/** True when there is at least one admin in the system. Used to hide Admin from role dropdown so only one user can set themselves as admin. */
-const hasExistingAdmin = ref(false);
+/** Number of user profiles in the system. Fetched in onMounted. If > 1, show only CLIENT/MECHANIC/CAR_WASH; else show only ADMIN (first user sets themselves as admin). */
+const usersCount = ref(0);
 
-/** Role options for the dropdown: show Admin only when there are no admins yet (first user can set themselves as admin), or when editing the existing admin so their role stays valid. */
+/** Role options: if more than 1 user, show the three roles (or include Admin when editing the existing admin); else show only Admin so the first user can set themselves as admin. */
 const roles = computed(() => {
-  let usersProfiles = apiService.getAllUsers() 
-  return usersProfiles.length>1? [USER_ROLES.CLIENT, USER_ROLES.MECHANIC, USER_ROLES.CAR_WASH ]:[USER_ROLES.ADMIN];
+  if (usersCount.value > 1) {
+    const three = [USER_ROLES.CLIENT, USER_ROLES.MECHANIC, USER_ROLES.CAR_WASH];
+    const editingAdmin = isEditMode.value && propsProfile.value?.roles?.includes(USER_ROLES.ADMIN);
+    return editingAdmin ? [...three, USER_ROLES.ADMIN] : three;
+  }
+  return [USER_ROLES.ADMIN];
 });
 
 const canEditRole = computed(() => {
@@ -239,13 +243,13 @@ onMounted(async () => {
     await fetchCurrentLocation();
   }
 
-  // Check if an admin already exists so we only show Admin role when there are none (first user can set themselves as admin).
+  // Count users: if > 1, show only CLIENT/MECHANIC/CAR_WASH; else show only ADMIN (first user can set themselves as admin).
   try {
-    const res = await apiService.getProfilesByRole(USER_ROLES.ADMIN);
+    const res = await apiService.getAllUsers();
     const list = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
-    hasExistingAdmin.value = list.length > 0;
+    usersCount.value = list.length;
   } catch {
-    hasExistingAdmin.value = false;
+    usersCount.value = 0;
   }
 });
 
