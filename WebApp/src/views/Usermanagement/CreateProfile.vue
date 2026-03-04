@@ -88,7 +88,6 @@ import PageContainer from "@/components/PageContainer.vue";
 import { USER_ROLES } from "@/utils/constants";
 import PhoneNumberInput from "@/components/PhoneNumberInput.vue";
 import { getSafeJson } from "@/utils/storage";
-import { closeScrollStrategy } from "vuetify/lib/components/VOverlay/scrollStrategies";
 
 const route = useRoute();
 const router = useRouter();
@@ -121,7 +120,7 @@ const propsProfile = ref(
 const isEditMode = computed(() => !!propsProfile.value?.id);
 
 const currentUser = ref(getSafeJson("userProfile", {}));
-closeScrollStrategy
+
 /** Number of user profiles in the system. Fetched in onMounted. If > 1, show only CLIENT/MECHANIC/CAR_WASH; else show only ADMIN (first user sets themselves as admin). */
 const usersCount = ref(0);
 
