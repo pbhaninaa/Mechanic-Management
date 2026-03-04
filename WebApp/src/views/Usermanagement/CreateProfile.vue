@@ -252,6 +252,7 @@ onMounted(async () => {
   try {
     const res = await apiService.getAllUsers();
     const list = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
+   console.log('count: %d', list.length);
     usersCount.value = list.length;
   } catch {
     usersCount.value = 0;
