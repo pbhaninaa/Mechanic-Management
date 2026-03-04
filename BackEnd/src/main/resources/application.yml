@@ -25,8 +25,7 @@ spring:
         debug: true
 # From address for outgoing emails - must match Gmail account when using Gmail SMTP
 app.mail.from: jaystarven@gmail.com
-# Frontend base URL for password reset links (must match how you access the web app)
-app.frontend-url: http://localhost:5173
+# Frontend URL is set per profile: application-sit/uat/prod.properties
 
 # Stripe - use env var to keep secrets out of git. Set STRIPE_SECRET_KEY (e.g. sk_test_...) before running
 stripe.secret-key: ${STRIPE_SECRET_KEY:}

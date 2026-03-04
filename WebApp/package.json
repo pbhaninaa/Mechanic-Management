@@ -7,12 +7,12 @@
     "node": "^20.19.0 || >=22.12.0"
   },
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --mode sit",
     "build": "vite build --mode production",
-    "build:dev": "vite build --mode development",
+    "build:sit": "vite build --mode sit",
     "build:uat": "vite build --mode uat",
     "build:prod": "vite build --mode production",
-    "preview:dev": "vite preview --mode development",
+    "preview:sit": "vite preview --mode sit",
     "preview:uat": "vite preview --mode uat",
     "preview:prod": "vite preview --mode production"
   },
