@@ -57,19 +57,15 @@
         <v-card-text class="overflow-y-auto" style="max-height: 70vh;">
           <InputField v-model="form.serviceName" label="Service name" outlined :disabled="loading"  />
           <InputField v-model.number="form.price" label="Price" type="number" :disabled="loading" outlined />
-          <p class="text-caption text-medium-emphasis mt-2 mb-1">Car types for this service (optional)</p>
-          <v-select
+          <DropdownField
             v-model="form.supportedCarTypes"
             :items="CAR_TYPES"
-            label="Leave empty for all car types"
-            placeholder="Select car types (e.g. Sedan, SUV)"
+            label="Car types for this service (optional)"
+            placeholder="Leave empty for all car types"
             multiple
-            chips
-            closable-chips
             :disabled="loading"
-            variant="outlined"
-            density="compact"
-            class="my-services-car-types-select"
+            :prepopulate-first="false"
+            clearable
           />
         </v-card-text>
         <v-card-actions>
@@ -102,6 +98,7 @@ import { ref, computed, onMounted } from 'vue';
 import PageContainer from '@/components/PageContainer.vue';
 import TableComponent from '@/components/TableComponent.vue';
 import InputField from '@/components/InputField.vue';
+import DropdownField from '@/components/DropdownField.vue';
 import Button from '@/components/Button.vue';
 import apiService from '@/api/apiService';
 import { getSafeJson } from '@/utils/storage';
@@ -292,15 +289,5 @@ onMounted(() => {
 .my-services-card-text :deep(.v-data-table td:nth-child(4)) {
   width: 25%;
   min-width: 90px;
-}
-
-/* Ensure car types v-select is visible (multi-select can collapse when empty) */
-.my-services-car-types-select {
-  min-height: 56px;
-}
-.my-services-car-types-select :deep(.v-field) {
-  min-height: 56px;
-  align-items: flex-start;
-  padding-top: 8px;
 }
 </style>
