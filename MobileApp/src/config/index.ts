@@ -1,8 +1,9 @@
 export const CONFIG = {
   // API Configuration - set to your backend URL
-  // Android Emulator: 10.0.2.2 = host's localhost
-  // Physical device: use your computer's IP (e.g. http://192.168.1.5:8080/api)
-  API_BASE_URL: 'https://172.20.10.11:8080/api',
+  // Local / Emulator: localhost:8080 (default Spring port, no custom ports)
+  // Android Emulator: use 10.0.2.2:8080 for host's localhost
+  // Physical device on same network: use your computer's IP (e.g. http://192.168.1.5:8080/api)
+  API_BASE_URL: 'http://localhost:8080/api',
   API_TIMEOUT: 15000,
   
   // App Configuration

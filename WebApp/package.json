@@ -8,6 +8,7 @@
   },
   "scripts": {
     "dev": "vite",
+    "build": "vite build --mode production",
     "build:dev": "vite build --mode development",
     "build:uat": "vite build --mode uat",
     "build:prod": "vite build --mode production",

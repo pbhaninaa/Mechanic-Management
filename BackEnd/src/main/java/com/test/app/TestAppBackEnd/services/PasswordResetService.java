@@ -30,7 +30,7 @@ public class PasswordResetService {
     private final EmailService emailService;
     private final PasswordEncoder passwordEncoder;
 
-    @Value("${app.frontend-url:https://172.20.10.11:3000}")
+    @Value("${app.frontend-url:http://localhost:5173}")
     private String frontendUrl;
 
     public PasswordResetService(PasswordResetTokenRepository tokenRepository,

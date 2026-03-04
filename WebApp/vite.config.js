@@ -28,8 +28,7 @@ export default defineConfig(({ mode }) => {
     server: {
       https: true,
       host: '0.0.0.0',
-      port: 3000,
-      strictPort: true,
+      // Use Vite default port (5173) - no custom port to avoid workplace firewall issues
     }
   }
 })

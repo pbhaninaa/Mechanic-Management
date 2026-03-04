@@ -97,7 +97,7 @@ class ApiService {
 //  ====================== INITIALIZATION =================
   constructor() {
     // Use CONFIG.API_BASE_URL - set to your computer's IP (e.g. 172.20.10.11) for physical device on same WiFi
-    const baseURL = CONFIG.API_BASE_URL || 'https://172.20.10.11:8080/api';
+    const baseURL = CONFIG.API_BASE_URL || 'http://localhost:8080/api';
     this.api = axios.create({
       baseURL,
       timeout: CONFIG.API_TIMEOUT || 15000,

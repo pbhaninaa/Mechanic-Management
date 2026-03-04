@@ -1,4 +1,16 @@
 spring:
+  railway:
+    schema: classpath:db/migration/V1__initial.sql
+    datasource: jdbc:mysql://trolley.proxy.rlwy.net:21098/railway?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    username: root
+    password: qWPrLlZDaTsQqBwJkdoFojZhiOTJRQwD
+
+  railwad:
+    schema: classpath:db/migration/V1__railwad.sql   # Change if needed
+    datasource: jdbc:mysql://trolley.proxy.rlwy.net:21098/railwad?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    username: root
+    password: qWPrLlZDaTsQqBwJkdoFojZhiOTJRQwD
+
   mail:
     host: smtp.gmail.com
     port: 587
@@ -14,7 +26,7 @@ spring:
 # From address for outgoing emails - must match Gmail account when using Gmail SMTP
 app.mail.from: jaystarven@gmail.com
 # Frontend base URL for password reset links (must match how you access the web app)
-app.frontend-url: https://172.20.10.11:3000
+app.frontend-url: http://localhost:5173
 
 # Stripe - use env var to keep secrets out of git. Set STRIPE_SECRET_KEY (e.g. sk_test_...) before running
 stripe.secret-key: ${STRIPE_SECRET_KEY:}
