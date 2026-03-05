@@ -1,19 +1,21 @@
 <template>
   <PageContainer>
     <v-card-text>
-    
+      <v-alert v-if="tableError" type="error" density="compact" class="mb-3" closable @click:close="tableError = ''">
+        {{ tableError }}
+      </v-alert>
+
       <TableComponent
         title="My Car Wash History"
         :headers="headers"
         :items="bookings"
         :items-per-page="10"
         :loading="loading"
+        no-data-message="No data."
         show-search
         search-placeholder="Search car plate, services, date, status..."
         @update:search-value="onSearch"
       >
-
-
         <template #item.serviceTypes="{ item }">
           {{ item.serviceTypes.join(", ") }}
         </template>
@@ -41,9 +43,6 @@
           </v-tooltip>
         </template>
 
-        <template #no-data>
-          You have no past car washes.
-        </template>
       </TableComponent>
 
       <v-row class="mt-4" justify="end" align="center">
@@ -116,6 +115,7 @@ const { formatCurrency } = useCurrency();
 // Reactive states
 const bookings = ref<Booking[]>([]);
 const loading = ref(false);
+const tableError = ref("");
 const router = useRouter();
 
 // Get logged-in username from localStorage
@@ -179,13 +179,14 @@ function onSearch(q) {
 }
 const fetchBookings = async () => {
   loading.value = true;
+  tableError.value = "";
   try {
     const params = searchQuery.value ? { search: searchQuery.value } : {};
     const response = await apiService.getCarWashBookingsByClient(loggedInUser.value?.username, params);
     const data = Array.isArray(response.data) ? response.data : [];
     bookings.value = sortRequestsByStatus(data);
-  } catch (error) {
-    console.error("Failed to fetch bookings:", error);
+  } catch (err: any) {
+    tableError.value = err?.message || "Failed to load bookings.";
     bookings.value = [];
   } finally {
     loading.value = false;

@@ -1,7 +1,11 @@
 <template>
   <PageContainer>
     <v-card-text>
-      <TableComponent title="Job Requests" :headers="headers" :items="jobRequests" :loading="false">
+      <v-alert v-if="tableError || jobStatusError" type="error" density="compact" class="mb-3" closable @click:close="tableError = ''; jobStatusError = ''">
+        {{ tableError || jobStatusError }}
+      </v-alert>
+
+      <TableComponent title="Job Requests" :headers="headers" :items="jobRequests" :loading="tableLoading" no-data-message="No data.">
         <template #item.status="{ item }">
           <v-chip :color="getStatusColor(item.status)" dark>
             {{ item.status }}
@@ -150,6 +154,8 @@ interface JobRequest {
 }
 
 const jobRequests = ref<JobRequest[]>([]);
+const tableLoading = ref(false);
+const tableError = ref("");
 const jobStatusError = ref("");
 const actionLoadingId = ref<string | null>(null);
 const assignLoading = ref(false);
@@ -338,6 +344,8 @@ const confirmAssign = async () => {
 };
 
 const loadJobRequests = async () => {
+  tableLoading.value = true;
+  tableError.value = "";
   try {
     const res = await apiService.getAllRequestHistory();
     const allRequests = res?.data ?? [];
@@ -362,7 +370,10 @@ const loadJobRequests = async () => {
     previousRequestIds.value = currentIds;
     jobRequests.value = sorted;
   } catch (err: any) {
-    console.error("Failed to load job requests:", err);
+    tableError.value = err?.message || "Failed to load job requests.";
+    jobRequests.value = [];
+  } finally {
+    tableLoading.value = false;
   }
 };
 const updateJobStatus = async (job: JobRequest, status: string, mechanicIdOverride?: string) => {

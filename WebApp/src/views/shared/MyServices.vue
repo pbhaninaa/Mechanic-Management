@@ -12,12 +12,15 @@
           <Button label="Add Service" color="primary" size="default" :loading="loading" @click="openAddDialog" />
         </v-card-title>
         <v-card-text class="my-services-card-text">
+          <v-alert v-if="message" :type="messageType" density="compact" class="mb-3" closable @click:close="message = ''">
+            {{ message }}
+          </v-alert>
           <TableComponent
             title=""
             :headers="headers"
             :items="offerings"
             :loading="loading"
-            :no-data-message="noDataMessage"
+            no-data-message="No data."
           >
             <template #item.serviceName="{ item }">
               {{ item.serviceName }}
@@ -136,12 +139,6 @@ const offerings = ref<any[]>([]);
 const loading = ref(false);
 const message = ref('');
 const messageType = ref<'success' | 'error'>('success');
-
-const noDataMessage = computed(() =>
-  messageType.value === 'error' && message.value
-    ? 'Could not load services. You can still try adding one.'
-    : "No services yet. Click 'Add Service' to add your first offering."
-);
 
 const carBrands = carsList || [];
 

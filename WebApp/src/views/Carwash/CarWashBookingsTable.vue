@@ -1,12 +1,17 @@
 <template>
   <PageContainer>
     <v-card-text>
+      <v-alert v-if="tableError" type="error" density="compact" class="mb-3" closable @click:close="tableError = ''">
+        {{ tableError }}
+      </v-alert>
+
       <TableComponent
         title="Car Wash Bookings"
         :headers="headers"
         :items="bookings"
         :items-per-page="10"
         :loading="loading"
+        no-data-message="No data."
         show-search
         search-placeholder="Search plate, client, status..."
         @update:search-value="onSearch"
@@ -167,6 +172,7 @@ interface Booking {
 
 const bookings = ref<Booking[]>([]);
 const loading = ref(false);
+const tableError = ref("");
 const actionLoadingId = ref<string | number | null>(null);
 const assignLoading = ref(false);
 const loggedInUser = getSafeJson("userProfile", {});
@@ -310,6 +316,7 @@ function onSearch(q) {
 }
 const fetchBookings = async () => {
   loading.value = true;
+  tableError.value = "";
   try {
     const params = searchQuery.value ? { search: searchQuery.value } : {};
     const res = await apiService.getAllCarWashBookings(params);
@@ -330,8 +337,8 @@ const fetchBookings = async () => {
       });
     }
     bookings.value = sortRequestsByStatus(list);
-  } catch (err) {
-    console.error("Failed to fetch bookings:", err);
+  } catch (err: any) {
+    tableError.value = err?.message || "Failed to load bookings.";
     bookings.value = [];
   } finally {
     loading.value = false;

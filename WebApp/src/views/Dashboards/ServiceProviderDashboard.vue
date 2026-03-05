@@ -3,14 +3,12 @@
     <h1>{{ config.title }}</h1>
     <p>{{ config.welcomeMsg }}</p>
 
-    <!-- Loading / Error -->
-    <div v-if="loading" class="text-center my-6">
-      <v-progress-circular indeterminate color="primary"></v-progress-circular>
-    </div>
-    <p v-if="error" class="text-error text-center">{{ error }}</p>
+    <v-alert v-if="error" type="error" density="compact" class="mb-3" closable @click:close="error = null">
+      {{ error }}
+    </v-alert>
 
     <!-- Stats Cards with colors -->
-    <v-row class="mt-4" dense v-if="!loading && !error">
+    <v-row class="mt-4" dense>
       <v-col v-for="card in statsCards" :key="card.title" cols="12" sm="6" md="3">
         <v-card :color="card.color" class="pa-4">
           <v-card-title class="text-h6 white--text">{{ card.title }}</v-card-title>
@@ -19,14 +17,15 @@
       </v-col>
     </v-row>
 
-    <!-- Pending Requests Table -->
-    <v-card class="mt-6" outlined v-if="!loading && !error">
+    <!-- Pending Requests Table: always visible; circle loader when loading, empty when no data -->
+    <v-card class="mt-6" outlined>
       <TableComponent
         :title="config.pendingTableTitle"
         :headers="tableHeaders"
         :items="pendingItems"
         :items-per-page="5"
         :loading="loading"
+        no-data-message="No data."
       >
         <template #item.actions="{ item }">
           <v-tooltip text="Accept" location="top">
@@ -310,9 +309,10 @@ const loadData = async () => {
       rawItems.value = sortRequestsByStatus(data);
       payments.value = Array.isArray(paymentsRes.data) ? paymentsRes.data : [];
     }
-  } catch (err) {
-    error.value = "Failed to load data.";
-    console.error(err);
+  } catch (err: any) {
+    error.value = err?.message || "Failed to load data.";
+    rawItems.value = [];
+    payments.value = [];
   } finally {
     loading.value = false;
   }

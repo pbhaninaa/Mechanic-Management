@@ -1,27 +1,28 @@
 <template>
   <PageContainer>
     <v-card-text>
-     
-      <div v-if="historyLoading">Loading your requests...</div>
-      <div v-else-if="historyError" class="error">{{ historyError }}</div>
-      <div v-else>
-        <TableComponent
-          title="My Request History"
-          :headers="headers"
-          :items="requests"
-          :items-per-page="10"
-          :loading="historyLoading"
-          show-search
-          search-placeholder="Search description, date, status..."
-          @update:search-value="onSearch"
-        >
-          <template #item.status="{ item }">
-            <v-chip :color="getStatusColor(item.status)" dark>
-              {{ item.status }}
-            </v-chip>
-          </template>
+      <v-alert v-if="historyError" type="error" density="compact" class="mb-3" closable @click:close="historyError = null">
+        {{ historyError }}
+      </v-alert>
 
-           <template #item.actions="{ item }">
+      <TableComponent
+        title="My Request History"
+        :headers="headers"
+        :items="requests"
+        :items-per-page="10"
+        :loading="historyLoading"
+        no-data-message="No data."
+        show-search
+        search-placeholder="Search description, date, status..."
+        @update:search-value="onSearch"
+      >
+        <template #item.status="{ item }">
+          <v-chip :color="getStatusColor(item.status)" dark>
+            {{ item.status }}
+          </v-chip>
+        </template>
+
+        <template #item.actions="{ item }">
           <v-tooltip text="Pay" location="top">
             <template #activator="{ props }">
               <v-btn v-bind="props" variant="text" size="small" color="green" icon
@@ -32,14 +33,9 @@
             </template>
           </v-tooltip>
         </template>
+      </TableComponent>
 
-          <template #no-data>
-            You have no past requests.
-          </template>
-        </TableComponent>
-      </div>
-
-      <v-row v-if="!historyError" class="mt-4" justify="end" align="center">
+      <v-row class="mt-4" justify="end" align="center">
         <v-col cols="12" class="d-flex justify-end flex-wrap gap-2 py-0">
           <v-btn
             color="primary"
@@ -186,8 +182,8 @@ const loadRequests = async () => {
     const data = Array.isArray(response.data) ? response.data : [];
     requests.value = sortRequestsByStatus(data);
   } catch (err: any) {
-    console.error(err);
-    historyError.value = err.message || "Failed to load request history";
+    historyError.value = err?.message || "Failed to load request history";
+    requests.value = [];
   } finally {
     historyLoading.value = false;
   }
@@ -222,11 +218,6 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.error {
-  color: red;
-  font-weight: bold;
-}
-
 .mt-3 {
   margin-top: 1rem;
 }

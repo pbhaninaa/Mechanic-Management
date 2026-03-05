@@ -15,9 +15,9 @@
       />
     </div>
 
-    <!-- Loading -->
-    <div v-show="loading" class="text-center my-4">
-      <v-progress-circular indeterminate color="primary" />
+    <!-- Loading: circle loader for all backend calls -->
+    <div v-show="loading" class="text-center py-8">
+      <v-progress-circular indeterminate color="primary" size="48" width="3" />
     </div>
 
   <v-data-table
@@ -52,11 +52,11 @@
   </template>
 
   <template v-slot:no-data>
-    <NoDataMessage
-      :message="noDataMessage"
-      :itemsLength="items.length"
-      :loading="loading"
-    />
+    <tr>
+      <td :colspan="(headers?.length ?? 0) || 1" class="text-center text-medium-emphasis py-6">
+        {{ noDataMessage }}
+      </td>
+    </tr>
   </template>
 </v-data-table>
 
@@ -64,7 +64,6 @@
 
 <script setup lang="ts">
 import { toRefs, ref, watch } from "vue";
-import NoDataMessage from "@/components/NoDataMessage.vue";
 import TooltipText from "@/components/TooltipText.vue";
 
 interface TableHeader {
@@ -95,7 +94,7 @@ const props = withDefaults(
     loading: false,
     itemsPerPage: 10,
     itemsPerPageOptions: () => [5, 10, 15, 20, 25],
-    noDataMessage: "No items found.",
+    noDataMessage: "No data.",
     showSearch: false,
     searchPlaceholder: "Search...",
   }

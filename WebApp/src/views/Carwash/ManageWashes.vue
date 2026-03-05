@@ -1,7 +1,7 @@
 <template>
   <PageContainer>
-    <v-alert v-if="updateError" type="error" dismissible class="mb-4" @click:close="updateError = ''">
-      {{ updateError }}
+    <v-alert v-if="tableError || updateError" type="error" density="compact" class="mb-3" closable @click:close="tableError = ''; updateError = ''">
+      {{ tableError || updateError }}
     </v-alert>
     <v-card-text>
       <TableComponent
@@ -10,6 +10,7 @@
         :items="washes"
         :items-per-page="10"
         :loading="loading"
+        no-data-message="No data."
         show-search
         search-placeholder="Search client, plate, status..."
         @update:search-value="onSearch"
@@ -84,6 +85,7 @@ interface WashJob {
 
 const washes = ref<WashJob[]>([]);
 const loading = ref(false);
+const tableError = ref("");
 const actionLoadingId = ref<string | number | null>(null);
 const updateError = ref("");
 
@@ -134,6 +136,7 @@ function onSearch(q) {
 // Fetch bookings for this car wash operator (backend filters by carWashId and search)
 const fetchWashes = async () => {
   loading.value = true;
+  tableError.value = "";
   try {
     const userId = String(loggedInUser?.id || "");
     const params = searchQuery.value ? { search: searchQuery.value } : {};
@@ -146,8 +149,8 @@ const fetchWashes = async () => {
         String(booking?.status ?? "").toLowerCase() !== "completed"
     );
     washes.value = sortRequestsByStatus(filtered, "manage");
-  } catch (err) {
-    console.error("Failed to fetch bookings:", err);
+  } catch (err: any) {
+    tableError.value = err?.message || "Failed to load washes.";
     washes.value = [];
   } finally {
     loading.value = false;

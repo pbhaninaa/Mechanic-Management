@@ -1,12 +1,17 @@
 <template>
   <PageContainer>
     <v-card-text>
-<TableComponent
-      title="Payments"
-      :headers="headers"
-      :items="payments"
-      :loading="false"
-      show-search
+      <v-alert v-if="tableError" type="error" density="compact" class="mb-3" closable @click:close="tableError = ''">
+        {{ tableError }}
+      </v-alert>
+
+      <TableComponent
+        title="Payments"
+        :headers="headers"
+        :items="payments"
+        :loading="loading"
+        no-data-message="No data."
+        show-search
       search-placeholder="Search client, job, status..."
       @update:search-value="onSearch"
     >
@@ -50,6 +55,8 @@ interface Payment {
 
 const { currencySymbol } = useCurrency();
 const payments = ref<Payment[]>([]);
+const loading = ref(false);
+const tableError = ref("");
 
 const headers = [
   { title: "Client", value: "client" },
@@ -66,20 +73,25 @@ function onSearch(q) {
   searchQuery.value = q;
 }
 const loadPayments = async () => {
+  loading.value = true;
+  tableError.value = "";
   try {
     const params = searchQuery.value ? { search: searchQuery.value } : {};
     const res = await apiService.getPaymentsByClients(params);
-    payments.value = res.data.map((p: any) => ({
+    payments.value = (res?.data || []).map((p: any) => ({
       id: p.id,
       client: p.clientUsername,
       jobDescription: p.jobDescription,
-      amount: Number(p.amount+p.platformFee).toFixed(2),
+      amount: Number(p.amount + p.platformFee).toFixed(2),
       date: p.paidAt,
       status: p.status || JOB_STATUS.PAID,
       jobId: p.jobId
     }));
-  } catch (err) {
-    console.error("Failed to load payments:", err);
+  } catch (err: any) {
+    tableError.value = err?.message || "Failed to load payments.";
+    payments.value = [];
+  } finally {
+    loading.value = false;
   }
 };
 

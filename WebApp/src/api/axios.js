@@ -35,6 +35,19 @@ API.interceptors.response.use(
     return response;
   },
   (error) => {
+    const isUnreachable =
+      !error.response &&
+      (error.code === "ERR_NETWORK" ||
+        error.message === "Network Error" ||
+        error.message?.toLowerCase?.().includes("network"));
+    const isTimeout = error.code === "ECONNABORTED";
+
+    if (isTimeout) {
+      error.message = "Request timeout. Please check your connection.";
+    } else if (isUnreachable) {
+      error.message = "Server is down. Please try again later.";
+    }
+
     if (!error.config?.skipGlobalToast) {
       const message =
         error.response?.data?.message ||
@@ -58,11 +71,7 @@ API.interceptors.response.use(
         }
       }
     }
-    
-    if (error.code === "ECONNABORTED") {
-      error.message = "Request timeout. Please check your connection.";
-    }
-    
+
     return Promise.reject(error);
   }
 );

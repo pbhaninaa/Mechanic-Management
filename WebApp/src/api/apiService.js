@@ -58,7 +58,22 @@ class ApiService {
   }
 
   handleError(error) {
-    const message = error.response?.data?.message || error.response?.data?.error || error.message || 'An unexpected error occurred. Please try again later.';
+    const isUnreachable =
+      !error.response &&
+      (error.code === 'ERR_NETWORK' ||
+        error.message === 'Network Error' ||
+        (error.message && String(error.message).toLowerCase().includes('network')));
+    const isTimeout = error.code === 'ECONNABORTED';
+
+    let message;
+    if (isTimeout) {
+      message = 'Request timeout. Please check your connection.';
+    } else if (isUnreachable) {
+      message = 'Server is down. Please try again later.';
+    } else {
+      message = error.response?.data?.message || error.response?.data?.error || error.message || 'An unexpected error occurred. Please try again later.';
+    }
+
     const status = error.response?.status;
     const apiError = new Error(message);
     apiError.status = status;

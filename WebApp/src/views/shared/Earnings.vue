@@ -1,19 +1,21 @@
 <template>
   <PageContainer>
     <v-card-text>
-     
-      <!-- Earnings Table -->
+      <v-alert v-if="tableError" type="error" density="compact" class="mb-3" closable @click:close="tableError = ''">
+        {{ tableError }}
+      </v-alert>
+
       <TableComponent
         title="Earnings"
         :headers="headers"
         :items="earnings"
         :items-per-page="10"
         :loading="loading"
+        no-data-message="No data."
         show-search
         search-placeholder="Search job, date, status..."
         @update:search-value="onSearch"
       >
-
         <template #item.amount="{ item }">
           {{ currencySymbol }} {{ item.amount }}
         </template>
@@ -34,9 +36,6 @@
           </v-chip>
         </template>
 
-        <template #no-data>
-          No earnings found.
-        </template>
       </TableComponent>
 
       <v-row v-if="isServiceProvider" class="mt-4" justify="end" align="center">
@@ -184,6 +183,7 @@ const headers = [
 // State
 const earnings = ref([]);
 const loading = ref(false);
+const tableError = ref("");
 
 const searchQuery = ref("");
 function onSearch(q) {
@@ -191,6 +191,7 @@ function onSearch(q) {
 }
 const fetchEarnings = async () => {
   loading.value = true;
+  tableError.value = "";
   const params = searchQuery.value ? { search: searchQuery.value } : {};
   try {
     let response;
@@ -236,8 +237,8 @@ const fetchEarnings = async () => {
       };
     });
   } catch (err: any) {
-    console.error("Error fetching earnings:", err);
-    // Error toast shown by global axios interceptor
+    tableError.value = err?.message || "Failed to load earnings.";
+    earnings.value = [];
   } finally {
     loading.value = false;
   }

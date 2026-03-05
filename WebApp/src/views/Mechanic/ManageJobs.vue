@@ -1,12 +1,17 @@
 <template>
   <PageContainer>
     <v-card-text>
+      <v-alert v-if="tableError" type="error" density="compact" class="mb-3" closable @click:close="tableError = ''">
+        {{ tableError }}
+      </v-alert>
+
       <TableComponent
         title="Manage Jobs"
         :headers="headers"
         :items="jobs"
         :items-per-page="10"
         :loading="loading"
+        no-data-message="No data."
         show-search
         search-placeholder="Search client, description, status..."
         @update:search-value="onSearch"
@@ -73,6 +78,7 @@ interface MechanicJob {
 
 const jobs = ref<MechanicJob[]>([]);
 const loading = ref(false);
+const tableError = ref("");
 const actionLoadingId = ref<string | number | null>(null);
 
 const isAdmin = (loggedInUser?.roles || []).includes(USER_ROLES.ADMIN);
@@ -149,6 +155,7 @@ function onSearch(q) {
 }
 const fetchJobs = async () => {
   loading.value = true;
+  tableError.value = "";
   try {
     const role = (loggedInUser?.roles?.[0] ?? "").toString().toLowerCase();
     const isAdmin = role === "admin";
@@ -168,8 +175,8 @@ const fetchJobs = async () => {
       data = data.filter((j) => !isStatus(j, JOB_STATUS.COMPLETED));
     }
     jobs.value = sortRequestsByStatus(data, "manage");
-  } catch (err) {
-    console.error("Failed to fetch jobs:", err);
+  } catch (err: any) {
+    tableError.value = err?.message || "Failed to load jobs.";
     jobs.value = [];
   } finally {
     loading.value = false;

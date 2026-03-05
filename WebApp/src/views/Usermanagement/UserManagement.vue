@@ -1,12 +1,16 @@
 <template>
   <PageContainer>
-   
       <v-card-text>
+        <v-alert v-if="error" type="error" density="compact" class="mb-3" closable @click:close="error = ''">
+          {{ error }}
+        </v-alert>
+
         <TableComponent
           title="Users Management"
           :headers="headers"
           :items="users"
           :loading="loading"
+          no-data-message="No data."
           show-search
           search-placeholder="Search name, email, username..."
           @update:search-value="onSearch"
@@ -42,11 +46,6 @@
             </v-tooltip>
           </template>
         </TableComponent>
-
-        
-
-        <!-- Error Alert -->
-        <v-alert v-if="error" type="error" class="mt-3">{{ error }}</v-alert>
       </v-card-text>
 
     <!-- Edit User Dialog -->
