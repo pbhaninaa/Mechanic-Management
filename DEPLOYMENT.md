@@ -79,3 +79,33 @@ In your **Vercel project** → **Settings** → **Environment Variables**, add:
 - [ ] `VITE_APP_ENV` = `production`  
 
 After changing env vars on **Vercel**, trigger a new deployment (redeploy) so the build picks them up.
+
+---
+
+## 4. Exact variable names and value fields (prod deployment reference)
+
+Use this when you are ready for prod: copy each **Variable** name into the platform’s “Name” field and put the described value in the “Value” field.
+
+### Railway (Backend service) → Variables
+
+| Variable (Name) | Value / What to put in the field |
+|-----------------|----------------------------------|
+| `SPRING_PROFILES_ACTIVE` | `prod` |
+| `SPRING_DATASOURCE_URL` | `jdbc:mysql://HOST:PORT/DATABASE?useSSL=true&serverTimezone=UTC` — replace HOST, PORT, DATABASE with values from Railway MySQL (Connect / Variables). |
+| `SPRING_DATASOURCE_USERNAME` | e.g. `root` — copy from Railway MySQL variables. |
+| `SPRING_DATASOURCE_PASSWORD` | Copy from Railway MySQL variables. |
+| `JWT_SECRET` | Your own long secret, at least 64 characters (e.g. run `openssl rand -base64 48` and use the output). |
+| `STRIPE_SECRET_KEY` | `sk_live_...` — from Stripe Dashboard → API Keys → Secret key. |
+| `MAIL_USERNAME` | Your Gmail address, e.g. `you@gmail.com`. |
+| `MAIL_PASSWORD` | Gmail App Password (16 characters from [Google App Passwords](https://myaccount.google.com/apppasswords)). |
+| `MAIL_FROM` | Same as sender email, e.g. `you@gmail.com`. |
+| `APP_FRONTEND_URL` | Your Vercel app URL with no trailing slash, e.g. `https://mechanic-management-4m995c2rk-pbhanina-5058s-projects.vercel.app`. |
+| `APP_FRONTEND_ALLOWED_ORIGINS` | (Optional) Comma-separated allowed origins, e.g. `https://mechanic-management-4m995c2rk-pbhanina-5058s-projects.vercel.app`. |
+
+### Vercel (Frontend) → Environment Variables
+
+| Variable (Name) | Value / What to put in the field | Environment |
+|-----------------|----------------------------------|-------------|
+| `VITE_API_URL` | `https://YOUR-RAILWAY-BACKEND.up.railway.app/api` — replace with your real Railway backend URL + `/api`. | Production (and Preview if you use it) |
+| `VITE_APP_ENV` | `production` | Production (and Preview if you use it) |
+| `VITE_STRIPE_PUBLISHABLE_KEY` | `pk_live_...` — from Stripe Dashboard → API Keys → Publishable key. | Production (optional) |
