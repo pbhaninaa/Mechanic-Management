@@ -11,6 +11,9 @@ logs/
 # Local config with secrets (copy from application-local.example.properties)
 **/application-local.properties
 
+# Values to paste into Railway (do not commit)
+**/railway-env-values.txt
+
 ### STS ###
 .apt_generated
 .classpath

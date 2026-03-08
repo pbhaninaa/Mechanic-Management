@@ -109,3 +109,41 @@ Use this when you are ready for prod: copy each **Variable** name into the platf
 | `VITE_API_URL` | `https://YOUR-RAILWAY-BACKEND.up.railway.app/api` — replace with your real Railway backend URL + `/api`. | Production (and Preview if you use it) |
 | `VITE_APP_ENV` | `production` | Production (and Preview if you use it) |
 | `VITE_STRIPE_PUBLISHABLE_KEY` | `pk_live_...` — from Stripe Dashboard → API Keys → Publishable key. | Production (optional) |
+
+---
+
+## 5. Current setup (as set now)
+
+Reference of how variables are currently set. Replace placeholders where noted.
+
+### Railway (Backend) – Environment Variables (JSON)
+
+Replace `APP_FRONTEND_URL` with your real Vercel URL if it changed. Add `STRIPE_SECRET_KEY` from Stripe Dashboard when using payments.
+
+```json
+{
+  "SPRING_PROFILES_ACTIVE": "prod",
+  "SPRING_DATASOURCE_URL": "jdbc:mysql://trolley.proxy.rlwy.net:21098/railway?useSSL=true&serverTimezone=UTC",
+  "SPRING_DATASOURCE_USERNAME": "root",
+  "SPRING_DATASOURCE_PASSWORD": "qWPrLlZDaTsQqBwJkdoFojZhiOTJRQwD",
+  "JWT_SECRET": "THIS_IS_A_VERY_LONG_SECRET_KEY_AT_LEAST_64_BYTES_LONG_FOR_HS512___",
+  "MAIL_USERNAME": "jaystarven@gmail.com",
+  "MAIL_PASSWORD": "guuywhimnbdwjrls",
+  "MAIL_FROM": "jaystarven@gmail.com",
+  "APP_FRONTEND_URL": "https://mechanic-management-4m995c2rk-pbhanina-5058s-projects.vercel.app",
+  "APP_FRONTEND_ALLOWED_ORIGINS": "https://mechanic-management-4m995c2rk-pbhanina-5058s-projects.vercel.app",
+  "STRIPE_SECRET_KEY": ""
+}
+```
+
+### Vercel (Frontend) – Environment Variables (JSON)
+
+Replace `YOUR-RAILWAY-BACKEND` in `VITE_API_URL` with your actual Railway backend host (e.g. `your-app.up.railway.app`). Add `VITE_STRIPE_PUBLISHABLE_KEY` from Stripe if using card payments on frontend.
+
+```json
+{
+  "VITE_API_URL": "https://YOUR-RAILWAY-BACKEND.up.railway.app/api",
+  "VITE_APP_ENV": "production",
+  "VITE_STRIPE_PUBLISHABLE_KEY": ""
+}
+```

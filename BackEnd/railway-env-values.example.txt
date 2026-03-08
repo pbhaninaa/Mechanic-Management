@@ -1,0 +1,14 @@
+# Copy to railway-env-values.txt and fill in your values, then paste into Railway → Variables.
+# Variable names go in Railway "Name", values in "Value". One per line, format: NAME=value
+
+SPRING_PROFILES_ACTIVE=prod
+SPRING_DATASOURCE_URL=jdbc:mysql://HOST:PORT/DATABASE?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+SPRING_DATASOURCE_USERNAME=root
+SPRING_DATASOURCE_PASSWORD=your_db_password
+JWT_SECRET=your_64_char_secret
+STRIPE_SECRET_KEY=sk_live_or_sk_test_...
+MAIL_USERNAME=your@gmail.com
+MAIL_PASSWORD=your_app_password
+MAIL_FROM=your@gmail.com
+APP_FRONTEND_URL=https://your-app.vercel.app
+APP_FRONTEND_ALLOWED_ORIGINS=https://your-app.vercel.app,http://localhost:5173
