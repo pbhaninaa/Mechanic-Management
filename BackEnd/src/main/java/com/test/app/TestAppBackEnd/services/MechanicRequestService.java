@@ -6,6 +6,8 @@ import com.test.app.TestAppBackEnd.entities.UserProfile;
 import com.test.app.TestAppBackEnd.repositories.MechanicRequestRepository;
 import com.test.app.TestAppBackEnd.repositories.ProviderServiceOfferingRepository;
 import com.test.app.TestAppBackEnd.repositories.UserProfileRepository;
+import com.test.app.TestAppBackEnd.config.FrontendUrlResolver;
+import com.test.app.TestAppBackEnd.util.DescriptionUtils;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
@@ -25,17 +27,20 @@ public class MechanicRequestService {
     private final EmailService emailService;
     private final ClientNotificationService notificationService;
     private final ProviderServiceOfferingRepository providerServiceOfferingRepository;
+    private final FrontendUrlResolver frontendUrlResolver;
 
     public MechanicRequestService(MechanicRequestRepository repository,
                                  UserProfileRepository userProfileRepository,
                                  EmailService emailService,
                                  ClientNotificationService notificationService,
-                                 ProviderServiceOfferingRepository providerServiceOfferingRepository) {
+                                 ProviderServiceOfferingRepository providerServiceOfferingRepository,
+                                 FrontendUrlResolver frontendUrlResolver) {
         this.repository = repository;
         this.userProfileRepository = userProfileRepository;
         this.emailService = emailService;
         this.notificationService = notificationService;
         this.providerServiceOfferingRepository = providerServiceOfferingRepository;
+        this.frontendUrlResolver = frontendUrlResolver;
     }
 
     private void enrichWithPhoneNumber(MechanicRequest request) {
@@ -79,6 +84,7 @@ public class MechanicRequestService {
 
     // ================= CREATE =================
     public MechanicRequest create(MechanicRequest request) {
+        request.setDescription(DescriptionUtils.ensureDescription(request.getDescription(), "mechanic service"));
         return repository.save(request);
     }
 
@@ -224,13 +230,12 @@ public class MechanicRequestService {
     }
 
     private String toJobDescription(MechanicRequest request) {
-        if (request.getDescription() != null && !request.getDescription().isBlank()) return request.getDescription();
-         return "mechanic service";
+        return DescriptionUtils.ensureDescription(request.getDescription(), "mechanic service");
     }
 
     private void notifyClientRequestAccepted(MechanicRequest request) {
         notificationService.notifyRequestAccepted(
-                request.getUsername(), "https://172.20.10.11:3000/history", "Mechanic Request", toJobDescription(request));
+                request.getUsername(), frontendUrlResolver.getFrontendBaseUrl() + "/history", "Mechanic Request", toJobDescription(request));
     }
 
     private void notifyClientServiceCompleted(MechanicRequest request, String loggedInUsername) {
@@ -260,8 +265,8 @@ public class MechanicRequestService {
             }
         }
 
-        // Update all fields (coords not persisted; location string is used)
-        existing.setDescription(updated.getDescription());
+        // Update all fields (coords not persisted; location string is used). Description never empty or "-".
+        existing.setDescription(DescriptionUtils.ensureDescription(updated.getDescription(), existing.getDescription() != null ? existing.getDescription() : "mechanic service"));
         existing.setLocation(updated.getLocation());
         existing.setDate(updated.getDate());
         existing.setStatus(updated.getStatus());

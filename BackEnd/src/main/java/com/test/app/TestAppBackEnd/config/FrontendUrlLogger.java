@@ -2,7 +2,6 @@ package com.test.app.TestAppBackEnd.config;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
@@ -16,15 +15,18 @@ public class FrontendUrlLogger {
 
     private static final Logger log = LoggerFactory.getLogger(FrontendUrlLogger.class);
 
-    @Value("${app.frontend-url:http://localhost:5173}")
-    private String frontendUrl;
+    private final FrontendUrlResolver frontendUrlResolver;
+
+    public FrontendUrlLogger(FrontendUrlResolver frontendUrlResolver) {
+        this.frontendUrlResolver = frontendUrlResolver;
+    }
 
     @EventListener(ApplicationReadyEvent.class)
     public void logFrontendUrl() {
-        log.info("Password reset links will use: {}", frontendUrl);
-        if (frontendUrl.contains("localhost:5173")) {
-            log.warn("WARNING: app.frontend-url contains localhost:5173 - if you access the app via IP (e.g. 172.20.10.11:3000), "
-                    + "set app.frontend-url in application.yml to match (e.g. https://172.20.10.11:3000)");
+        String defaultUrl = frontendUrlResolver.getDefaultFrontendUrl();
+        log.info("Frontend base URL (default): {}. Links use request Origin when in allowlist.", defaultUrl);
+        if (defaultUrl.contains("localhost") || defaultUrl.contains("127.0.0.1")) {
+            log.warn("WARNING: default frontend URL is local. For production set app.frontend-url (or APP_FRONTEND_URL) to your Vercel URL.");
         }
     }
 }

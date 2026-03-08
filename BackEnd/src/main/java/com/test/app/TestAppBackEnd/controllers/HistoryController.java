@@ -80,9 +80,10 @@ public class HistoryController {
             );
         }
 
-        // For simplicity, update the first entry (or you can update all if needed)
+        // For simplicity, update the first entry (or you can update all if needed). Description never empty or "-".
         RequestHistory existing = existingHistories.get(0);
-        existing.setDescription(updatedRequest.getDescription());
+        existing.setDescription(com.test.app.TestAppBackEnd.util.DescriptionUtils.ensureDescription(
+                updatedRequest.getDescription(), existing.getDescription() != null ? existing.getDescription() : "Request"));
         existing.setLocation(updatedRequest.getLocation());
         existing.setDate(updatedRequest.getDate());
         existing.setStatus(updatedRequest.getStatus());

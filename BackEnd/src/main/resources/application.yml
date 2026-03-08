@@ -1,31 +1,18 @@
 spring:
-  railway:
-    schema: classpath:db/migration/V1__initial.sql
-    datasource: jdbc:mysql://trolley.proxy.rlwy.net:21098/railway?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-    username: root
-    password: qWPrLlZDaTsQqBwJkdoFojZhiOTJRQwD
-
-  railwad:
-    schema: classpath:db/migration/V1__railwad.sql   # Change if needed
-    datasource: jdbc:mysql://trolley.proxy.rlwy.net:21098/railwad?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-    username: root
-    password: qWPrLlZDaTsQqBwJkdoFojZhiOTJRQwD
-
   mail:
-    host: smtp.gmail.com
-    port: 587
-    username: jaystarven@gmail.com
-    password: guuywhimnbdwjrls
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
     properties:
       mail:
         smtp:
           auth: true
           starttls:
             enable: true
-        debug: true
-# From address for outgoing emails - must match Gmail account when using Gmail SMTP
-app.mail.from: jaystarven@gmail.com
-# Frontend URL is set per profile: application-sit/uat/prod.properties
+        debug: false
+# From address for outgoing emails - set MAIL_FROM in production (or in application-local.properties for local)
+app.mail.from: ${MAIL_FROM:}
 
-# Stripe - use env var to keep secrets out of git. Set STRIPE_SECRET_KEY (e.g. sk_test_...) before running
+# Stripe - set STRIPE_SECRET_KEY in production (e.g. sk_live_...). For local dev set in application-local.properties.
 stripe.secret-key: ${STRIPE_SECRET_KEY:}

@@ -46,9 +46,7 @@ public class ClientNotificationService {
         String toEmail = profile != null && profile.getEmail() != null && !profile.getEmail().isBlank()
                 ? profile.getEmail() : (username != null && username.contains("@") ? username : null);
 
-        String jobContext = (jobDescription != null && !jobDescription.isBlank())
-                ? jobDescription
-                : serviceType;
+        String jobContext = com.test.app.TestAppBackEnd.util.DescriptionUtils.ensureDescription(jobDescription, serviceType);
 
         String subject = "Your " + serviceType + " Request Has Been Accepted";
         String body = "Hi " + username + ",\n\n" +
@@ -74,9 +72,7 @@ public class ClientNotificationService {
         String toEmail = profile != null && profile.getEmail() != null && !profile.getEmail().isBlank()
                 ? profile.getEmail() : (clientUsername != null && clientUsername.contains("@") ? clientUsername : null);
 
-        String jobContext = (jobDescription != null && !jobDescription.isBlank())
-                ? jobDescription
-                : serviceType;
+        String jobContext = com.test.app.TestAppBackEnd.util.DescriptionUtils.ensureDescription(jobDescription, serviceType);
 
         // Determine the collection address (staff's address if available)
         String collectionAddress = BUSINESS_ADDRESS;

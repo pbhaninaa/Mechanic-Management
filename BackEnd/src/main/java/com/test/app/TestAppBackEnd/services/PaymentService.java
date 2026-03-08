@@ -7,6 +7,7 @@ import com.test.app.TestAppBackEnd.repositories.CarWashBookingRepository;
 import com.test.app.TestAppBackEnd.repositories.MechanicRequestRepository;
 import com.test.app.TestAppBackEnd.repositories.PaymentRepository;
 import com.test.app.TestAppBackEnd.repositories.UserProfileRepository;
+import com.test.app.TestAppBackEnd.util.DescriptionUtils;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -67,6 +68,7 @@ public class PaymentService {
 
         double platformFee = request.getAmount() * PLATFORM_FEE_PERCENT;
 
+        String jobDescLabel = (request.getMechanicId() != null && !request.getMechanicId().isBlank()) ? "Car Mechanical Service" : "Car Wash Service";
         Payment payment = new Payment(
                 request.getAmount() - platformFee,
                 request.getClientUsername(),
@@ -74,9 +76,10 @@ public class PaymentService {
                 request.getMechanicId(),
                 request.getCarWashId(),
                 platformFee,
-                (request.getMechanicId() != null && !request.getMechanicId().isBlank()) ? "Car Mechanical Service" : "Car Wash Service"
+                "pending"
         );
         payment.setStatus("completed");
+        payment.setJobDescription(DescriptionUtils.ensureDescription(null, jobDescLabel));
 
         Payment savedPayment = paymentRepository.save(payment);
 

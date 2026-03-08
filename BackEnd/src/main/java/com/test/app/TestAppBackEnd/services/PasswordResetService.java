@@ -5,9 +5,9 @@ import com.test.app.TestAppBackEnd.entities.User;
 import com.test.app.TestAppBackEnd.repositories.PasswordResetTokenRepository;
 import com.test.app.TestAppBackEnd.repositories.UserProfileRepository;
 import com.test.app.TestAppBackEnd.repositories.UserRepository;
+import com.test.app.TestAppBackEnd.config.FrontendUrlResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,20 +29,20 @@ public class PasswordResetService {
     private final UserProfileRepository userProfileRepository;
     private final EmailService emailService;
     private final PasswordEncoder passwordEncoder;
-
-    @Value("${app.frontend-url:http://localhost:5173}")
-    private String frontendUrl;
+    private final FrontendUrlResolver frontendUrlResolver;
 
     public PasswordResetService(PasswordResetTokenRepository tokenRepository,
             UserRepository userRepository,
             UserProfileRepository userProfileRepository,
             EmailService emailService,
-            PasswordEncoder passwordEncoder) {
+            PasswordEncoder passwordEncoder,
+            FrontendUrlResolver frontendUrlResolver) {
         this.tokenRepository = tokenRepository;
         this.userRepository = userRepository;
         this.userProfileRepository = userProfileRepository;
         this.emailService = emailService;
         this.passwordEncoder = passwordEncoder;
+        this.frontendUrlResolver = frontendUrlResolver;
     }
 
     /**
@@ -64,7 +64,7 @@ public class PasswordResetService {
         PasswordResetToken resetToken = new PasswordResetToken(username, token, expiry);
         tokenRepository.save(resetToken);
 
-        String baseUrl = frontendUrl.endsWith("/") ? frontendUrl.substring(0, frontendUrl.length() - 1) : frontendUrl;
+        String baseUrl = frontendUrlResolver.getFrontendBaseUrl();
         String resetLink = baseUrl + "/reset-password?token=" + token;
         log.info("Password reset email: sending link to {} -> {}", email, resetLink);
         String subject = "Reset Your Password";
