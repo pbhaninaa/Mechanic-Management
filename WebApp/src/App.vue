@@ -138,6 +138,7 @@ onUnmounted(() => {
   transform: scale(var(--fit-scale, 1));
   width: calc(100% / var(--fit-scale, 1));
   min-height: calc(100% / var(--fit-scale, 1));
+  height: auto !important; /* allow content to grow so .fit-screen can scroll */
 }
 
 .main-content {
@@ -150,7 +151,8 @@ onUnmounted(() => {
   background-image: url('https://i.pinimg.com/1200x/10/c0/6e/10c06ea7c9c177984e865384ce512d05.jpg');
   background-repeat: no-repeat;
   background-size: cover;  
-  background-position: center; 
+  background-position: center;
+  overflow-y: auto; /* ensure main content area scrolls when content overflows */
 }
 
 .main-unauth {

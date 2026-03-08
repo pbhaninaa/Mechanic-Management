@@ -3,6 +3,7 @@ package com.test.app.TestAppBackEnd.controllers;
 import com.test.app.TestAppBackEnd.models.ApiResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -13,16 +14,29 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
+import java.util.Arrays;
 import java.util.stream.Collectors;
 
 /**
  * Global exception handler for consistent error responses across the API.
  * Ensures all clients receive meaningful error messages and proper HTTP status codes.
+ * In non-production (sit, uat, or no profile), 500 responses include the exception message to help debug.
  */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
+    private final Environment environment;
+
+    public GlobalExceptionHandler(Environment environment) {
+        this.environment = environment;
+    }
+
+    private boolean isProduction() {
+        if (environment.getActiveProfiles().length == 0) return false;
+        return Arrays.stream(environment.getActiveProfiles()).anyMatch(p -> "prod".equalsIgnoreCase(p));
+    }
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ApiResponse<Object>> handleIllegalArgument(IllegalArgumentException ex) {
@@ -80,17 +94,22 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<ApiResponse<Object>> handleRuntimeException(RuntimeException ex) {
         log.error("Unexpected error: ", ex);
+        String message = ex.getMessage() != null ? ex.getMessage() : "An unexpected error occurred";
+        if (!isProduction()) {
+            message = message + " (server logs have full stack trace)";
+        }
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(new ApiResponse<>(
-                        ex.getMessage() != null ? ex.getMessage() : "An unexpected error occurred",
-                        HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                        null));
+                .body(new ApiResponse<>(message, HttpStatus.INTERNAL_SERVER_ERROR.value(), null));
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Object>> handleGenericException(Exception ex) {
         log.error("Unhandled exception: ", ex);
+        String message = "An unexpected error occurred. Please try again later.";
+        if (!isProduction() && ex.getMessage() != null && !ex.getMessage().isBlank()) {
+            message = ex.getMessage() + " (server logs have full stack trace)";
+        }
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(new ApiResponse<>("An unexpected error occurred. Please try again later.", HttpStatus.INTERNAL_SERVER_ERROR.value(), null));
+                .body(new ApiResponse<>(message, HttpStatus.INTERNAL_SERVER_ERROR.value(), null));
     }
 }

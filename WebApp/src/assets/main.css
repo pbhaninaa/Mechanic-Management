@@ -43,11 +43,19 @@ a,
 }
 
 /* Remove any default margins and paddings that might cause layout issues */
-html, body, #app, .v-application {
+html, body, #app {
   margin: 0 !important;
   padding: 0 !important;
   width: 100% !important;
   height: 100% !important;
+}
+
+/* Allow app container to grow for scrolling; .fit-screen > .app-container sets height: auto in App.vue */
+.v-application {
+  margin: 0 !important;
+  padding: 0 !important;
+  width: 100% !important;
+  min-height: 100% !important;
 }
 
 /* Global responsive design improvements */
