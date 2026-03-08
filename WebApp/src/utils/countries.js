@@ -1,4 +1,5 @@
 export const countries = [
+   { label: "South Africa (+27)", code: "+27", iso: "ZA", maxLength: 9, currency: "R" },/*
   { label: "Afghanistan (+93)", code: "+93", iso: "AF", maxLength: 9, currency: "؋" },
   { label: "Albania (+355)", code: "+355", iso: "AL", maxLength: 9, currency: "L" },
   { label: "Algeria (+213)", code: "+213", iso: "DZ", maxLength: 9, currency: "دج" },
@@ -42,7 +43,7 @@ export const countries = [
   { label: "Russia (+7)", code: "+7", iso: "RU", maxLength: 10, currency: "₽" },
   { label: "Saudi Arabia (+966)", code: "+966", iso: "SA", maxLength: 9, currency: "﷼" },
   { label: "Singapore (+65)", code: "+65", iso: "SG", maxLength: 8, currency: "$" },
-  { label: "South Africa (+27)", code: "+27", iso: "ZA", maxLength: 9, currency: "R" },
+ 
   { label: "South Korea (+82)", code: "+82", iso: "KR", maxLength: 10, currency: "₩" },
   { label: "Spain (+34)", code: "+34", iso: "ES", maxLength: 9, currency: "€" },
   { label: "Sweden (+46)", code: "+46", iso: "SE", maxLength: 9, currency: "kr" },
@@ -57,5 +58,5 @@ export const countries = [
   { label: "United States (+1)", code: "+1", iso: "US", maxLength: 10, currency: "$" },
   { label: "Vietnam (+84)", code: "+84", iso: "VN", maxLength: 9, currency: "₫" },
   { label: "Zambia (+260)", code: "+260", iso: "ZM", maxLength: 9, currency: "ZK" },
-  { label: "Zimbabwe (+263)", code: "+263", iso: "ZW", maxLength: 9, currency: "Z$" }
+  { label: "Zimbabwe (+263)", code: "+263", iso: "ZW", maxLength: 9, currency: "Z$" }*/
 ];

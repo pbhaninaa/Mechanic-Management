@@ -63,6 +63,16 @@
           <!-- Editable Roles Multi-Select -->
           <v-select v-model="selectedUser.roles" :items="availableRoles" label="Roles" :multiple="false" chips
             variant="outlined" required />
+
+          <!-- Number of Employees (required for MECHANIC / CARWASH) -->
+          <InputField
+            v-if="isEditProviderRole"
+            v-model.number="selectedUser.numberOfEmployees"
+            label="Number of Employees"
+            type="number"
+            :disabled="loading"
+            required
+          />
         </v-card-text>
 
         <!-- Centered Buttons -->
@@ -93,6 +103,14 @@
           <InputField v-model="createForm.address" label="Address" type="text" :disabled="createLoading" />
           <v-select v-model="createForm.roles" :items="availableRoles" label="Role" chips :multiple="false"
             variant="outlined" required :disabled="createLoading" />
+          <InputField
+            v-if="isCreateProviderRole"
+            v-model.number="createForm.numberOfEmployees"
+            label="Number of Employees"
+            type="number"
+            :disabled="createLoading"
+            required
+          />
         </v-card-text>
         <v-card-actions>
           <v-spacer />
@@ -203,31 +221,57 @@ const createForm = ref({
   countryCode: '+27',
   address: '',
   roles: 'CLIENT',
+  numberOfEmployees: null as number | null,
 });
 
-const isCreateFormValid = computed(() => (
-  createForm.value.username?.trim() &&
-  createForm.value.password?.trim() &&
-  createForm.value.firstName?.trim() &&
-  createForm.value.lastName?.trim() &&
-  createForm.value.email?.trim() &&
-  isCreatePhoneValid.value &&
-  createForm.value.roles
-));
+/** True when created user's role is MECHANIC or CARWASH */
+const isCreateProviderRole = computed(() => {
+  const r = createForm.value.roles;
+  return r === 'MECHANIC' || r === 'CARWASH';
+});
+
+const isCreateFormValid = computed(() => {
+  const base =
+    createForm.value.username?.trim() &&
+    createForm.value.password?.trim() &&
+    createForm.value.firstName?.trim() &&
+    createForm.value.lastName?.trim() &&
+    createForm.value.email?.trim() &&
+    isCreatePhoneValid.value &&
+    createForm.value.roles;
+  if (!base) return false;
+  if (isCreateProviderRole.value) {
+    const n = createForm.value.numberOfEmployees;
+    return n != null && Number(n) >= 1;
+  }
+  return true;
+});
 
 // Available roles
 const availableRoles = ['CLIENT', 'MECHANIC', 'ADMIN', 'CARWASH'];
 
+/** True when edited user's role is MECHANIC or CARWASH (array or single value from v-select) */
+const isEditProviderRole = computed(() => {
+  const r = selectedUser.value?.roles;
+  const role = Array.isArray(r) && r.length ? r[0] : r;
+  return role === 'MECHANIC' || role === 'CARWASH';
+});
+
 // Form validation
 const isFormValid = computed(() => {
-  return (
+  const base =
     selectedUser.value.firstName &&
     selectedUser.value.lastName &&
     selectedUser.value.username &&
     selectedUser.value.email &&
     isPhoneValid.value &&
-    selectedUser.value.roles?.length > 0
-  );
+    selectedUser.value.roles?.length > 0;
+  if (!base) return false;
+  if (isEditProviderRole.value) {
+    const n = selectedUser.value.numberOfEmployees;
+    return n != null && Number(n) >= 1;
+  }
+  return true;
 });
 
 const getDefaultCreateForm = () => ({
@@ -240,6 +284,7 @@ const getDefaultCreateForm = () => ({
   countryCode: '+27',
   address: '',
   roles: 'CLIENT',
+  numberOfEmployees: null as number | null,
 });
 
 const openCreateUserDialog = () => {
@@ -259,7 +304,7 @@ const getErrorMessage = (err: any) =>
 
 const runCreateProfile = async () => {
   const rolesVal = createForm.value.roles;
-  const profileData = {
+  const profileData: Record<string, unknown> = {
     username: createForm.value.username.trim(),
     firstName: createForm.value.firstName.trim(),
     lastName: createForm.value.lastName.trim(),
@@ -269,6 +314,10 @@ const runCreateProfile = async () => {
     address: createForm.value.address?.trim() || '',
     roles: Array.isArray(rolesVal) ? rolesVal : [rolesVal],
   };
+  if (createForm.value.roles === 'MECHANIC' || createForm.value.roles === 'CARWASH') {
+    const n = createForm.value.numberOfEmployees;
+    profileData.numberOfEmployees = n != null && Number(n) >= 1 ? Number(n) : 1;
+  }
   await apiService.createUserProfile(profileData, { skipGlobalToast: true });
 };
 
@@ -349,7 +398,8 @@ const editUser = (user: any) => {
   selectedUser.value = {
     ...user,
     phoneNumber: user.phoneNumber || "",
-    countryCode: user.countryCode || "+27"
+    countryCode: user.countryCode || "+27",
+    numberOfEmployees: user.numberOfEmployees ?? null
   };
   editDialog.value = true;
 };
