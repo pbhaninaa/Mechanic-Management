@@ -1,7 +1,6 @@
 package com.test.app.TestAppBackEnd.security;
 
 import com.test.app.TestAppBackEnd.services.CustomUserDetailsService;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -16,9 +15,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Configuration
 public class SecurityConfig {
@@ -41,18 +38,11 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http,
-            @Value("${app.cors.allowed-origins:${app.frontend-allowed-origins:}}") String allowedOriginsConfig) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         CorsConfiguration config = new CorsConfiguration();
-        List<String> origins = parseOrigins(allowedOriginsConfig);
-        if (origins.isEmpty()) {
-            config.setAllowedOriginPatterns(List.of("*"));
-        } else {
-            config.setAllowedOrigins(origins);
-        }
-
+        config.setAllowedOriginPatterns(List.of("*"));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
@@ -77,13 +67,5 @@ public class SecurityConfig {
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
-    }
-
-    private static List<String> parseOrigins(String config) {
-        if (config == null || config.isBlank()) return List.of();
-        return Arrays.stream(config.split(","))
-                .map(String::trim)
-                .filter(s -> !s.isEmpty())
-                .collect(Collectors.toList());
     }
 }
