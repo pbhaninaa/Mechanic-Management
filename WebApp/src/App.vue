@@ -1,4 +1,5 @@
 <template>
+  <div class="fit-screen" :style="{ '--fit-scale': fitScale }">
   <v-app class="app-container">
     <!-- Global success toast -->
     <v-snackbar v-model="toastSuccessVisible" :timeout="4000" color="green" location="top" class="toast-snackbar">
@@ -44,6 +45,7 @@
       </router-view>
     </v-main>
   </v-app>
+  </div>
 </template>
 
 <script setup>
@@ -75,6 +77,16 @@ toast.subscribe(({ type, message }) => {
 });
 const windowWidth = ref(window.innerWidth);
 
+// Fit to screen: scale down on small viewports so everything is visible (reference 1280×720)
+const FIT_REF_WIDTH = 1280;
+const FIT_REF_HEIGHT = 720;
+const fitScale = ref(1);
+const updateFitScale = () => {
+  const w = window.innerWidth;
+  const h = window.innerHeight;
+  const s = Math.min(1, w / FIT_REF_WIDTH, h / FIT_REF_HEIGHT);
+  fitScale.value = Math.max(0.25, Math.round(s * 100) / 100);
+};
 
 // Responsive
 const isMobile = computed(() => windowWidth.value < 960);
@@ -89,14 +101,16 @@ const checkAuth = () => {
   isAuthenticated.value = !!token;
 };
 
-// Update window width
+// Update window width and fit scale
 const handleResize = () => {
   windowWidth.value = window.innerWidth;
+  updateFitScale();
 };
 
 onMounted(() => {
   checkAuth();
   handleResize();
+  updateFitScale();
   window.addEventListener("storage", checkAuth);
   window.addEventListener("resize", handleResize);
   // Listen for auth changes (login, logout, profile save) — avoids full reload
@@ -111,6 +125,21 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+/* Scale app to fit viewport on small screens so everything is visible */
+.fit-screen {
+  width: 100vw;
+  height: 100vh;
+  overflow-x: hidden;
+  overflow-y: auto;
+  display: block;
+}
+.fit-screen > .app-container {
+  transform-origin: 0 0;
+  transform: scale(var(--fit-scale, 1));
+  width: calc(100% / var(--fit-scale, 1));
+  min-height: calc(100% / var(--fit-scale, 1));
+}
+
 .main-content {
   background-color: rgb(255, 255, 255);  
   transition: margin-left 0.3s ease;
