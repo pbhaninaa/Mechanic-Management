@@ -32,12 +32,16 @@
       ref="sidebarNav"
     />
 
-    <!-- Main content reacts to sidebar -->
+    <!-- Main content reacts to sidebar. keep-alive caches list views so revisiting doesn't refetch. -->
     <v-main
       :class="mainClasses"
       class="main-content"
     >
-      <router-view />
+      <router-view v-slot="{ Component, route }">
+        <keep-alive :max="12">
+          <component :is="Component" :key="route.path" />
+        </keep-alive>
+      </router-view>
     </v-main>
   </v-app>
 </template>

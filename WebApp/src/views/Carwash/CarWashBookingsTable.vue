@@ -144,7 +144,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch } from "vue";
+import { ref, onMounted, onActivated, onDeactivated, watch } from "vue";
 import PageContainer from "@/components/PageContainer.vue";
 import InputField from "@/components/InputField.vue";
 import apiService from "@/api/apiService";
@@ -314,8 +314,9 @@ const searchQuery = ref("");
 function onSearch(q) {
   searchQuery.value = q;
 }
-const fetchBookings = async () => {
-  loading.value = true;
+/** @param showLoading - if false, refresh in background without spinner (e.g. when returning to cached page) */
+const fetchBookings = async (showLoading = true) => {
+  if (showLoading) loading.value = true;
   tableError.value = "";
   try {
     const params = searchQuery.value ? { search: searchQuery.value } : {};
@@ -339,9 +340,9 @@ const fetchBookings = async () => {
     bookings.value = sortRequestsByStatus(list);
   } catch (err: any) {
     tableError.value = err?.message || "Failed to load bookings.";
-    bookings.value = [];
+    if (showLoading) bookings.value = [];
   } finally {
-    loading.value = false;
+    if (showLoading) loading.value = false;
   }
 };
 watch(searchQuery, () => fetchBookings());
@@ -428,5 +429,17 @@ async function doDeleteBooking() {
   }
 }
 
-onMounted(fetchBookings);
+const wasDeactivatedOnce = ref(false);
+onMounted(() => {
+  loading.value = true;
+  fetchBookings();
+});
+
+// When returning to this cached page, refresh in background so DB changes appear
+onActivated(() => {
+  if (wasDeactivatedOnce.value) fetchBookings(false);
+});
+onDeactivated(() => {
+  wasDeactivatedOnce.value = true;
+});
 </script>

@@ -5,8 +5,7 @@ import com.test.app.TestAppBackEnd.entities.UserProfile;
 import com.test.app.TestAppBackEnd.models.ApiResponse;
 import com.test.app.TestAppBackEnd.models.CommunicationRequest;
 import com.test.app.TestAppBackEnd.repositories.UserProfileRepository;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.scheduling.annotation.Async;
 
@@ -82,15 +81,17 @@ public class UserProfileService {
         return repository.findByRoles(role);
     }
 
+    private static final int DEFAULT_PAGE_SIZE = 50;
+
     public Iterable<UserProfile> getAllProfiles() {
-        return repository.findAll();
+        return repository.findAll(PageRequest.of(0, DEFAULT_PAGE_SIZE)).getContent();
     }
 
     public Iterable<UserProfile> getAllProfiles(String search) {
         if (search != null && !search.isBlank()) {
-            return repository.findAllWithSearch(search.trim());
+            return repository.findAllWithSearch(search.trim(), PageRequest.of(0, DEFAULT_PAGE_SIZE)).getContent();
         }
-        return repository.findAll();
+        return repository.findAll(PageRequest.of(0, DEFAULT_PAGE_SIZE)).getContent();
     }
 
     // ================= UPDATE =================

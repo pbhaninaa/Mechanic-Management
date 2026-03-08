@@ -7,6 +7,7 @@ import com.test.app.TestAppBackEnd.repositories.CarWashBookingRepository;
 import com.test.app.TestAppBackEnd.repositories.MechanicRequestRepository;
 import com.test.app.TestAppBackEnd.repositories.PaymentRepository;
 import com.test.app.TestAppBackEnd.repositories.UserProfileRepository;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.scheduling.annotation.Async;
@@ -85,16 +86,18 @@ public class PaymentService {
         return savedPayment;
     }
 
+    private static final int DEFAULT_PAGE_SIZE = 50;
+
     // ================= GETTERS =================
     public List<Payment> getAllPayments() {
-        return paymentRepository.findAll();
+        return paymentRepository.findAll(PageRequest.of(0, DEFAULT_PAGE_SIZE)).getContent();
     }
 
     public List<Payment> getAllPayments(String search) {
         if (search != null && !search.isBlank()) {
-            return paymentRepository.findAllWithSearch(search.trim());
+            return paymentRepository.findAllWithSearch(search.trim(), PageRequest.of(0, DEFAULT_PAGE_SIZE)).getContent();
         }
-        return paymentRepository.findAll();
+        return paymentRepository.findAll(PageRequest.of(0, DEFAULT_PAGE_SIZE)).getContent();
     }
 
     public List<Payment> getPaymentsByClient(String clientUsername) {

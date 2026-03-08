@@ -1,9 +1,7 @@
 <template>
   <PageContainer>
       <v-card-text>
-        <v-alert v-if="error" type="error" density="compact" class="mb-3" closable @click:close="error = ''">
-          {{ error }}
-        </v-alert>
+     
 
         <TableComponent
           title="Users Management"
@@ -142,7 +140,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue';
+import { ref, computed, onMounted, onActivated, onDeactivated, watch } from 'vue';
 import PageContainer from '@/components/PageContainer.vue';
 import InputField from '@/components/InputField.vue';
 import Button from '@/components/Button.vue';
@@ -330,8 +328,9 @@ const searchQuery = ref("");
 function onSearch(q) {
   searchQuery.value = q;
 }
-const loadUsers = async () => {
-  loading.value = true;
+/** @param showLoading - if false, refresh in background (e.g. when returning to cached page) */
+const loadUsers = async (showLoading = true) => {
+  if (showLoading) loading.value = true;
   error.value = null;
   try {
     const params = searchQuery.value ? { search: searchQuery.value } : {};
@@ -340,7 +339,7 @@ const loadUsers = async () => {
   } catch (err: any) {
     error.value = err.message || 'Failed to fetch users';
   } finally {
-    loading.value = false;
+    if (showLoading) loading.value = false;
   }
 };
 watch(searchQuery, () => loadUsers());
@@ -445,5 +444,17 @@ const deleteAllConfirmed = async () => {
 };
 
 
-onMounted(loadUsers);
+const wasDeactivatedOnce = ref(false);
+onMounted(() => {
+  loading.value = true;
+  loadUsers();
+});
+
+// When returning to this cached page, refresh in background so DB changes appear
+onActivated(() => {
+  if (wasDeactivatedOnce.value) loadUsers(false);
+});
+onDeactivated(() => {
+  wasDeactivatedOnce.value = true;
+});
 </script>

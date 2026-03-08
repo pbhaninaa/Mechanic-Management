@@ -51,7 +51,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from "vue";
+import { ref, computed, onMounted, onActivated, onDeactivated, watch } from "vue";
 import PageContainer from "@/components/PageContainer.vue";
 import { getStatusColor, sortRequestsByStatus } from "@/utils/helper";
 import apiService from "@/api/apiService";
@@ -153,8 +153,9 @@ const searchQuery = ref("");
 function onSearch(q) {
   searchQuery.value = q;
 }
-const fetchJobs = async () => {
-  loading.value = true;
+/** @param showLoading - if false, refresh in background (e.g. when returning to cached page) */
+const fetchJobs = async (showLoading = true) => {
+  if (showLoading) loading.value = true;
   tableError.value = "";
   try {
     const role = (loggedInUser?.roles?.[0] ?? "").toString().toLowerCase();
@@ -177,12 +178,24 @@ const fetchJobs = async () => {
     jobs.value = sortRequestsByStatus(data, "manage");
   } catch (err: any) {
     tableError.value = err?.message || "Failed to load jobs.";
-    jobs.value = [];
+    if (showLoading) jobs.value = [];
   } finally {
-    loading.value = false;
+    if (showLoading) loading.value = false;
   }
 };
 watch(searchQuery, () => fetchJobs());
 
-onMounted(fetchJobs);
+const wasDeactivatedOnce = ref(false);
+onMounted(() => {
+  loading.value = true;
+  fetchJobs();
+});
+
+// When returning to this cached page, refresh in background so DB changes appear
+onActivated(() => {
+  if (wasDeactivatedOnce.value) fetchJobs(false);
+});
+onDeactivated(() => {
+  wasDeactivatedOnce.value = true;
+});
 </script>

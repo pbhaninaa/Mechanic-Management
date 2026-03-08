@@ -1,6 +1,8 @@
 package com.test.app.TestAppBackEnd.repositories;
 
 import com.test.app.TestAppBackEnd.entities.Payment;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -16,10 +18,13 @@ public interface PaymentRepository extends JpaRepository<Payment, String> {
     List<Payment> findByMechanicIdAndPaidAtBetweenOrderByPaidAtDesc(String mechanicId, LocalDateTime start, LocalDateTime end);
     List<Payment> findByCarWashIdAndPaidAtBetweenOrderByPaidAtDesc(String carWashId, LocalDateTime start, LocalDateTime end);
 
-    @Query("SELECT p FROM Payment p WHERE (:q IS NULL OR :q = '' OR " +
+    @Query(value = "SELECT p FROM Payment p WHERE (:q IS NULL OR :q = '' OR " +
             "LOWER(COALESCE(p.jobDescription, '')) LIKE LOWER(CONCAT('%', :q, '%')) OR LOWER(COALESCE(p.clientUsername, '')) LIKE LOWER(CONCAT('%', :q, '%')) OR " +
-            "LOWER(COALESCE(p.status, '')) LIKE LOWER(CONCAT('%', :q, '%')) OR LOWER(COALESCE(p.jobId, '')) LIKE LOWER(CONCAT('%', :q, '%'))) ORDER BY p.paidAt DESC")
-    List<Payment> findAllWithSearch(@Param("q") String q);
+            "LOWER(COALESCE(p.status, '')) LIKE LOWER(CONCAT('%', :q, '%')) OR LOWER(COALESCE(p.jobId, '')) LIKE LOWER(CONCAT('%', :q, '%'))) ORDER BY p.paidAt DESC",
+            countQuery = "SELECT COUNT(p) FROM Payment p WHERE (:q IS NULL OR :q = '' OR " +
+            "LOWER(COALESCE(p.jobDescription, '')) LIKE LOWER(CONCAT('%', :q, '%')) OR LOWER(COALESCE(p.clientUsername, '')) LIKE LOWER(CONCAT('%', :q, '%')) OR " +
+            "LOWER(COALESCE(p.status, '')) LIKE LOWER(CONCAT('%', :q, '%')) OR LOWER(COALESCE(p.jobId, '')) LIKE LOWER(CONCAT('%', :q, '%')))")
+    Page<Payment> findAllWithSearch(@Param("q") String q, Pageable pageable);
 
     @Query("SELECT p FROM Payment p WHERE p.mechanicId = :mechanicId AND (:q IS NULL OR :q = '' OR " +
             "LOWER(COALESCE(p.jobDescription, '')) LIKE LOWER(CONCAT('%', :q, '%')) OR LOWER(COALESCE(p.clientUsername, '')) LIKE LOWER(CONCAT('%', :q, '%')) OR " +

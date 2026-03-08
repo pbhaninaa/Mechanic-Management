@@ -4,11 +4,15 @@ import com.test.app.TestAppBackEnd.entities.MechanicRequest;
 import com.test.app.TestAppBackEnd.entities.UserProfile;
 import com.test.app.TestAppBackEnd.repositories.MechanicRequestRepository;
 import com.test.app.TestAppBackEnd.repositories.UserProfileRepository;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 public class MechanicRequestService {
@@ -31,14 +35,30 @@ public class MechanicRequestService {
     private void enrichWithPhoneNumber(MechanicRequest request) {
         if (request.getUsername() != null) {
             String phone = userProfileRepository.findByUsername(request.getUsername())
-                    .map(p -> p.getPhoneNumber())
+                    .map(UserProfile::getPhoneNumber)
                     .orElse(null);
             request.setPhoneNumber(phone != null && !phone.isBlank() ? phone : null);
         }
     }
 
+    /** Batch-fetch profiles by usernames (one query) and set phone numbers on requests. Avoids N+1. */
     private List<MechanicRequest> enrichWithPhoneNumbers(List<MechanicRequest> requests) {
-        requests.forEach(this::enrichWithPhoneNumber);
+        if (requests == null || requests.isEmpty()) return requests;
+        Set<String> usernames = requests.stream()
+                .map(MechanicRequest::getUsername)
+                .filter(u -> u != null && !u.isBlank())
+                .collect(Collectors.toSet());
+        if (usernames.isEmpty()) return requests;
+        List<UserProfile> profiles = userProfileRepository.findByUsernameIn(usernames);
+        Map<String, String> usernameToPhone = profiles.stream()
+                .filter(p -> p.getPhoneNumber() != null && !p.getPhoneNumber().isBlank())
+                .collect(Collectors.toMap(UserProfile::getUsername, UserProfile::getPhoneNumber, (a, b) -> a));
+        for (MechanicRequest r : requests) {
+            if (r.getUsername() != null) {
+                String phone = usernameToPhone.get(r.getUsername());
+                r.setPhoneNumber(phone);
+            }
+        }
         return requests;
     }
 
@@ -56,16 +76,19 @@ public class MechanicRequestService {
         return repository.save(request);
     }
 
+    /** Default max rows for list endpoints so tables load quickly. */
+    private static final int DEFAULT_PAGE_SIZE = 50;
+
     // ================= READ =================
     public List<MechanicRequest> getAll() {
-        List<MechanicRequest> all = repository.findAll();
+        List<MechanicRequest> all = repository.findAll(PageRequest.of(0, DEFAULT_PAGE_SIZE)).getContent();
         return enrichWithPhoneNumbers(all);
     }
 
     public List<MechanicRequest> getAll(String search) {
         List<MechanicRequest> list = (search != null && !search.isBlank())
-                ? repository.findAllWithSearch(search.trim())
-                : repository.findAll();
+                ? repository.findAllWithSearch(search.trim(), PageRequest.of(0, DEFAULT_PAGE_SIZE)).getContent()
+                : repository.findAll(PageRequest.of(0, DEFAULT_PAGE_SIZE)).getContent();
         return enrichWithPhoneNumbers(list);
     }
 

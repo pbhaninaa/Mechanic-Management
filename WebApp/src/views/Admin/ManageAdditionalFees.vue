@@ -4,7 +4,7 @@
       <v-card-title>Additional Fees</v-card-title>
       <v-card-subtitle>Manage call-out, towing, and other additional fees. Only admins can add, update, or delete.</v-card-subtitle>
       <v-card-text>
-        <v-alert v-if="error" type="error" density="compact" class="mb-3">{{ error }}</v-alert>
+        
         <v-progress-linear v-if="loading" indeterminate color="primary" class="mb-3" />
         <v-table v-else>
           <thead>

@@ -4,6 +4,7 @@ import com.test.app.TestAppBackEnd.entities.CarWashBooking;
 import com.test.app.TestAppBackEnd.entities.UserProfile;
 import com.test.app.TestAppBackEnd.repositories.CarWashBookingRepository;
 import com.test.app.TestAppBackEnd.repositories.UserProfileRepository;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -57,16 +58,19 @@ public class CarWashBookingService {
         return repository.save(booking);
     }
 
+    /** Default max rows for list endpoints so tables load quickly. */
+    private static final int DEFAULT_PAGE_SIZE = 50;
+
     // ================= READ =================
     public List<CarWashBooking> getAllBookings() {
-        return repository.findAll();
+        return repository.findAll(PageRequest.of(0, DEFAULT_PAGE_SIZE)).getContent();
     }
 
     public List<CarWashBooking> getAllBookings(String search) {
         if (search != null && !search.isBlank()) {
-            return repository.findAllWithSearch(search.trim());
+            return repository.findAllWithSearch(search.trim(), PageRequest.of(0, DEFAULT_PAGE_SIZE)).getContent();
         }
-        return repository.findAll();
+        return repository.findAll(PageRequest.of(0, DEFAULT_PAGE_SIZE)).getContent();
     }
 
     public List<CarWashBooking> getBookingsByClient(String clientUsername) {
@@ -129,7 +133,7 @@ public class CarWashBookingService {
                 }
             }
             // Update all booking fields (date saved as yyyy-MM-dd for range search)
-             booking.setDate(updatedBooking.getDate());
+            booking.setDate(updatedBooking.getDate());
             booking.setCarPlate(updatedBooking.getCarPlate());
             booking.setCarType(updatedBooking.getCarType());
             booking.setCarDescription(updatedBooking.getCarDescription());

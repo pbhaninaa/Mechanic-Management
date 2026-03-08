@@ -1,6 +1,8 @@
 package com.test.app.TestAppBackEnd.repositories;
 
 import com.test.app.TestAppBackEnd.entities.MechanicRequest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -27,11 +29,15 @@ public interface MechanicRequestRepository extends JpaRepository<MechanicRequest
             "LOWER(COALESCE(m.carPlate, '')) LIKE LOWER(CONCAT('%', :q, '%'))) ORDER BY m.date DESC")
     List<MechanicRequest> findByMechanicIdWithSearch(@Param("mechanicId") String mechanicId, @Param("q") String q);
 
-    @Query("SELECT m FROM MechanicRequest m WHERE (:q IS NULL OR :q = '' OR " +
+    @Query(value = "SELECT m FROM MechanicRequest m WHERE (:q IS NULL OR :q = '' OR " +
             "LOWER(COALESCE(m.description, '')) LIKE LOWER(CONCAT('%', :q, '%')) OR LOWER(COALESCE(m.location, '')) LIKE LOWER(CONCAT('%', :q, '%')) OR " +
             "LOWER(m.status) LIKE LOWER(CONCAT('%', :q, '%')) OR LOWER(COALESCE(m.username, '')) LIKE LOWER(CONCAT('%', :q, '%')) OR " +
-            "LOWER(COALESCE(m.carPlate, '')) LIKE LOWER(CONCAT('%', :q, '%'))) ORDER BY m.date DESC")
-    List<MechanicRequest> findAllWithSearch(@Param("q") String q);
+            "LOWER(COALESCE(m.carPlate, '')) LIKE LOWER(CONCAT('%', :q, '%'))) ORDER BY m.date DESC",
+            countQuery = "SELECT COUNT(m) FROM MechanicRequest m WHERE (:q IS NULL OR :q = '' OR " +
+            "LOWER(COALESCE(m.description, '')) LIKE LOWER(CONCAT('%', :q, '%')) OR LOWER(COALESCE(m.location, '')) LIKE LOWER(CONCAT('%', :q, '%')) OR " +
+            "LOWER(m.status) LIKE LOWER(CONCAT('%', :q, '%')) OR LOWER(COALESCE(m.username, '')) LIKE LOWER(CONCAT('%', :q, '%')) OR " +
+            "LOWER(COALESCE(m.carPlate, '')) LIKE LOWER(CONCAT('%', :q, '%')))")
+    Page<MechanicRequest> findAllWithSearch(@Param("q") String q, Pageable pageable);
 
     /** Requests for a user within date range */
     List<MechanicRequest> findByUsernameAndDateBetweenOrderByDateDesc(String username, LocalDate startDate, LocalDate endDate);

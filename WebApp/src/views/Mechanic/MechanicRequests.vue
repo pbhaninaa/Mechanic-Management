@@ -126,7 +126,7 @@
 
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from "vue";
+import { ref, computed, onMounted, onUnmounted, onActivated, onDeactivated } from "vue";
 import PageContainer from "@/components/PageContainer.vue";
 import InputField from "@/components/InputField.vue";
 import apiService from "@/api/apiService";
@@ -343,8 +343,9 @@ const confirmAssign = async () => {
   }
 };
 
-const loadJobRequests = async () => {
-  tableLoading.value = true;
+/** @param background - if true, don't show loading spinner (e.g. when returning to cached page or polling) */
+const loadJobRequests = async (background = false) => {
+  if (!background) tableLoading.value = true;
   tableError.value = "";
   try {
     const res = await apiService.getAllRequestHistory();
@@ -371,9 +372,9 @@ const loadJobRequests = async () => {
     jobRequests.value = sorted;
   } catch (err: any) {
     tableError.value = err?.message || "Failed to load job requests.";
-    jobRequests.value = [];
+    if (!background) jobRequests.value = [];
   } finally {
-    tableLoading.value = false;
+    if (!background) tableLoading.value = false;
   }
 };
 const updateJobStatus = async (job: JobRequest, status: string, mechanicIdOverride?: string) => {
@@ -464,8 +465,24 @@ async function doDeleteJob() {
 }
 
 onMounted(() => {
+  tableLoading.value = true;
   loadJobRequests();
-  pollTimerId = setInterval(loadJobRequests, pollIntervalMs);
+  pollTimerId = setInterval(() => loadJobRequests(true), pollIntervalMs);
+});
+
+// With keep-alive, component is cached when navigating away; refresh data and restart poll when shown
+onActivated(() => {
+  loadJobRequests(true); // background refresh so DB changes appear
+  if (pollTimerId == null) {
+    pollTimerId = setInterval(() => loadJobRequests(true), pollIntervalMs);
+  }
+});
+
+onDeactivated(() => {
+  if (pollTimerId != null) {
+    clearInterval(pollTimerId);
+    pollTimerId = null;
+  }
 });
 
 onUnmounted(() => {

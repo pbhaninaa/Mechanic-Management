@@ -3,9 +3,6 @@
     <h1>{{ config.title }}</h1>
     <p>{{ config.welcomeMsg }}</p>
 
-    <v-alert v-if="error" type="error" density="compact" class="mb-3" closable @click:close="error = null">
-      {{ error }}
-    </v-alert>
 
     <!-- Stats Cards with colors -->
     <v-row class="mt-4" dense>

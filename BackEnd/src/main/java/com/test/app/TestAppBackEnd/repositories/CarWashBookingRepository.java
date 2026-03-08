@@ -1,6 +1,8 @@
 package com.test.app.TestAppBackEnd.repositories;
 
 import com.test.app.TestAppBackEnd.entities.CarWashBooking;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -25,16 +27,23 @@ public interface CarWashBookingRepository extends JpaRepository<CarWashBooking, 
             "ORDER BY b.date DESC")
     List<CarWashBooking> findByClientUsernameWithSearch(@Param("username") String username, @Param("q") String q);
 
-    /** Search all bookings (ignores date for string search) */
-    @Query("SELECT b FROM CarWashBooking b WHERE " +
+    /** Search all bookings (ignores date for string search), limited by pageable. */
+    @Query(value = "SELECT b FROM CarWashBooking b WHERE " +
             "(:q IS NULL OR :q = '' " +
             "OR LOWER(COALESCE(b.carPlate, '')) LIKE LOWER(CONCAT('%', :q, '%')) " +
             "OR LOWER(COALESCE(b.location, '')) LIKE LOWER(CONCAT('%', :q, '%')) " +
             "OR LOWER(b.status) LIKE LOWER(CONCAT('%', :q, '%')) " +
             "OR LOWER(COALESCE(b.carDescription, '')) LIKE LOWER(CONCAT('%', :q, '%')) " +
             "OR LOWER(COALESCE(b.clientUsername, '')) LIKE LOWER(CONCAT('%', :q, '%'))) " +
-            "ORDER BY b.createdAt DESC")
-    List<CarWashBooking> findAllWithSearch(@Param("q") String q);
+            "ORDER BY b.createdAt DESC",
+            countQuery = "SELECT COUNT(b) FROM CarWashBooking b WHERE " +
+            "(:q IS NULL OR :q = '' " +
+            "OR LOWER(COALESCE(b.carPlate, '')) LIKE LOWER(CONCAT('%', :q, '%')) " +
+            "OR LOWER(COALESCE(b.location, '')) LIKE LOWER(CONCAT('%', :q, '%')) " +
+            "OR LOWER(b.status) LIKE LOWER(CONCAT('%', :q, '%')) " +
+            "OR LOWER(COALESCE(b.carDescription, '')) LIKE LOWER(CONCAT('%', :q, '%')) " +
+            "OR LOWER(COALESCE(b.clientUsername, '')) LIKE LOWER(CONCAT('%', :q, '%')))")
+    Page<CarWashBooking> findAllWithSearch(@Param("q") String q, Pageable pageable);
 
     /** Search bookings for a specific car wash */
     @Query("SELECT b FROM CarWashBooking b WHERE b.carWashId = :carWashId AND " +
