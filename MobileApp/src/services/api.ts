@@ -182,6 +182,7 @@ class ApiService {
     countryCode?: string;
     address?: string;
     roles: string[];
+    numberOfEmployees?: number;
   }): Promise<ApiResponse<User>> {
     try {
       const { data } = await this.api.post<ApiResponse<any>>('/user-profile', profileData);

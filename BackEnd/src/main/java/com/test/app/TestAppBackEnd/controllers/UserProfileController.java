@@ -28,6 +28,17 @@ public class UserProfileController {
             @RequestBody UserProfile profile,
             Authentication authentication) {
 
+        // Validation: MECHANIC and CARWASH require numberOfEmployees >= 1
+        if (profile.getRoles() != null &&
+                (profile.getRoles().contains(Role.MECHANIC) || profile.getRoles().contains(Role.CARWASH))) {
+            if (profile.getNumberOfEmployees() == null || profile.getNumberOfEmployees() < 1) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(new ApiResponse<>(
+                                "Number of employees is required for CARWASH and MECHANIC providers and must be at least 1.",
+                                HttpStatus.BAD_REQUEST.value(), null));
+            }
+        }
+
         try {
             UserProfile saved = userProfileService.createProfileForUser(profile);
 
@@ -35,8 +46,12 @@ public class UserProfileController {
                     .body(new ApiResponse<>("Profile created successfully", HttpStatus.CREATED.value(), saved));
 
         } catch (IllegalArgumentException ex) {
-            return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body(new ApiResponse<>(ex.getMessage(), HttpStatus.CONFLICT.value(), null));
+            // Validation errors (e.g. number of employees) -> 400; duplicate username/email -> 409
+            boolean isValidationError = ex.getMessage() != null
+                    && ex.getMessage().contains("Number of employees");
+            HttpStatus status = isValidationError ? HttpStatus.BAD_REQUEST : HttpStatus.CONFLICT;
+            return ResponseEntity.status(status)
+                    .body(new ApiResponse<>(ex.getMessage(), status.value(), null));
         }
     }
 

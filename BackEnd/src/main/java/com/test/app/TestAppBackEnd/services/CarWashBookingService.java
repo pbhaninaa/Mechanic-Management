@@ -1,9 +1,9 @@
 package com.test.app.TestAppBackEnd.services;
 
 import com.test.app.TestAppBackEnd.entities.CarWashBooking;
+import com.test.app.TestAppBackEnd.entities.UserProfile;
 import com.test.app.TestAppBackEnd.repositories.CarWashBookingRepository;
 import com.test.app.TestAppBackEnd.repositories.UserProfileRepository;
-import com.test.app.TestAppBackEnd.util.DateFormatUtil;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -104,20 +104,28 @@ public class CarWashBookingService {
         return repository.findById(id);
     }
 
-    private static final int MAX_INCOMPLETE_JOBS = 5;
+    /** Max concurrent paid/in-progress jobs = provider's numberOfEmployees (default 1 if not set). */
+    private int getMaxPaidJobsForProvider(String providerProfileId) {
+        return userProfileRepository.findById(providerProfileId)
+                .map(UserProfile::getNumberOfEmployees)
+                .filter(n -> n != null && n >= 1)
+                .map(Long::intValue)
+                .orElse(1);
+    }
 
     // ================= UPDATE =================
     public CarWashBooking updateBooking(String id, CarWashBooking updatedBooking, String loggedInUsername) {
         return repository.findById(id).map(booking -> {
-            // Block acceptance if car wash already has 5 incomplete jobs (only when newly accepting, not when updating own booking)
+            // Block acceptance if provider already has paid/in-progress jobs >= numberOfEmployees (only when newly accepting)
             String newCarWashId = updatedBooking.getCarWashId();
             boolean isNewAcceptance = "accepted".equalsIgnoreCase(updatedBooking.getStatus())
                     && newCarWashId != null && !newCarWashId.isBlank()
                     && (booking.getCarWashId() == null || !booking.getCarWashId().equals(newCarWashId));
             if (isNewAcceptance) {
+                int maxAllowed = getMaxPaidJobsForProvider(newCarWashId);
                 long paidIncompleteCount = repository.countPaidIncompleteByCarWashId(newCarWashId);
-                if (paidIncompleteCount >= MAX_INCOMPLETE_JOBS) {
-                    throw new IllegalStateException("Cannot accept more bookings. This car wash has " + paidIncompleteCount + " paid jobs not yet completed. Complete some before accepting new ones (max " + MAX_INCOMPLETE_JOBS + ").");
+                if (paidIncompleteCount >= maxAllowed) {
+                    throw new IllegalStateException("Cannot accept more bookings, Complete some before accepting new ones.");
                 }
             }
             // Update all booking fields (date saved as yyyy-MM-dd for range search)
@@ -141,7 +149,7 @@ public class CarWashBookingService {
                     notificationService.notifyServiceProvider(loggedInUsername,booking.getLocation());
 
                     notificationService.notifyRequestAccepted(
-                            booking.getClientUsername(), "https://172.20.10.11:3000/my-washes", "Car Wash Booking", toJobDescription(booking));
+                            booking.getClientUsername(), "https://mechanic-management-806bi8xrb-pbhanina-5058s-projects.vercel.app/my-washes", "Car Wash Booking", toJobDescription(booking));
                 } else if ("completed".equalsIgnoreCase(newStatus)) {
                     notificationService.notifyServiceCompleted(
                             booking.getClientUsername(), loggedInUsername, "car wash service", toJobDescription(booking));

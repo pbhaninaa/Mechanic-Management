@@ -32,11 +32,13 @@ public class UserProfile {
 
     @Column(nullable = false, unique = true)
     private String email;
-
+    /** Required for CARWASH/MECHANIC; limits how many paid/in-progress requests the provider can have. */
+    @Column(nullable = true)
+    private Long numberOfEmployees;
     private String firstName;
     private String lastName;
     private String phoneNumber;
-    private String countryCode; // e.g. "+27", "+1"
+    private String countryCode;
 
     private String latitude;
     private String longitude;

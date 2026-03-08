@@ -33,6 +33,7 @@ const CreateProfileScreen = ({ navigation }: any) => {
     phoneNumber: '',
     address: '',
     role: 'CLIENT',
+    numberOfEmployees: '',
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -55,25 +56,36 @@ const CreateProfileScreen = ({ navigation }: any) => {
     if ((form.role === 'MECHANIC' || form.role === 'CARWASH') && !form.address?.trim()) {
       e.address = 'Address required for Mechanic/Car Wash (clients need directions)';
     }
+    if (form.role === 'MECHANIC' || form.role === 'CARWASH') {
+      const n = parseInt(form.numberOfEmployees?.trim() ?? '', 10);
+      if (!Number.isInteger(n) || n < 1) {
+        e.numberOfEmployees = 'Number of employees is required (at least 1)';
+      }
+    }
     setErrors(e);
     return Object.keys(e).length === 0;
   };
 
   const handleSave = async () => {
     if (!validate() || !username) return;
-    try {
-      await dispatch(createProfile({
-        username,
-        email: form.email.trim(),
-        firstName: form.firstName.trim(),
-        lastName: form.lastName.trim(),
-        phoneNumber: form.phoneNumber.trim(),
-        countryCode: '+27',
-        address: form.address.trim() || undefined,
-        roles: [form.role],
-      }));
-    } catch {
-      Alert.alert('Error', error || 'Failed to create profile');
+    const numberOfEmployees =
+      (form.role === 'MECHANIC' || form.role === 'CARWASH')
+        ? Math.max(1, parseInt(form.numberOfEmployees?.trim() ?? '1', 10))
+        : undefined;
+    const result = await dispatch(createProfile({
+      username,
+      email: form.email.trim(),
+      firstName: form.firstName.trim(),
+      lastName: form.lastName.trim(),
+      phoneNumber: form.phoneNumber.trim(),
+      countryCode: '+27',
+      address: form.address.trim() || undefined,
+      roles: [form.role],
+      numberOfEmployees,
+    }));
+    if (createProfile.rejected.match(result)) {
+      const msg = (result.payload as string) || error || 'Failed to create profile';
+      Alert.alert('Error', msg);
     }
   };
 
@@ -130,6 +142,20 @@ const CreateProfileScreen = ({ navigation }: any) => {
             ))}
           </View>
         </View>
+        {(form.role === 'MECHANIC' || form.role === 'CARWASH') && (
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Number of Employees *</Text>
+            <TextInput
+              style={[styles.input, errors.numberOfEmployees ? styles.inputError : null]}
+              placeholder="e.g. 2"
+              value={form.numberOfEmployees}
+              onChangeText={v => update('numberOfEmployees', v)}
+              keyboardType="number-pad"
+            />
+            {errors.numberOfEmployees ? <Text style={styles.errorText}>{errors.numberOfEmployees}</Text> : null}
+            <Text style={styles.hint}>Limits how many paid jobs you can have at once.</Text>
+          </View>
+        )}
         <TouchableOpacity style={styles.btn} onPress={handleSave}>
           <Text style={styles.btnText}>Save Profile</Text>
         </TouchableOpacity>
@@ -157,6 +183,7 @@ const styles = StyleSheet.create({
   roleBtnActive: { borderColor: CONFIG.COLORS.PRIMARY, backgroundColor: CONFIG.COLORS.PRIMARY + '15' },
   roleBtnText: { fontSize: CONFIG.FONT_SIZES.MEDIUM, color: CONFIG.COLORS.GRAY },
   roleBtnTextActive: { color: CONFIG.COLORS.PRIMARY, fontWeight: '600' },
+  hint: { fontSize: CONFIG.FONT_SIZES.SMALL, color: CONFIG.COLORS.GRAY, marginTop: 4 },
   btn: { height: CONFIG.DIMENSIONS.BUTTON_HEIGHT, backgroundColor: CONFIG.COLORS.PRIMARY, borderRadius: 8, justifyContent: 'center', alignItems: 'center', marginTop: 24 },
   btnText: { color: '#fff', fontSize: CONFIG.FONT_SIZES.LARGE, fontWeight: '600' },
 });

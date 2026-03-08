@@ -34,7 +34,11 @@ public class UserProfileService {
     }
 
     // ================= CREATE =================
-    public UserProfile createProfileForUser( UserProfile profile) {
+    public UserProfile createProfileForUser(UserProfile profile) {
+        boolean isProvider = profile.getRoles().contains(Role.CARWASH) || profile.getRoles().contains(Role.MECHANIC);
+        if (isProvider && (profile.getNumberOfEmployees() == null || profile.getNumberOfEmployees() < 1)) {
+            throw new IllegalArgumentException("Number of employees is required for CARWASH and MECHANIC providers and must be at least 1.");
+        }
 
         if (repository.findByUsername(profile.getUsername()).isPresent()) {
             throw new IllegalArgumentException("Username already exists");
@@ -103,9 +107,18 @@ public class UserProfileService {
                     }
                     existing.setAddress(updatedProfile.getAddress());
                     existing.setEmail(updatedProfile.getEmail());
+                    if (updatedProfile.getNumberOfEmployees() != null) {
+                        existing.setNumberOfEmployees(updatedProfile.getNumberOfEmployees());
+                    }
 
                     if (isAdmin) {
                         existing.setRoles(updatedProfile.getRoles());
+                    }
+
+                    // If provider (CARWASH/MECHANIC), numberOfEmployees must remain >= 1
+                    boolean isProvider = existing.getRoles().contains(Role.CARWASH) || existing.getRoles().contains(Role.MECHANIC);
+                    if (isProvider && (existing.getNumberOfEmployees() == null || existing.getNumberOfEmployees() < 1)) {
+                        throw new IllegalArgumentException("Number of employees is required for CARWASH and MECHANIC providers and must be at least 1.");
                     }
 
                     existing.setUpdatedAt(LocalDateTime.now());

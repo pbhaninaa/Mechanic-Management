@@ -47,6 +47,7 @@ export const createProfile = createAsyncThunk(
     countryCode?: string;
     address?: string;
     roles: string[];
+    numberOfEmployees?: number;
   }, { rejectWithValue }) => {
     try {
       const response = await apiService.createProfile(profileData);

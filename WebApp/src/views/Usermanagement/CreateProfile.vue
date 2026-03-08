@@ -18,7 +18,7 @@
       />
 
       <!-- Address Section -->
-      <div v-if="form.roles[0] !== USER_ROLES.ADMIN">
+      <div v-if="selectedRole !== USER_ROLES.ADMIN">
         <v-radio-group v-model="useCurrentLocation" row>
           <v-radio label="Use My Current Location" :value="true" />
           <v-radio label="Enter Address Manually" :value="false" />
@@ -54,6 +54,16 @@
         :disabled="loading || !canEditRole"
         required
         variant="outlined"
+      />
+
+      <InputField
+        v-if="isProviderRole"
+        v-model.number="form.numberOfEmployees"
+        label="Number of Employees"
+        type="number"
+        :disabled="loading"
+        required
+        :persistent-hint="true"
       />
 
       <Button
@@ -106,7 +116,8 @@ const form = ref({
   address: "",
   latitude: null,
   longitude: null,
-  roles: [USER_ROLES.CLIENT]
+  roles: [USER_ROLES.CLIENT],
+  numberOfEmployees: null
 });
 
 const propsProfile = ref(
@@ -176,9 +187,17 @@ watch(useCurrentLocation, async (val) => {
   }
 });
 
+/** Selected role: v-select with multiple=false can bind a string or array */
+const selectedRole = computed(() => {
+  const r = form.value.roles;
+  if (Array.isArray(r) && r.length) return r[0];
+  if (r != null && typeof r === "string") return r;
+  return null;
+});
+
 // When address is entered manually and role needs coords, geocode so Save can enable
 watch(
-  () => [form.value.address, useCurrentLocation.value, form.value.roles?.[0]],
+  () => [form.value.address, useCurrentLocation.value, selectedRole.value],
   async ([address, useCurrent, role]) => {
     if (useCurrent || !address?.trim()) return;
     if (role !== USER_ROLES.MECHANIC && role !== USER_ROLES.CAR_WASH) return;
@@ -200,7 +219,13 @@ watch(
 const isPhoneValid = ref(false);
 
 const requiresCoordinates = computed(() => {
-  const role = form.value.roles?.[0];
+  const role = selectedRole.value;
+  return role === USER_ROLES.MECHANIC || role === USER_ROLES.CAR_WASH;
+});
+
+/** True when selected role is Mechanic or Car Wash — show and require Number of Employees */
+const isProviderRole = computed(() => {
+  const role = selectedRole.value;
   return role === USER_ROLES.MECHANIC || role === USER_ROLES.CAR_WASH;
 });
 
@@ -212,6 +237,10 @@ const isPhoneAcceptable = computed(() => {
 });
 
 const isSaveDisabled = computed(() => {
+  const needEmployees = isProviderRole.value && (
+    form.value.numberOfEmployees == null ||
+    Number(form.value.numberOfEmployees) < 1
+  );
   return (
     loading.value ||
     !form.value.firstName?.trim() ||
@@ -220,6 +249,7 @@ const isSaveDisabled = computed(() => {
     !form.value.email?.trim() ||
     !form.value.phoneNumber?.trim() ||
     !isPhoneAcceptable.value ||
+    needEmployees ||
     (requiresCoordinates.value &&
       (!form.value.latitude || !form.value.longitude))
   );
@@ -236,7 +266,8 @@ onMounted(async () => {
       ...propsProfile.value,
       latitude: propsProfile.value.latitude ?? null,
       longitude: propsProfile.value.longitude ?? null,
-      roles: propsProfile.value.roles ?? []
+      roles: propsProfile.value.roles ?? [],
+      numberOfEmployees: propsProfile.value.numberOfEmployees ?? null
     };
 
     if (propsProfile.value.address) {
@@ -274,7 +305,18 @@ const saveProfile = async () => {
     return;
   }
 
+  // Front-end validation: provider roles require number of employees >= 1
+  if (isProviderRole.value) {
+    const num = form.value.numberOfEmployees != null ? Number(form.value.numberOfEmployees) : null;
+    if (num == null || !Number.isInteger(num) || num < 1) {
+      message.value = "Number of employees is required for Mechanic and Car Wash and must be at least 1.";
+      messageType.value = "error";
+      return;
+    }
+  }
+
   loading.value = true;
+  message.value = "";
 
   try {
     if (!Array.isArray(form.value.roles)) {
@@ -293,7 +335,7 @@ const saveProfile = async () => {
     emitAuthChanged();
     router.push("/dashboard");
   } catch (err) {
-    message.value = "Failed to save profile.";
+    message.value = err?.message || "Failed to save profile.";
     messageType.value = "error";
   } finally {
     loading.value = false;

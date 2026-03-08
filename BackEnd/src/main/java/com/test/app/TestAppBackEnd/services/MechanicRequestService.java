@@ -1,6 +1,7 @@
 package com.test.app.TestAppBackEnd.services;
 
 import com.test.app.TestAppBackEnd.entities.MechanicRequest;
+import com.test.app.TestAppBackEnd.entities.UserProfile;
 import com.test.app.TestAppBackEnd.repositories.MechanicRequestRepository;
 import com.test.app.TestAppBackEnd.repositories.UserProfileRepository;
 import org.springframework.stereotype.Service;
@@ -115,7 +116,14 @@ public class MechanicRequestService {
         return enrichWithPhoneNumbers(repository.findByStatusAndMechanicIdIsNull("pending"));
     }
 
-    private static final int MAX_INCOMPLETE_JOBS = 5;
+    /** Max concurrent paid/in-progress jobs = provider's numberOfEmployees (default 1 if not set). */
+    private int getMaxPaidJobsForMechanic(String mechanicProfileId) {
+        return userProfileRepository.findById(mechanicProfileId)
+                .map(UserProfile::getNumberOfEmployees)
+                .filter(n -> n != null && n >= 1)
+                .map(Long::intValue)
+                .orElse(1);
+    }
 
     public Optional<MechanicRequest> acceptJob(String requestId, String mechanicId) {
         Optional<MechanicRequest> opt = repository.findById(requestId);
@@ -127,9 +135,10 @@ public class MechanicRequestService {
         if (!"pending".equals(req.getStatus())) {
             throw new IllegalStateException("Only pending jobs can be accepted");
         }
+        int maxAllowed = getMaxPaidJobsForMechanic(mechanicId);
         long paidIncompleteCount = repository.countPaidIncompleteByMechanicId(mechanicId);
-        if (paidIncompleteCount >= MAX_INCOMPLETE_JOBS) {
-            throw new IllegalStateException("You cannot accept more jobs. You have " + paidIncompleteCount + " paid jobs not yet completed. Complete some before accepting new ones (max " + MAX_INCOMPLETE_JOBS + ").");
+        if (paidIncompleteCount >= maxAllowed) {
+            throw new IllegalStateException("You cannot accept more jobs, Complete some before accepting new ones.");
         }
         req.setMechanicId(mechanicId);
         req.setStatus("assigned");
@@ -176,14 +185,15 @@ public class MechanicRequestService {
 
         MechanicRequest existing = requests.get();
 
-        // Enforce max incomplete jobs when mechanic is being assigned (via update)
+        // Enforce max paid/in-progress jobs (by numberOfEmployees) when mechanic is being assigned (via update)
         String newMechanicId = updated.getMechanicId();
         if (newMechanicId != null && !newMechanicId.isBlank()
                 && ("assigned".equalsIgnoreCase(updated.getStatus()) || "accepted".equalsIgnoreCase(updated.getStatus()))
                 && (existing.getMechanicId() == null || existing.getMechanicId().isBlank())) {
+            int maxAllowed = getMaxPaidJobsForMechanic(newMechanicId);
             long paidIncompleteCount = repository.countPaidIncompleteByMechanicId(newMechanicId);
-            if (paidIncompleteCount >= MAX_INCOMPLETE_JOBS) {
-                throw new IllegalStateException("Cannot assign. This mechanic has " + paidIncompleteCount + " paid jobs not yet completed. Complete some before accepting new ones (max " + MAX_INCOMPLETE_JOBS + ").");
+            if (paidIncompleteCount >= maxAllowed) {
+                throw new IllegalStateException("Cannot assign, Complete some before accepting new ones.");
             }
         }
 
