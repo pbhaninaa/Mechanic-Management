@@ -1,13 +1,16 @@
 package com.test.app.TestAppBackEnd.services;
 
 import com.test.app.TestAppBackEnd.entities.MechanicRequest;
+import com.test.app.TestAppBackEnd.entities.ProviderServiceOffering;
 import com.test.app.TestAppBackEnd.entities.UserProfile;
 import com.test.app.TestAppBackEnd.repositories.MechanicRequestRepository;
+import com.test.app.TestAppBackEnd.repositories.ProviderServiceOfferingRepository;
 import com.test.app.TestAppBackEnd.repositories.UserProfileRepository;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -21,15 +24,18 @@ public class MechanicRequestService {
     private final UserProfileRepository userProfileRepository;
     private final EmailService emailService;
     private final ClientNotificationService notificationService;
+    private final ProviderServiceOfferingRepository providerServiceOfferingRepository;
 
     public MechanicRequestService(MechanicRequestRepository repository,
                                  UserProfileRepository userProfileRepository,
                                  EmailService emailService,
-                                 ClientNotificationService notificationService) {
+                                 ClientNotificationService notificationService,
+                                 ProviderServiceOfferingRepository providerServiceOfferingRepository) {
         this.repository = repository;
         this.userProfileRepository = userProfileRepository;
         this.emailService = emailService;
         this.notificationService = notificationService;
+        this.providerServiceOfferingRepository = providerServiceOfferingRepository;
     }
 
     private void enrichWithPhoneNumber(MechanicRequest request) {
@@ -139,6 +145,39 @@ public class MechanicRequestService {
         return enrichWithPhoneNumbers(repository.findByStatusAndMechanicIdIsNull("pending"));
     }
 
+    /**
+     * Ensures the mechanic offers all requested services (parsed from description) for the given car brand.
+     * @throws IllegalStateException if any requested service is not offered by the mechanic for that car
+     */
+    private void validateRequestServicesOfferedByMechanic(String mechanicId, String carType, String description) {
+        if (description == null || description.isBlank()) return;
+        List<String> requestedServices = Arrays.stream(description.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isBlank())
+                .toList();
+        if (requestedServices.isEmpty()) return;
+        List<ProviderServiceOffering> offerings = providerServiceOfferingRepository.findByProviderId(mechanicId);
+        List<ProviderServiceOffering> forCar = offerings.stream()
+                .filter(o -> offeringMatchesCarBrand(o.getCarBrand(), carType))
+                .toList();
+        Set<String> offeredNames = forCar.stream()
+                .map(ProviderServiceOffering::getServiceName)
+                .filter(n -> n != null && !n.isBlank())
+                .collect(Collectors.toSet());
+        for (String requested : requestedServices) {
+            if (!offeredNames.contains(requested)) {
+                throw new IllegalStateException(
+                        "Cannot accept this job: you do not offer the service \"" + requested + "\" for this car brand. Only accept jobs for services you offer.");
+            }
+        }
+    }
+
+    private boolean offeringMatchesCarBrand(String offeringCarBrand, String requestCarType) {
+        if (requestCarType == null || requestCarType.isBlank()) return true;
+        if (offeringCarBrand == null || offeringCarBrand.isBlank()) return true;
+        return offeringCarBrand.trim().equalsIgnoreCase(requestCarType.trim());
+    }
+
     /** Max concurrent paid/in-progress jobs = provider's numberOfEmployees (default 1 if not set). */
     private int getMaxPaidJobsForMechanic(String mechanicProfileId) {
         return userProfileRepository.findById(mechanicProfileId)
@@ -163,6 +202,7 @@ public class MechanicRequestService {
         if (paidIncompleteCount >= maxAllowed) {
             throw new IllegalStateException("You cannot accept more jobs, Complete some before accepting new ones.");
         }
+        validateRequestServicesOfferedByMechanic(mechanicId, req.getCarType(), req.getDescription());
         req.setMechanicId(mechanicId);
         req.setStatus("assigned");
         MechanicRequest saved = repository.save(req);

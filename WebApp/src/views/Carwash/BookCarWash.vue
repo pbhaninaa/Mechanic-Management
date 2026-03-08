@@ -36,7 +36,7 @@
           <InputField v-model="newBooking.carDescription" label="Car Description (Make/Model/Year/Color)" type="text"
             :disabled="loading" required />
 
-          <!-- Services: shown only after car type is selected; list is filtered by selected car type. -->
+          <!-- Services: all choices are from one provider (locked by first service you pick). You don't choose the provider – a provider will accept your booking. -->
           <template v-if="canShowServices">
             <v-alert v-if="!newBooking.carType" type="info" density="compact" class="mb-2">
               Select a car type above to see available services for your vehicle.
@@ -45,11 +45,21 @@
               <v-alert v-if="!catalogLoading && noProviderForCarType" type="warning" density="compact" class="mb-2">
                 We don't have a service provider for the selected car type ({{ noProviderForCarType }}) at this location. Try a different car type or address.
               </v-alert>
+              <DropdownField
+                v-else-if="!catalogLoading && serviceTypes.length > 0"
+                v-model="newBooking.serviceTypes"
+                :items="serviceTypes"
+                label="Select services"
+                multiple
+                chips
+                clearable
+                required
+                :disabled="catalogLoading"
+                :prepopulate-first="false"
+              />
               <v-alert v-else-if="!catalogLoading && serviceTypes.length === 0" type="info" density="compact" class="mb-2">
                 No car wash services are available near this location yet. Try a different address or check back later.
               </v-alert>
-              <DropdownField v-else-if="serviceTypes.length > 0" v-model="newBooking.serviceTypes" :items="serviceTypes"
-                label="Select Services" multiple chips required :disabled="catalogLoading" :prepopulate-first="false" />
             </template>
           </template>
           <v-alert v-else type="info" density="compact" class="mb-2">
@@ -124,7 +134,7 @@ const additionalFees = ref<Record<string, number>>({ callOut: 500 });
 
 const carTypes = CAR_TYPES;
 
-// Services: load all nearby once, then filter by selected car type (no prepopulation).
+// Services: load nearby, filter by car type, then by selected provider so user only selects from one provider.
 const allNearbyOfferings = ref<any[]>([]);
 const serviceTypes = ref<string[]>([]);
 const catalogPriceMap = ref<Record<string, number>>({});
@@ -186,7 +196,20 @@ function offeringMatchesCarType(o: any, clientCarType: string): boolean {
   return types.some((t: string) => t === clientCarType);
 }
 
-/** Filter stored nearby offerings by selected car type and update service list and prices (no extra API call). */
+/** Distance squared from user to offering (for sorting by nearest). */
+function distSq(o: any): number {
+  const lat = Number(o.latitude ?? o.lat);
+  const lng = Number(o.longitude ?? o.lng);
+  if (isNaN(lat) || isNaN(lng)) return Infinity;
+  const dLat = lat - location.value.latitude;
+  const dLng = lng - location.value.longitude;
+  return dLat * dLat + dLng * dLng;
+}
+
+/**
+ * Build service list so user can only select services from one provider (fair: no provider choice).
+ * When no service selected: show all unique service names. When they pick one, lock to nearest provider that offers it.
+ */
 function applyCarTypeFilter() {
   noProviderForCarType.value = null;
   const clientCarType = newBooking.value.carType || '';
@@ -199,18 +222,36 @@ function applyCarTypeFilter() {
   const matching = list.filter((o: any) => offeringMatchesCarType(o, clientCarType));
   if (list.length > 0 && matching.length === 0) {
     noProviderForCarType.value = clientCarType;
+    serviceTypes.value = [];
+    catalogPriceMap.value = {};
+    newBooking.value.serviceTypes = [];
+    return;
   }
-  const names = [...new Set(matching.map((o: any) => o.serviceName ?? o.service_name).filter(Boolean))].sort();
+  const selected = newBooking.value.serviceTypes || [];
+  let offeringsForList = matching;
+  if (selected.length > 0) {
+    const firstService = selected[0]?.trim();
+    const withFirst = matching.filter((o: any) => (o.serviceName ?? o.service_name) === firstService);
+    if (withFirst.length > 0) {
+      withFirst.sort((a: any, b: any) => distSq(a) - distSq(b));
+      const lockedProviderId = withFirst[0].providerId ?? withFirst[0].provider_id;
+      offeringsForList = matching.filter((o: any) => (o.providerId ?? o.provider_id) === lockedProviderId);
+    }
+  }
+  const names = [...new Set(offeringsForList.map((o: any) => o.serviceName ?? o.service_name).filter(Boolean))].sort();
   serviceTypes.value = names;
   const priceMap: Record<string, number> = {};
-  matching.forEach((o: any) => {
+  offeringsForList.forEach((o: any) => {
     const n = o.serviceName ?? o.service_name;
     if (!n) return;
     const p = Number(o.price);
     if (!isNaN(p) && (priceMap[n] == null || p < priceMap[n])) priceMap[n] = p;
   });
   catalogPriceMap.value = priceMap;
-  newBooking.value.serviceTypes = [];
+  const validSelection = selected.filter((s: string) => serviceTypes.value.includes(s));
+  if (validSelection.length !== selected.length) {
+    newBooking.value.serviceTypes = validSelection;
+  }
 }
 
 // Load all nearby services once; then filter by selected car type in applyCarTypeFilter (no prepopulation).
@@ -263,6 +304,10 @@ watch(useCurrentLocation, async (val) => {
 watch(() => newBooking.value.carType, () => {
   if (allNearbyOfferings.value.length > 0) applyCarTypeFilter();
 });
+
+watch(() => newBooking.value.serviceTypes, () => {
+  if (allNearbyOfferings.value.length > 0 && newBooking.value.carType) applyCarTypeFilter();
+}, { deep: true });
 
 // Fetch additional fees from API
 async function loadAdditionalFees() {

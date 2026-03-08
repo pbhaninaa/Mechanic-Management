@@ -1,17 +1,23 @@
 package com.test.app.TestAppBackEnd.controllers;
 
 import com.stripe.exception.StripeException;
+import com.test.app.TestAppBackEnd.constants.Role;
+import com.test.app.TestAppBackEnd.entities.UserProfile;
 import com.test.app.TestAppBackEnd.models.ApiResponse;
 import com.test.app.TestAppBackEnd.models.PaymentRequest;
 import com.test.app.TestAppBackEnd.entities.Payment;
+import com.test.app.TestAppBackEnd.repositories.UserProfileRepository;
 import com.test.app.TestAppBackEnd.services.PaymentService;
 import com.test.app.TestAppBackEnd.services.StripeService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/payments")
@@ -22,6 +28,21 @@ public class PaymentController {
 
     @Autowired
     private StripeService stripeService;
+
+    @Autowired
+    private UserProfileRepository userProfileRepository;
+
+    private boolean isAdmin(Authentication auth) {
+        if (auth == null || auth.getAuthorities() == null) return false;
+        return auth.getAuthorities().stream()
+                .anyMatch(a -> "ROLE_ADMIN".equals(a.getAuthority()) || "ADMIN".equals(a.getAuthority()));
+    }
+
+    /** Resolve current user's profile for payment scoping (non-admin see only their own). */
+    private Optional<UserProfile> currentProfile(Authentication auth) {
+        if (auth == null || auth.getName() == null || auth.getName().isBlank()) return Optional.empty();
+        return userProfileRepository.findByUsername(auth.getName());
+    }
 
     /** Create Stripe PaymentIntent for card payments - returns clientSecret for frontend */
     @PostMapping("/create-intent")
@@ -64,62 +85,99 @@ public class PaymentController {
     }
 
     // Get all payments (supports both GET /api/payments and GET /api/payments/getPayments)
+    // Admin: all payments. Others: only payments linked to the current user (as client, mechanic, or car wash).
     @GetMapping({"", "/"})
-    public ResponseEntity<ApiResponse<List<Payment>>> getPaymentsRoot(@RequestParam(required = false) String search) {
-        return getAllPayments(search);
+    public ResponseEntity<ApiResponse<List<Payment>>> getPaymentsRoot(
+            @RequestParam(required = false) String search,
+            Authentication auth) {
+        return getAllPayments(search, auth);
     }
 
     @GetMapping("/getPayments")
-    public ResponseEntity<ApiResponse<List<Payment>>> getAllPayments(@RequestParam(required = false) String search) {
-        List<Payment> payments = paymentService.getAllPayments(search);
-        ApiResponse<List<Payment>> response = new ApiResponse<>(
-                "Fetched all payments",
+    public ResponseEntity<ApiResponse<List<Payment>>> getAllPayments(
+            @RequestParam(required = false) String search,
+            Authentication auth) {
+        List<Payment> payments;
+        if (isAdmin(auth)) {
+            payments = paymentService.getAllPayments(search);
+        } else {
+            Optional<UserProfile> profileOpt = currentProfile(auth);
+            if (profileOpt.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(new ApiResponse<>("Profile not found", HttpStatus.FORBIDDEN.value(), List.of()));
+            }
+            UserProfile profile = profileOpt.get();
+            String username = profile.getUsername();
+            String profileId = profile.getId();
+            if (profile.getRoles().contains(Role.MECHANIC)) {
+                payments = paymentService.getPaymentsByMechanic(profileId, search);
+            } else if (profile.getRoles().contains(Role.CARWASH)) {
+                payments = paymentService.getPaymentsByCarWash(profileId, search);
+            } else {
+                payments = paymentService.getPaymentsByClient(username, search);
+            }
+        }
+        return ResponseEntity.ok(new ApiResponse<>(
+                "Fetched payments",
                 HttpStatus.OK.value(),
-                payments
-        );
-        return ResponseEntity.ok(response);
+                payments));
     }
 
-    // Get payments by client username
+    // Get payments by client username (non-admin may only request their own username)
     @GetMapping("/client/{username}")
     public ResponseEntity<ApiResponse<List<Payment>>> getPaymentsByClient(
             @PathVariable String username,
-            @RequestParam(required = false) String search) {
+            @RequestParam(required = false) String search,
+            Authentication auth) {
+        if (!isAdmin(auth) && (auth == null || !username.equals(auth.getName()))) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(new ApiResponse<>("You may only view your own payments", HttpStatus.FORBIDDEN.value(), null));
+        }
         List<Payment> payments = paymentService.getPaymentsByClient(username, search);
-        ApiResponse<List<Payment>> response = new ApiResponse<>(
+        return ResponseEntity.ok(new ApiResponse<>(
                 "Fetched payments for client: " + username,
                 HttpStatus.OK.value(),
-                payments
-        );
-        return ResponseEntity.ok(response);
+                payments));
     }
 
-    // Get payments by mechanic ID
+    // Get payments by mechanic ID (non-admin may only request their own profile id)
     @GetMapping("/mechanic/{mechanicId}")
     public ResponseEntity<ApiResponse<List<Payment>>> getPaymentsByMechanic(
             @PathVariable String mechanicId,
-            @RequestParam(required = false) String search) {
+            @RequestParam(required = false) String search,
+            Authentication auth) {
+        if (!isAdmin(auth)) {
+            Optional<UserProfile> profileOpt = currentProfile(auth);
+            if (profileOpt.isEmpty() || !mechanicId.equals(profileOpt.get().getId())) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(new ApiResponse<>("You may only view your own payments", HttpStatus.FORBIDDEN.value(), null));
+            }
+        }
         List<Payment> payments = paymentService.getPaymentsByMechanic(mechanicId, search);
-        ApiResponse<List<Payment>> response = new ApiResponse<>(
+        return ResponseEntity.ok(new ApiResponse<>(
                 "Fetched payments for mechanic ID: " + mechanicId,
                 HttpStatus.OK.value(),
-                payments
-        );
-        return ResponseEntity.ok(response);
+                payments));
     }
 
-    // Get payments by car wash ID
+    // Get payments by car wash ID (non-admin may only request their own profile id)
     @GetMapping("/carWash/{carWashId}")
     public ResponseEntity<ApiResponse<List<Payment>>> getPaymentsByCarWash(
             @PathVariable String carWashId,
-            @RequestParam(required = false) String search) {
+            @RequestParam(required = false) String search,
+            Authentication auth) {
+        if (!isAdmin(auth)) {
+            Optional<UserProfile> profileOpt = currentProfile(auth);
+            if (profileOpt.isEmpty() || !carWashId.equals(profileOpt.get().getId())) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(new ApiResponse<>("You may only view your own payments", HttpStatus.FORBIDDEN.value(), null));
+            }
+        }
         List<Payment> payments = paymentService.getPaymentsByCarWash(carWashId, search);
-        ApiResponse<List<Payment>> response = new ApiResponse<>(
+        return ResponseEntity.ok(new ApiResponse<>(
                 "Fetched payments for car wash ID: " + carWashId,
                 HttpStatus.OK.value(),
-                payments
-        );
-        return ResponseEntity.ok(response);
+                payments));
     }
 
     // Delete payment by ID

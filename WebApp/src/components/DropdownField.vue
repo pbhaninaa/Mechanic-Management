@@ -4,6 +4,8 @@
     <v-select
       v-model="internalValue"
       :items="items"
+      :item-title="itemTitle"
+      :item-value="itemValue"
       :label="label"
       :placeholder="computedPlaceholder"
       :multiple="multiple"
@@ -65,7 +67,10 @@ const props = defineProps({
   dense: { type: Boolean, default: true },
   hideDetails: { type: Boolean, default: false },
   fieldClass: { type: String, default: "" },
-  appendIcon: { type: String, default: "" }
+  appendIcon: { type: String, default: "" },
+  /** When items are objects, use e.g. itemTitle="label" itemValue="id" for display and value */
+  itemTitle: { type: [String, Function], default: undefined },
+  itemValue: { type: [String, Function], default: undefined }
 })
 
 const emit = defineEmits(['update:modelValue', 'input'])

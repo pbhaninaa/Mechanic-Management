@@ -64,7 +64,7 @@
           <InputField v-model="request.vinNumber" label="VIN number" placeholder="Vehicle identification number" :disabled="loading" required />
           <v-divider class="my-4" />
 
-          <!-- Service selection: shown only after car brand is selected; list filtered by selected brand (no prepopulation). -->
+          <!-- Service selection: all choices are from one provider (locked by first service you pick). You don't choose the provider – a provider will accept your request. -->
           <template v-if="canShowServices">
             <v-alert v-if="!request.carType" type="info" density="compact" class="mb-2">
               Select a car brand above to see available services for your vehicle.
@@ -74,12 +74,13 @@
                 We don't have a service provider for the selected car brand ({{ noProviderForCarBrand }}) at this location. Try a different car brand or address.
               </v-alert>
               <DropdownField
-                v-else-if="jobOptions.length > 0"
+                v-else-if="!catalogLoading && jobOptions.length > 0"
                 v-model="request.serviceTypes"
                 :items="jobOptions"
-                label="Select Services"
+                label="Select services"
                 multiple
                 chips
+                clearable
                 required
                 :disabled="loading || catalogLoading"
                 :prepopulate-first="false"
@@ -289,7 +290,21 @@ function offeringMatchesCarBrand(o: any, clientCarBrand: string): boolean {
   return brand.trim() === clientCarBrand.trim();
 }
 
-/** Filter stored nearby offerings by selected car brand and update service list and prices (no extra API call). */
+/** Distance squared from user to offering (for sorting by nearest). */
+function distSq(o: any): number {
+  const lat = Number(o.latitude ?? o.lat);
+  const lng = Number(o.longitude ?? o.lng);
+  if (isNaN(lat) || isNaN(lng)) return Infinity;
+  const dLat = lat - location.value.latitude;
+  const dLng = lng - location.value.longitude;
+  return dLat * dLat + dLng * dLng;
+}
+
+/**
+ * Build jobOptions so user can only select services from one provider (fair: no provider choice).
+ * When no service selected: show all unique service names so they pick one. When they pick one,
+ * we lock to the nearest provider that offers it and show only that provider's services.
+ */
 function applyCarBrandFilter() {
   noProviderForCarBrand.value = null;
   const clientCarBrand = request.value.carType || "";
@@ -302,16 +317,34 @@ function applyCarBrandFilter() {
   const matching = list.filter((o: any) => offeringMatchesCarBrand(o, clientCarBrand));
   if (list.length > 0 && matching.length === 0) {
     noProviderForCarBrand.value = clientCarBrand;
+    jobOptions.value = [];
+    mechanicServicePrices.value = {};
+    request.value.serviceTypes = [];
+    return;
   }
-  jobOptions.value = [...new Set(matching.map((o: any) => o.serviceName ?? o.service_name).filter(Boolean))];
+  const selected = request.value.serviceTypes || [];
+  let offeringsForList = matching;
+  if (selected.length > 0) {
+    const firstService = selected[0]?.trim();
+    const withFirst = matching.filter((o: any) => (o.serviceName ?? o.service_name) === firstService);
+    if (withFirst.length > 0) {
+      withFirst.sort((a: any, b: any) => distSq(a) - distSq(b));
+      const lockedProviderId = withFirst[0].providerId ?? withFirst[0].provider_id;
+      offeringsForList = matching.filter((o: any) => (o.providerId ?? o.provider_id) === lockedProviderId);
+    }
+  }
+  jobOptions.value = [...new Set(offeringsForList.map((o: any) => o.serviceName ?? o.service_name).filter(Boolean))];
   const priceMap: Record<string, number> = {};
-  matching.forEach((o: any) => {
+  offeringsForList.forEach((o: any) => {
     const name = o.serviceName ?? o.service_name;
     const price = Number(o.price);
     if (!isNaN(price)) priceMap[name] = price;
   });
   mechanicServicePrices.value = priceMap;
-  request.value.serviceTypes = [];
+  const validSelection = selected.filter((s: string) => jobOptions.value.includes(s));
+  if (validSelection.length !== selected.length) {
+    request.value.serviceTypes = validSelection;
+  }
 }
 
 // Load all nearby services once; then filter by selected car brand in applyCarBrandFilter (no prepopulation).
@@ -342,6 +375,10 @@ async function loadNearbyServices() {
 watch(() => request.value.carType, () => {
   if (allNearbyOfferings.value.length > 0) applyCarBrandFilter();
 });
+
+watch(() => request.value.serviceTypes, () => {
+  if (allNearbyOfferings.value.length > 0 && request.value.carType) applyCarBrandFilter();
+}, { deep: true });
 
 // Watch location for manual geocoding
 watch(() => request.value.location, async loc => {

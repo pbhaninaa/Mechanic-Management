@@ -1,14 +1,18 @@
 package com.test.app.TestAppBackEnd.services;
 
 import com.test.app.TestAppBackEnd.entities.CarWashBooking;
+import com.test.app.TestAppBackEnd.entities.ProviderServiceOffering;
 import com.test.app.TestAppBackEnd.entities.UserProfile;
 import com.test.app.TestAppBackEnd.repositories.CarWashBookingRepository;
+import com.test.app.TestAppBackEnd.repositories.ProviderServiceOfferingRepository;
 import com.test.app.TestAppBackEnd.repositories.UserProfileRepository;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 public class CarWashBookingService {
@@ -17,15 +21,18 @@ public class CarWashBookingService {
     private final EmailService emailService;
     private final UserProfileRepository userProfileRepository;
     private final ClientNotificationService notificationService;
+    private final ProviderServiceOfferingRepository providerServiceOfferingRepository;
 
     public CarWashBookingService(CarWashBookingRepository repository,
                                  EmailService emailService,
                                  UserProfileRepository userProfileRepository,
-                                 ClientNotificationService notificationService) {
+                                 ClientNotificationService notificationService,
+                                 ProviderServiceOfferingRepository providerServiceOfferingRepository) {
         this.repository = repository;
         this.emailService = emailService;
         this.userProfileRepository = userProfileRepository;
         this.notificationService = notificationService;
+        this.providerServiceOfferingRepository = providerServiceOfferingRepository;
     }
 
     private String getClientEmail(String username) {
@@ -108,6 +115,39 @@ public class CarWashBookingService {
         return repository.findById(id);
     }
 
+    /**
+     * Ensures the provider offers all requested services for the given car type.
+     * @throws IllegalStateException if any requested service is not offered by the provider for that car type
+     */
+    private void validateBookingServicesOfferedByProvider(String providerId, String carType, List<String> requestedServiceTypes) {
+        if (requestedServiceTypes == null || requestedServiceTypes.isEmpty()) return;
+        List<ProviderServiceOffering> offerings = providerServiceOfferingRepository.findByProviderId(providerId);
+        List<ProviderServiceOffering> forCarType = offerings.stream()
+                .filter(o -> offeringMatchesCarType(o.getSupportedCarTypes(), carType))
+                .toList();
+        Set<String> offeredNames = forCarType.stream()
+                .map(ProviderServiceOffering::getServiceName)
+                .filter(n -> n != null && !n.isBlank())
+                .collect(Collectors.toSet());
+        for (String requested : requestedServiceTypes) {
+            if (requested == null || requested.isBlank()) continue;
+            if (!offeredNames.contains(requested.trim())) {
+                throw new IllegalStateException(
+                        "Cannot accept this booking: you do not offer the service \"" + requested + "\" for this car type. Only accept bookings for services you offer.");
+            }
+        }
+    }
+
+    private boolean offeringMatchesCarType(String supportedCarTypes, String carType) {
+        if (carType == null || carType.isBlank()) return true;
+        if (supportedCarTypes == null || supportedCarTypes.isBlank()) return true;
+        String[] parts = supportedCarTypes.split(",");
+        for (String p : parts) {
+            if (p != null && p.trim().equalsIgnoreCase(carType.trim())) return true;
+        }
+        return false;
+    }
+
     /** Max concurrent paid/in-progress jobs = provider's numberOfEmployees (default 1 if not set). */
     private int getMaxPaidJobsForProvider(String providerProfileId) {
         return userProfileRepository.findById(providerProfileId)
@@ -131,6 +171,8 @@ public class CarWashBookingService {
                 if (paidIncompleteCount >= maxAllowed) {
                     throw new IllegalStateException("Cannot accept more bookings, Complete some before accepting new ones.");
                 }
+                // Only allow acceptance if this provider offers all requested services for the booking's car type
+                validateBookingServicesOfferedByProvider(newCarWashId, updatedBooking.getCarType(), updatedBooking.getServiceTypes());
             }
             // Update all booking fields (date saved as yyyy-MM-dd for range search)
             booking.setDate(updatedBooking.getDate());
